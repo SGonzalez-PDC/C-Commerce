@@ -163,7 +163,16 @@ function rewireRefs(wf, nameToId) {
   const existing = await listAllWorkflows();
   const nameToId = new Map(existing);
 
-  // PASO 1: upsert (crear/actualizar) y construir el mapa nombre->id del destino
+  // PASO 0: pre-enlazar referencias con el mapa de workflows YA existentes.
+  // n8n no permite guardar un workflow que referencia subworkflows no publicados,
+  // por eso hay que corregir las referencias ANTES del upsert (no despues).
+  console.log("\n-- Paso 0: pre-enlazar referencias (existentes) --");
+  for (const item of workflows) {
+    const changed = rewireRefs(item.wf, nameToId);
+    if (changed) console.log("  " + item.wf.name + ": " + changed + " ref(s)");
+  }
+
+  // PASO 1: upsert (crear/actualizar) y completar el mapa nombre->id del destino
   console.log("\n-- Paso 1: upsert --");
   for (const item of workflows) {
     const name = item.wf.name;
@@ -181,8 +190,9 @@ function rewireRefs(wf, nameToId) {
     }
   }
 
-  // PASO 2: reescribir referencias entre workflows y volver a guardar los que cambian
-  console.log("\n-- Paso 2: enlazar referencias --");
+  // PASO 2: re-enlazar SOLO lo que apuntaba a workflows recien creados (ids nuevos)
+  // y volver a guardar los que cambian.
+  console.log("\n-- Paso 2: re-enlazar nuevos --");
   for (const item of workflows) {
     const changed = rewireRefs(item.wf, nameToId);
     if (!changed) continue;
