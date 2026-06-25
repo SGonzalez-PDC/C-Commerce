@@ -95,7 +95,7 @@
           "__rl": true,
           "value": "REEMPLAZAR_ID_AGENTE_A",
           "mode": "list",
-          "cachedResultName": "IsaCodisa Agent (Agente A)"
+          "cachedResultName": "IsaCodisa Agent"
         },
         "workflowInputs": {
           "mappingMode": "passthrough",
@@ -124,7 +124,7 @@
           "__rl": true,
           "value": "REEMPLAZAR_ID_AGENTE_B",
           "mode": "list",
-          "cachedResultName": "IsaCodisa Agent B"
+          "cachedResultName": "IsaCodisa Agent AVON"
         },
         "workflowInputs": {
           "mappingMode": "passthrough",
