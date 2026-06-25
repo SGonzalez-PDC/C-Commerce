@@ -39,8 +39,8 @@
       "alwaysOutputData": true,
       "credentials": {
         "microsoftSql": {
-          "id": "nfXUqIrinWAQRi4a",
-          "name": "SQL STAGE FFA - SEBAS"
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
         }
       }
     },
