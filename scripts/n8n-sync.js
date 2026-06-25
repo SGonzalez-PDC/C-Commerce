@@ -35,15 +35,18 @@ const ONLY = opt("only", null);
 const ROOT = path.resolve(__dirname, "..");
 
 // ---- .env loader (simple, sin dependencias) ----
-function loadDotEnv() {
-  const p = path.join(ROOT, ".env");
+// Carga .env y, si existe, .env.<entorno> (este ultimo tiene prioridad). En CI no
+// hay archivos .env: las variables vienen del environment del job.
+function loadDotEnvFile(p) {
   if (!fs.existsSync(p)) return;
   for (const line of fs.readFileSync(p, "utf8").split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    if (m) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
-loadDotEnv();
+const ENV_EARLY = (() => { const i = process.argv.indexOf("--env"); return i >= 0 ? process.argv[i + 1] : "dev"; })();
+loadDotEnvFile(path.join(__dirname, "..", ".env"));
+loadDotEnvFile(path.join(__dirname, "..", ".env." + ENV_EARLY));
 
 const N8N_URL = (process.env.N8N_URL || "").replace(/\/+$/, "");
 const N8N_API_KEY = process.env.N8N_API_KEY || "";

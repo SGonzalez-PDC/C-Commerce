@@ -1,0 +1,25 @@
+name: Deploy n8n (staging)
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - "workflows/**"
+      - "envs/staging.json"
+      - "scripts/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Desplegar workflows a n8n staging
+        run: node scripts/n8n-sync.js --env staging
+        env:
+          N8N_URL: ${{ secrets.N8N_URL }}
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
