@@ -1,0 +1,97 @@
+{
+  "name": "ISA Tool - Obtener Plantillas",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "company"
+            },
+            {
+              "name": "nombre"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        -48
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DECLARE @company NVARCHAR(50)  = '{{ $json.company }}';\nDECLARE @nombre  NVARCHAR(512) = NULLIF(LTRIM(RTRIM('{{ $json.nombre }}')), '');\n\nSELECT (\n  SELECT\n    t.id              AS template_id,\n    t.name            AS template_name,\n    t.language,\n    t.content_type,\n    t.parameter_format,\n    t.meta_template_id,\n    (\n      SELECT\n        d.id             AS det_id,\n        d.component_type,\n        d.component_format,\n        d.text_content,\n        d.sort_order,\n        (\n          SELECT\n            b.button_type,\n            b.button_text,\n            b.button_url,\n            b.button_phone,\n            b.sort_order\n          FROM c_commerce_message_template_button b\n          WHERE b.template_det_id = d.id\n          ORDER BY b.sort_order\n          FOR JSON PATH\n        ) AS buttons,\n        (\n          SELECT TOP 1 m.media_identifier\n          FROM c_commerce_message_template_media m\n          WHERE m.template_det_id = d.id\n        ) AS media_identifier,\n        (\n          SELECT\n            e.parameter_name,\n            e.example_value\n          FROM c_commerce_message_template_example e\n          WHERE e.template_det_id = d.id\n          FOR JSON PATH\n        ) AS examples\n      FROM c_commerce_message_template_det d\n      WHERE d.template_id = t.id\n        AND d.company = t.company\n      ORDER BY d.sort_order\n      FOR JSON PATH\n    ) AS components\n  FROM c_commerce_message_template t\n  WHERE t.company = @company\n    AND t.active = 1\n    AND t.is_deleted = 0\n    AND (@nombre IS NULL OR t.name LIKE '%' + @nombre + '%')\n  ORDER BY t.name\n  FOR JSON PATH\n) AS resultado"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        -48
+      ],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Query Plantillas",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "nfXUqIrinWAQRi4a",
+          "name": "SQL STAGE FFA - SEBAS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\n\nif (!row || !row.resultado) {\n  return [{ json: {\n    total: 0,\n    plantillas: [],\n    mensaje: 'No hay plantillas activas disponibles.'\n  }}];\n}\n\nlet plantillas;\ntry {\n  plantillas = JSON.parse(row.resultado);\n} catch (e) {\n  return [{ json: {\n    total: 0,\n    plantillas: [],\n    mensaje: 'Error al procesar las plantillas.'\n  }}];\n}\n\nif (!plantillas || plantillas.length === 0) {\n  return [{ json: {\n    total: 0,\n    plantillas: [],\n    mensaje: 'No hay plantillas activas disponibles.'\n  }}];\n}\n\nconst parse = v => {\n  if (!v) return [];\n  if (Array.isArray(v)) return v;\n  try { return JSON.parse(v); } catch { return []; }\n};\n\nreturn [{ json: {\n  total: plantillas.length,\n  plantillas: plantillas.map(t => {\n    const components = parse(t.components).map(d => ({\n      det_id:           d.det_id,\n      component_type:   d.component_type,\n      component_format: d.component_format,\n      text_content:     d.text_content,\n      sort_order:       d.sort_order,\n      media_identifier: d.media_identifier || null,\n      buttons:          parse(d.buttons),\n      examples:         parse(d.examples)\n    }));\n\n    const body    = components.find(c => c.component_type === 'BODY');\n    const header  = components.find(c => c.component_type === 'HEADER');\n    const footer  = components.find(c => c.component_type === 'FOOTER');\n    const btnComp = components.find(c => c.component_type === 'BUTTONS');\n\n    return {\n      template_id:      t.template_id,\n      template_name:    t.template_name,\n      language:         t.language,\n      meta_template_id: t.meta_template_id,\n      parameter_format: t.parameter_format,\n      header_text:      header?.text_content    || null,\n      header_format:    header?.component_format || null,\n      body_text:        body?.text_content       || null,\n      footer_text:      footer?.text_content     || null,\n      variables:        body?.examples           || [],\n      buttons:          btnComp?.buttons         || [],\n      components\n    };\n  })\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -48
+      ],
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Formatear Plantillas"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Query Plantillas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Plantillas": {
+      "main": [
+        [
+          {
+            "node": "Formatear Plantillas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e4f5a6b7-c8d9-0123-ef01-345678901234",
+  "meta": {
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "PlantillasTool001",
+  "tags": []
+}

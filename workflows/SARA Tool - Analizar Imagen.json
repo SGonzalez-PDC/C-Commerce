@@ -1,0 +1,105 @@
+{
+  "name": "SARA Tool - Analizar Imagen",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "trigger"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        48
+      ],
+      "id": "bd48821c-1a45-457b-9ed2-b44c849f0751",
+      "name": "When Called by Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "Analiza la imagen de un producto de limpieza y devuelve ÚNICAMENTE un JSON con esta estructura exacta:\n\n{\n  \"tipo_producto\": \"<una de: Cloro, Detergente, Desinfectante, Jabón, Utensilios, Limpiador, Ambientador, Desconocido>\",\n  \"marca\": \"<marca visible en la etiqueta o null si no la distingues>\",\n  \"descripcion_breve\": \"<descripción breve del producto, máximo 20 palabras>\",\n  \"palabras_clave_busqueda\": [\"<lista de 2-4 palabras útiles para buscar en catálogo>\"],\n  \"confianza\": \"<alta|media|baja>\"\n}\n\nReglas:\n- Si ves texto en la etiqueta, úsalo para identificar la marca (Clorox, Magia Blanca, Ariel, Fabuloso, Pinol, Axion, Protex, Dove, Scotch-Brite, Windex, Glade, Mr. Músculo, Xedex).\n- Si la imagen no es un producto de limpieza, responde tipo_producto='Desconocido' y confianza='baja'.\n- SOLO devuelve el JSON. Sin backticks, sin texto adicional, sin markdown.",
+        "inputType": "binary",
+        "binaryPropertyName": "data0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        48
+      ],
+      "id": "d7077b09-6b4c-4cd2-8a28-d76f78dacf1c",
+      "name": "Gemini Vision",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dmDyRdDA9oCzXOwY",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Resource: Image, Operation: Analyze. binaryPropertyName debe coincidir con el pin del binario que llega (típicamente 'data0')."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsea el JSON devuelto por Gemini Vision y construye el contexto para el agente\nconst raw = $input.first().json;\n\n// Gemini puede devolver el texto en varias ubicaciones según la versión del nodo:\nlet rawText = '';\nif (raw.content?.parts?.[0]?.text) {\n  rawText = raw.content.parts[0].text;\n} else if (raw.response?.text) {\n  rawText = raw.response.text;\n} else if (raw.text) {\n  rawText = raw.text;\n} else if (typeof raw === 'string') {\n  rawText = raw;\n} else {\n  rawText = JSON.stringify(raw);\n}\n\nlet analisis;\ntry {\n  const clean = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();\n  analisis = JSON.parse(clean);\n} catch (e) {\n  return {\n    json: {\n      ok: false,\n      error: 'No se pudo interpretar el análisis de la imagen',\n      raw: rawText,\n      contexto_imagen: '[IMAGEN RECIBIDA] No pude analizarla. Pide al cliente que describa lo que busca.'\n    }\n  };\n}\n\nlet query_sugerido = '';\nif (analisis.marca && analisis.marca !== 'null' && analisis.marca !== null) {\n  query_sugerido = `${analisis.tipo_producto} ${analisis.marca}`.trim();\n} else if (analisis.tipo_producto && analisis.tipo_producto !== 'Desconocido') {\n  query_sugerido = analisis.tipo_producto;\n}\n\nlet contexto_imagen;\nif (query_sugerido) {\n  contexto_imagen = `[IMAGEN RECIBIDA DEL CLIENTE] Analicé la imagen y detecté: tipo=${analisis.tipo_producto}, marca=${analisis.marca || 'no identificada'}, confianza=${analisis.confianza}. Llama a buscar_productos con query='${query_sugerido}' y presenta las opciones al cliente en formato numérico.`;\n} else {\n  contexto_imagen = `[IMAGEN RECIBIDA DEL CLIENTE] No pude identificar un producto de limpieza claro en la imagen. Pregunta al cliente qué busca con palabras.`;\n}\n\nreturn {\n  json: {\n    ok: true,\n    tipo_producto: analisis.tipo_producto || 'Desconocido',\n    marca: analisis.marca || null,\n    descripcion_breve: analisis.descripcion_breve || '',\n    palabras_clave: analisis.palabras_clave_busqueda || [],\n    confianza: analisis.confianza || 'baja',\n    query_sugerido,\n    contexto_imagen\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        48
+      ],
+      "id": "6720e075-480c-4026-9d3a-4eeb17828bd3",
+      "name": "Parsear Análisis"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Workflow": {
+      "main": [
+        [
+          {
+            "node": "Gemini Vision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Vision": {
+      "main": [
+        [
+          {
+            "node": "Parsear Análisis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0c093cdb-2b15-4f27-90e4-23e751d6b8c6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "YWgEbPYooDFQSFEr",
+  "tags": []
+}

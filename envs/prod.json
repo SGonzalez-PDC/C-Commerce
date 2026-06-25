@@ -1,0 +1,15 @@
+{
+  "folder": "workflows",
+  "comment": "Produccion: sin prefijo de entorno en URL ni BD. OJO: prod tiene links cableados a mano; revisa antes de desplegar. El orden de reemplazos importa (primero la URL .dev).",
+  "replacements": {
+    ".dev.pdctechco.com": ".pdctechco.com",
+    "DEV_C_COMMERCE": "C_COMMERCE",
+    "DEV_SEGURIDAD": "SEGURIDAD",
+    "DEV_FFA": "FFA"
+  },
+  "credentials": {
+    "SQL STAGE FFA - SEBAS": "REEMPLAZA_CON_ID_CRED_PROD"
+  },
+  "exclude": [],
+  "activate": []
+}

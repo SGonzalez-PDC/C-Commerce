@@ -1,0 +1,85 @@
+{
+  "name": "ISA Tool - Iniciar Carrito",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            { "name": "empresa" },
+            { "name": "tienda" },
+            { "name": "codcliente" },
+            { "name": "price_list" },
+            { "name": "id_direccion" },
+            { "name": "direccion" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [848, -48],
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330001",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/get-or-create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\",\n  \"price_list\": \"{{ $json.price_list }}\",\n  \"id_direccion\": \"{{ $json.id_direccion }}\",\n  \"direccion\": \"{{ $json.direccion }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1072, -48],
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330002",
+      "name": "Llamar C Commerce"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\n\nif (!response || response.status >= 400) {\n  return [{ json: { ok: false, error: response?.message || 'Error al iniciar el carrito' } }];\n}\n\nconst cart_id = response?.data?.cart_id || null;\n\nif (!cart_id) {\n  return [{ json: { ok: false, error: 'No se recibio cart_id en la respuesta' } }];\n}\n\nreturn [{ json: { ok: true, cart_id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1296, -48],
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330003",
+      "name": "Parsear Respuesta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Llamar C Commerce",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar C Commerce": {
+      "main": [
+        [
+          {
+            "node": "Parsear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f1a2b3c4-d5e6-7890-abcd-ef3333330010",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "ISATool-IniciarCarrito",
+  "tags": []
+}

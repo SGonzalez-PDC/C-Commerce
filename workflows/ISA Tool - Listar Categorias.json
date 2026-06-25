@@ -1,0 +1,97 @@
+{
+  "name": "ISA Tool - Listar Categorias",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "cliente_id"
+            },
+            {
+              "name": "empresa"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        944,
+        144
+      ],
+      "id": "d27b16d7-58e6-4e03-bb17-9a08ed157172",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DECLARE @empresa     NVARCHAR(10) = '{{ $json.empresa }}';\nDECLARE @cod_cliente NVARCHAR(50) = NULLIF('{{ $json.cliente_id }}', '');\n\nSELECT\n  c.des_cat_1 AS categoria,\n  COUNT(*) AS total_productos,\n  MIN(iu.precio) AS precio_desde,\n  MAX(iu.precio) AS precio_hasta\nFROM dbo.CATEGORIA c\nINNER JOIN dbo.ARTICULO a\n  ON a.CATEGORIA = c.cod_cat_1\n  AND a.EMPRESA = c.empresa\nINNER JOIN (\n  SELECT i.EMPRESA, i.SKU, SUM(i.EXISTENCIA) AS EXISTENCIA\n  FROM dbo.INVENTARIO i\n  WHERE i.EMPRESA = @empresa\n  GROUP BY i.EMPRESA, i.SKU\n  HAVING SUM(i.EXISTENCIA) > 0\n) ii ON ii.EMPRESA = a.EMPRESA AND ii.SKU = a.SKU\nOUTER APPLY (\n  SELECT TOP 1 COALESCE(lp.lista, 'P1') AS lista\n  FROM dbo.CLIENTES cli\n  LEFT JOIN dbo.listado_precios lp\n    ON lp.empresa = cli.empresa\n    AND (lp.cliente = cli.CodCliente OR lp.segmentacion = cli.segmentacion_cliente)\n  WHERE cli.empresa = a.EMPRESA\n    AND cli.CodCliente = @cod_cliente\n  ORDER BY\n    CASE\n      WHEN lp.cliente = cli.CodCliente THEN 1\n      WHEN lp.segmentacion = cli.segmentacion_cliente THEN 2\n      ELSE 3\n    END\n) lista_cliente\nINNER JOIN dbo.Inv_UniMedArticulo iu\n  ON iu.Empresa = a.EMPRESA\n  AND iu.sku = a.SKU\n  AND iu.lista = ISNULL(lista_cliente.lista, 'P1')\nWHERE c.empresa = @empresa\nGROUP BY c.des_cat_1\nORDER BY COUNT(*) DESC, c.des_cat_1 ASC;"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        144
+      ],
+      "id": "151d8bc1-25d9-4512-8c8b-d735c1c7e8a0",
+      "name": "Query Categorias",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "nfXUqIrinWAQRi4a",
+          "name": "SQL STAGE FFA - SEBAS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json).filter(r => r && r.categoria);\n\nif (items.length === 0) {\n  return [{\n    json: {\n      encontradas: 0,\n      categorias: [],\n      mensaje: 'No hay categorías con productos disponibles en este momento.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    encontradas: items.length,\n    categorias: items.map(c => ({\n      categoria: c.categoria,\n      total_productos: c.total_productos,\n      precio_desde: parseFloat(c.precio_desde),\n      precio_hasta: parseFloat(c.precio_hasta)\n    }))\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        144
+      ],
+      "id": "0923cc49-35b6-44fe-816a-5d51eafcbe21",
+      "name": "Formatear Categorías"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Query Categorias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Categorias": {
+      "main": [
+        [
+          {
+            "node": "Formatear Categorías",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9b441ba8-4b5d-4207-852c-efdbc4f14622",
+  "meta": {
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "85JCkzXmVhbcvS6S",
+  "tags": []
+}

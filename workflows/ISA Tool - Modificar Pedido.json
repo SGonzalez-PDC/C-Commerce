@@ -1,0 +1,82 @@
+{
+  "name": "ISA Tool - Modificar Pedido",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            { "name": "empresa" },
+            { "name": "phone" },
+            { "name": "phone_number_id" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [848, -48],
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef2222220001",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/process-action",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"phone_number_id\": \"{{ $json.phone_number_id }}\",\n  \"boton_id\": \"ORDER_MODIFY\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1072, -48],
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef2222220002",
+      "name": "Llamar C Commerce"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\n\nif (!response || response.Status >= 400) {\n  return [{ json: { ok: false, error: response?.Message || 'Error al modificar el pedido' } }];\n}\n\nreturn [{ json: { ok: true, message: response?.Message || 'Link de modificacion enviado' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1296, -48],
+      "id": "f1a2b3c4-d5e6-7890-abcd-ef2222220003",
+      "name": "Parsear Respuesta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Llamar C Commerce",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar C Commerce": {
+      "main": [
+        [
+          {
+            "node": "Parsear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f1a2b3c4-d5e6-7890-abcd-ef2222220010",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "ISATool-ModificarPedido",
+  "tags": []
+}

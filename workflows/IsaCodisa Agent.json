@@ -1,0 +1,2941 @@
+{
+  "name": "IsaCodisa Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -138848,
+        -8652
+      ],
+      "id": "3e8d2e09-93df-4628-8f25-247a55d7cac6",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e0ca45a5-9bb5-4bd0-b306-69e320f269ba",
+              "leftValue": "={{ $json.messages[0].from }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            },
+            {
+              "id": "b188c031-fccb-4029-a1b4-7d54e15dae52",
+              "leftValue": "={{ $json.statuses }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -138624,
+        -8652
+      ],
+      "id": "a2a5c412-9ade-4eab-8c88-4d96225f7670",
+      "name": "Es un Mensaje Nuevo?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ent = $('Entrada').first().json;\nconst configItem = $input.first().json;\n\nconst mm = configItem.multimedia_enabled || {};\nconst imagenEnabled = !!mm.imagen;\nconst audioEnabled  = !!mm.audio;\n\nconst esImagen = ent.msg_type === 'image';\nconst esAudio  = ent.msg_type === 'audio' || ent.msg_type === 'voice';\n\nconst tieneImagen = esImagen && imagenEnabled;\nconst tieneAudio  = esAudio && audioEnabled;\n\nlet textoEntrada = ent.text || '';\n\n// Gap: media con la capacidad deshabilitada y sin texto -> instruccion para el agente.\nconst mediaDeshabilitada = (esImagen && !imagenEnabled) || (esAudio && !audioEnabled);\nif (mediaDeshabilitada && !textoEntrada) {\n  const tipo = esImagen ? 'una imagen' : 'un audio';\n  textoEntrada = '[SISTEMA: el cliente envio ' + tipo + ' pero el procesamiento de imagenes y audio esta deshabilitado. Indicale amablemente que por ahora no tienes esa capacidad y ofrecele mostrarle el catalogo.]';\n}\n\nreturn [{\n  json: {\n    chatInput: textoEntrada,\n    boton_id: ent.boton_id || '',\n    sessionId: ent.from || '',\n    tools_enabled: configItem.tools_enabled,\n    multimedia_enabled: configItem.multimedia_enabled,\n    can_escalate_to_human: configItem.can_escalate_to_human,\n    can_request_additional: configItem.can_request_additional,\n    recomendaciones: configItem.recomendaciones,\n    welcome_message: configItem.welcome_message,\n    business_info: configItem.business_info,\n    faq: configItem.faq,\n    contact: configItem.contact,\n    tiene_imagen: tieneImagen,\n    tiene_audio: tieneAudio,\n    imagen_url: ent.image_url || '',\n    imagen_id: ent.image_id || '',\n    audio_url: ent.audio_url || '',\n    audio_id: ent.audio_id || ''\n  },\n  binary: {}\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -136832,
+        -8868
+      ],
+      "id": "09fedc7b-cc71-4520-861a-8fbd5f758f40",
+      "name": "Detectar Multimedia"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $json.tiene_imagen }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IMAGEN"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c2",
+                    "leftValue": "={{ $json.tiene_audio }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AUDIO"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Sin multimedia"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -136384,
+        -8780
+      ],
+      "id": "bb4d682e-7ae3-4c42-8fd0-5178987c86b5",
+      "name": "Multimedia?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.imagen_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data0"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -136160,
+        -8868
+      ],
+      "id": "dc48d111-d917-4c73-92e4-a5d581620fd9",
+      "name": "Descargar Imagen",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "lzhc0XfmV71YJshE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/lzhc0XfmV71YJshE",
+          "cachedResultName": "SARA Tool - Analizar Imagen"
+        },
+        "workflowInputs": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "trigger"
+          ],
+          "schema": [
+            {
+              "id": "trigger",
+              "displayName": "trigger",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -135936,
+        -8868
+      ],
+      "id": "81c59ede-90ab-4dda-8003-66a5ae5d7b75",
+      "name": "Analizar Imagen",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "1ZjJ57RCII0NxvTg",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/1ZjJ57RCII0NxvTg",
+          "cachedResultName": "SARA Tool - Transcribir Audio"
+        },
+        "workflowInputs": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "trigger"
+          ],
+          "schema": [
+            {
+              "id": "trigger",
+              "displayName": "trigger",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -135936,
+        -8676
+      ],
+      "id": "73fd5d36-b68e-475e-a139-e799bee4198a",
+      "name": "Analizar Audio",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const multimedia = $('Detectar Multimedia').first().json;\nconst analisisImg = $input.first().json;\nreturn [{ json: {\n  ...multimedia,\n  contexto_imagen: analisisImg.contexto_imagen || 'Sin imagen.',\n  contexto_audio: 'Sin audio.'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -135712,
+        -8868
+      ],
+      "id": "9fe004a2-f641-4b95-bcc8-fbb0f5578779",
+      "name": "Combinar contexto imagen"
+    },
+    {
+      "parameters": {
+        "jsCode": "const multimedia = $('Detectar Multimedia').first().json;\nconst transcripcion = $input.first().json;\nreturn [{ json: {\n  ...multimedia,\n  chatInput: transcripcion.mensaje_inyectar || multimedia.chatInput,\n  contexto_imagen: 'Sin imagen.',\n  contexto_audio: transcripcion.contexto_audio || 'Sin audio.'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -135712,
+        -8676
+      ],
+      "id": "026353a5-a5bd-4dea-a5c5-29a1041c6d85",
+      "name": "Combinar contexto audio"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nreturn [{ json: {\n  ...data,\n  contexto_imagen: 'Sin imagen.',\n  contexto_audio: 'Sin audio.'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -135712,
+        -8396
+      ],
+      "id": "709882bc-4719-4028-84f2-00ea46ff6dd5",
+      "name": "Pasar sin multimedia"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst chatInput = (data.chatInput || '').trim();\n\nlet identificador = '';\n\n// 1) El mensaje es esencialmente solo el codigo o telefono (con o sin separadores, con o sin letras de prefijo)\nconst limpio = chatInput.replace(/[\\s\\-().]/g, '');\nif (/^[A-Za-z]{0,5}\\d{4,15}$/.test(limpio)) {\n  identificador = limpio;\n} else {\n  // 2) Viene dentro de una frase: codigo con prefijo de letras, o numero largo (>=6 digitos)\n  const sueltos = chatInput.replace(/[\\s\\-().]/g, ' ');\n  const matchCodLetra = chatInput.match(/\\b([A-Za-z]{1,5}\\d{4,12})\\b/);\n  const matchNum = sueltos.match(/\\b(\\d{6,15})\\b/);\n  identificador = (matchCodLetra && matchCodLetra[1]) || (matchNum && matchNum[1]) || '';\n}\n\nreturn [{\n  json: {\n    ...data,\n    identificador_detectado: identificador,\n    need_lookup: identificador.length > 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -135488,
+        -8676
+      ],
+      "id": "231206c1-315e-417f-8036-0715d753a9b2",
+      "name": "Detectar Identificador"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador_detectado }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nIF (@input IS NULL OR LEN(@input) = 0)\nBEGIN\n  SELECT TOP 0 1 AS cliente_id;\n  RETURN;\nEND\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT COUNT(*) AS total_ordenes, MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df ON df.empresa = f.Empresa AND df.tienda = f.Tienda AND df.no_tx = f.no_tx\n    LEFT JOIN dbo.ARTICULO a ON a.EMPRESA = df.empresa AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat ON cat.empresa = a.EMPRESA AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A' AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (cli.CodCliente = @input OR cli.Telefono1 = @input OR cli.Telefono2 = @input OR cli.Telefono3 = @input);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -135264,
+        -8676
+      ],
+      "id": "55957112-0cb9-4ce7-a9a1-ce1bb36b5434",
+      "name": "Lookup Cliente",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== LISTA BLANCA DE CODIGOS DE CLIENTE =====================\n// Agrega aqui los codigos permitidos, ej: ['3502561', '3502999'].\n// Lista VACIA = sin restriccion (funciona como hoy, pasan todos).\nconst ALLOWED_CLIENT_CODES = [];\nconst MENSAJE_BLOQUEO = 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio. Si tienes un codigo de cliente o telefono habilitado, compartemelo. 🙏';\n// =============================================================\n\nconst detector = $('Detectar Identificador').first().json;\nconst lookupRows = $input.all().map(i => i.json).filter(r => r && r.cliente_id);\n\nlet perfil;\n\nif (lookupRows.length > 0) {\n  const row = lookupRows[0];\n  const esRecurrente = (row.total_ordenes || 0) > 0;\n  perfil = {\n    estado: 'IDENTIFICADO_AHORA',\n    cliente_id: row.cliente_id,\n    empresa: row.empresa,\n    tienda: '10000',\n    nombre: String(row.nombre || '').trim().replace(/\\s+/g, ' '),\n    telefono: String(row.telefono || '').trim(),\n    total_ordenes: row.total_ordenes || 0,\n    es_recurrente: esRecurrente,\n    es_nuevo: !esRecurrente,\n    producto_mas_frecuente_nombre: row.producto_mas_frecuente_nombre || '',\n    mensaje_lookup: ''\n  };\n} else if (detector.need_lookup) {\n  perfil = {\n    estado: 'LOOKUP_FALLIDO',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: `No encontré ningún cliente con el dato '${detector.identificador_detectado}'.`\n  };\n} else {\n  perfil = {\n    estado: 'SIN_LOOKUP',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: ''\n  };\n}\n\n// El gateo del catalogo/carrito es DURO en el nodo Filtro (al emitir el link).\n// Aqui ya NO se bloquea la conversacion: todos reciben soporte basico (FAQ, contacto, info).\nconst accesoBloqueado = false;\n\n// habilitado para pedidos: lista vacia = todos; con lista = solo codigos en ella.\n// Solo es fiable cuando hay cliente_id (estado IDENTIFICADO_AHORA); en SIN_LOOKUP el agente lo lee de la marca.\nperfil.habilitado = ALLOWED_CLIENT_CODES.length === 0\n  || (!!perfil.cliente_id && ALLOWED_CLIENT_CODES.map(String).includes(String(perfil.cliente_id)));\n\nreturn [{\n  json: {\n    ...detector,\n    perfil: perfil,\n    acceso_bloqueado: accesoBloqueado,\n    mensaje_bloqueo: MENSAJE_BLOQUEO,\n    allowed_client_codes: ALLOWED_CLIENT_CODES.map(String)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -135040,
+        -8676
+      ],
+      "id": "2f77599d-904f-4bc4-866c-a542e60bd9e0",
+      "name": "Construir Perfil"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.boton_id ? '[boton_id:' + $json.boton_id + '] ' + $json.chatInput : $json.chatInput }}",
+        "options": {
+          "systemMessage": "=Eres IsaCodisa, asistente virtual de ventas. Personalidad cálida y conversacional. Hablas español natural.\n\nEres el ROUTER de un sistema multi-agente. Tu trabajo es: (1) manejar identificación, bienvenida y sesión; (2) clasificar la intención del cliente y delegar en EXACTAMENTE UN subagente; (3) reenviar VERBATIM lo que el subagente devuelve.\n\n═══════════════════════════════════════════════\nMENSAJE DE BIENVENIDA CONFIGURADO\n═══════════════════════════════════════════════\n{{ $json.welcome_message }}\n\nÚsalo SOLO en el primerísimo mensaje cuando saludas. Después no lo repitas.\n\n═══════════════════════════════════════════════\nCÓMO RECUERDAS AL CLIENTE\n═══════════════════════════════════════════════\nCuando IDENTIFICAS a un cliente (estado=IDENTIFICADO_AHORA), incluye al final de tu mensaje esta marca técnica oculta:\n\n<!--SESSION:cliente_id=XXX;empresa=YYY;tienda=ZZZ;nombre=NNN;habilitado=SI|NO-->\n\nLa marca queda en tu memoria conversacional pero el sistema la oculta al usuario. En turnos posteriores con estado=SIN_LOOKUP, revisa tus mensajes anteriores en memoria, encuentra la marca, y úsala como fuente de cliente_id/empresa/tienda para las tools.\n\nESTADOS:\n- IDENTIFICADO_AHORA: cliente recién identificado este turno (nombre NO vacío) → confirma identidad, incluye marca.\n- LOOKUP_FALLIDO: dato no matcheó → NO inventes nombre; pide que reenvíe su código de cliente.\n- SIN_LOOKUP: usuario no envió identificador válido → si hay marca en memoria de un cliente YA confirmado, opera con esos datos; si no, pide identificación. NUNCA inventes un nombre ni confirmes identidad en este estado. El campo habilitado de la marca (habilitado=SI/NO) define si el cliente puede hacer pedidos; en SIN_LOOKUP usa SIEMPRE ese valor de la marca, no el de DATOS.\n\nREGLA DE IDENTIDAD (CRÍTICA): SOLO puedes mostrar o confirmar el nombre de un cliente cuando estado=IDENTIFICADO_AHORA Y el campo nombre NO está vacío. En cualquier otro caso está PROHIBIDO inventar, adivinar o suponer un nombre. Atribuir la sesión al cliente equivocado es el peor error posible. Si no tienes un nombre real del sistema, pide el código de cliente o teléfono.\n\n═══════════════════════════════════════════════\nDATOS DEL CLIENTE (turno actual)\n═══════════════════════════════════════════════\n- estado:                {{ $json.perfil.estado }}\n- cliente_id:            {{ $json.perfil.cliente_id }}\n- empresa:               {{ $json.perfil.empresa }}\n- tienda:                {{ $json.perfil.tienda }}\n- nombre:                {{ $json.perfil.nombre }}\n- es_recurrente:         {{ $json.perfil.es_recurrente }}\n- es_nuevo:              {{ $json.perfil.es_nuevo }}\n- producto_mas_frecuente: {{ $json.perfil.producto_mas_frecuente_nombre }}\n- mensaje_lookup:        {{ $json.perfil.mensaje_lookup }}\n- habilitado_pedidos:    {{ $json.perfil.habilitado ? 'SI' : 'NO' }}\n\n═══════════════════════════════════════════════\nESTADO DE HERRAMIENTAS (configurado por el cliente)\n═══════════════════════════════════════════════\n- listar_categorias:       {{ $json.tools_enabled.listar_categorias ? 'HABILITADA' : 'DESHABILITADA' }}\n- buscar_productos:        {{ $json.tools_enabled.buscar_productos ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_recomendaciones: {{ $json.tools_enabled.obtener_recomendaciones ? 'HABILITADA' : 'DESHABILITADA' }}\n- ver_historial_compras:   {{ $json.tools_enabled.ver_historial_compras ? 'HABILITADA' : 'DESHABILITADA' }}\n- generar_link_carrito:    {{ $json.tools_enabled.generar_link_carrito ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_plantillas:      {{ $json.tools_enabled.obtener_plantillas ? 'HABILITADA' : 'DESHABILITADA' }}\n\nNUNCA uses una capacidad DESHABILITADA. Si la pide el cliente, di que no está activada y ofrece alternativa.\n\n═══════════════════════════════════════════════\nCAPACIDADES ADICIONALES\n═══════════════════════════════════════════════\n- Escalación a humano: {{ $json.can_escalate_to_human ? 'PERMITIDA' : 'NO PERMITIDA' }}\n- Solicitar datos extra: {{ $json.can_request_additional ? 'PERMITIDA' : 'NO PERMITIDA' }}\n\nREGLA DE ESCALACIÓN (si escalación PERMITIDA) — OBLIGATORIA:\nSiempre que el cliente pida hablar con una persona, humano, agente, asesor, alguien más, un representante, soporte o ayuda — o cualquier variación ('quiero hablar con un humano', 'pásame con alguien', 'necesito un asesor', 'comunícame con una persona', 'quiero hablar con alguien más', 'me atiende una persona?', 'necesito soporte', 'ayúdenme', 'esto no me sirve', una queja, un reclamo, o un problema que no resuelves) — llama `escalar_a_humano` de INMEDIATO, en ESE MISMO turno, pasando toda la conversación en `historial`.\n\nPROHIBIDO al escalar: NO des teléfono, correo, web ni NINGÚN dato de contacto. NO sugieras que el cliente contacte por su cuenta. Tu ÚNICA respuesta visible debe ser breve, confirmando que lo comunicas con un agente. Ejemplo EXACTO: 'Con gusto te comunico con un agente. En un momento te atienden. 😊'\n\nANTE CUALQUIER duda entre escalar o dar contacto, ESCALA. Pedir 'hablar con alguien' NO es pedir un número: es escalamiento. NUNCA intentes resolver tú problemas de soporte.\n\n═══════════════════════════════════════════════\nMULTIMEDIA\n═══════════════════════════════════════════════\nImagen: {{ $json.contexto_imagen }}\nAudio:  {{ $json.contexto_audio }}\n\n═══════════════════════════════════════════════\nSUBAGENTES (tus herramientas principales de delegación)\n═══════════════════════════════════════════════\nClasifica la intención del cliente y llama EXACTAMENTE UN subagente por turno:\n\n1. subagente_pedido(query, cliente_id, empresa, tienda, sessionId) — para armar/confirmar/modificar el pedido y manejar el carrito (agregar/quitar productos), recomendaciones del carrito. Pásale en query el mensaje del cliente y el contexto necesario; cliente_id sale de DATOS DEL CLIENTE (estado=IDENTIFICADO_AHORA) o de la marca <!--SESSION...--> de tu memoria (estado=SIN_LOOKUP). OJO: el link del catálogo/carrito NO se lo pides a este subagente; lo emite el router directamente con [SEND_CART_LINK] (ver PASO 3 y CIERRE).\n2. subagente_catalogo(query, cliente_id, empresa, tienda) — para ver productos, explorar categorías, consultar precios o buscar artículos sin necesariamente armar pedido.\n3. subagente_faq(query, business_info, faq, contact) — para dudas del negocio, políticas, horarios, contacto o plantillas.\n\nCLASIFICACIÓN:\n- botón 'Ver Catalogo' / [boton_id:ver_catalogo], o pedir EXPLICITAMENTE el link del catálogo ('mándame el link', 'quiero verlo en la web') → NO uses subagente: el router emite TÚ MISMO el marcador [SEND_CART_LINK] (ver PASO 3 y CIERRE).\n- FINALIZAR un pedido que se está armando en el chat ('eso es todo', 'solo eso', 'finaliza', 'finalicemos', 'ya', 'cerremos', 'listo', 'es todo') → SIEMPRE delega en subagente_pedido. NUNCA emitas TÚ el [SEND_CART_LINK] en este caso: el subagente arma el cierre (recomendaciones + resumen + link). El router solo emite el link para el botón Ver Catalogo o cuando piden explícitamente el catálogo en la web.\n- armar/confirmar/modificar/cancelar pedido, carrito (agregar/quitar productos, VACIAR/ELIMINAR/BORRAR el carrito o empezar de cero), recomendaciones → subagente_pedido.\n- botón 'Hacer un pedido' / [boton_id:hacer_pedido], o 'quiero hacer un pedido', armar pedido en el chat → subagente_pedido.\n- 'qué tienes', 'busco X', ver productos, categorías, precios, explorar escritos como TEXTO LIBRE (nunca el botón Ver Catalogo) → subagente_catalogo.\n- dudas, políticas, horarios, '¿cuál es su teléfono?', '¿cómo los contacto?', plantillas → subagente_faq.\n\nREGLA DE PASS-THROUGH (CRÍTICA): cuando un subagente devuelve texto, tu salida visible debe ser EXACTAMENTE y VERBATIM ese texto. NO lo reescribas, NO lo resumas, NO agregues ni quites nada, y PRESERVA cualquier marcador que contenga ([SEND_CART_LINK], [SEND_BUTTONS], [SEND_IMAGE], [SEND_TEMPLATE], [ORDER_ACTION:...], [SEND_PRODUCTS]...[/SEND_PRODUCTS]) tal cual, en su misma posición, para que el pipeline downstream (Filtro) los procese. NO inventes marcadores que el subagente no haya emitido.\n\nNo llames más de un subagente por turno. Si la intención no encaja con ninguno (ej. escalación, finalizar), maneja tú mismo con las reglas correspondientes (escalar_a_humano / finalizar_chat) sin delegar.\n\n═══════════════════════════════════════════════\nFLUJO DE CONVERSACIÓN (lo maneja el router)\n═══════════════════════════════════════════════\n\nPRIMER MENSAJE (estado=SIN_LOOKUP, sin marca en memoria):\nEmite al INICIO de tu respuesta, en su propia línea, el marcador [SEND_IMAGE] (el sistema manda la imagen de bienvenida ANTES del texto). Luego, en líneas siguientes, usa el welcome_message pero pide UNICAMENTE el código de cliente (NO se pide el número de teléfono para identificarse; si el welcome_message menciona el teléfono, omite esa parte). El marcador [SEND_IMAGE] va EXCLUSIVAMENTE en este primer saludo; nunca lo repitas en turnos posteriores. NO delegues en un subagente en este primer saludo.\n\nIDENTIFICADO_AHORA (PASO 1: CONFIRMAR IDENTIDAD CON BOTONES):\nCuando identificas al cliente este turno, tu ÚNICA acción es pedirle que confirme que es él mostrando dos botones (Sí / No). NO le preguntes qué busca todavía, NO delegues todavía. SIEMPRE incluye en tu respuesta la marca SESSION (queda en tu memoria, la necesitarás en los turnos siguientes) Y el marcador de botones. El texto visible va dentro del campo 'body' del marcador: cálido, con emojis y *negritas*. Rellena habilitado con SI/NO segun habilitado_pedidos de DATOS DEL CLIENTE:\n  '<!--SESSION:cliente_id={cliente_id};empresa={empresa};tienda={tienda};nombre={nombre};habilitado={habilitado}-->\\n[SEND_BUTTONS:{\"body\":\"¡Hola! 👋 Antes de empezar, confírmame una cosa:\\n\\n¿Eres *{nombre}*? 😊\",\"buttons\":[{\"id\":\"confirmar_si\",\"title\":\"Sí, soy yo\"},{\"id\":\"confirmar_no\",\"title\":\"No, no soy yo\"}]}]'\n\nPASO 2: RESPUESTA A LA CONFIRMACIÓN (turno siguiente, estado=SIN_LOOKUP con marca en memoria):\n- Si CONFIRMA (botón 'Sí, soy yo' / id confirmar_si, o texto 'sí', 'soy yo', 'correcto', 'así es'):\n  GATE DE PEDIDOS — revisa habilitado_pedidos (en IDENTIFICADO_AHORA tómalo de DATOS; en SIN_LOOKUP de la marca SESSION habilitado=...):\n  - Si habilitado_pedidos=NO: NO muestres el botón Ver Catalogo ni ofrezcas pedidos/catálogo. Dile cálido que su código aún no está habilitado para hacer pedidos por este medio y que con gusto le ayudas con dudas, horarios o datos de contacto (delega esas dudas en subagente_faq).\n  - Si habilitado_pedidos=SI: muéstrale el menú de acciones con botones, con copy cálido:\n  '[SEND_BUTTONS:{\"body\":\"¡Perfecto, *{nombre}*! 🙌\\n\\n¿Qué te gustaría hacer hoy? 👇\",\"buttons\":[{\"id\":\"ver_catalogo\",\"title\":\"Ver Catalogo\"},{\"id\":\"hacer_pedido\",\"title\":\"Hacer un pedido\"}]}]'\n- Si NIEGA (botón 'No, no soy yo' / id confirmar_no, o texto 'no'): discúlpate amablemente y pídele su código de cliente correcto. Ej: '¡Ups! Mil disculpas 🙏\\n\\n¿Me compartes tu *código de cliente* para ubicarte bien?'\n\nPASO 3: ACCIÓN ELEGIDA (usuario tocó un botón del menú o escribió la acción):\n- 'Ver Catalogo' (id ver_catalogo, o el mensaje trae [boton_id:ver_catalogo]): NO llames NINGUNA tool ni subagente. Responde TÚ MISMO con un texto cálido breve y agrega en la ÚLTIMA línea el marcador [SEND_CART_LINK:{\"codcliente\":\"<cliente_id>\",\"empresa\":\"00010\"}], tomando cliente_id de DATOS DEL CLIENTE o de la marca <!--SESSION...--> de tu memoria. ESTE ES EL ÚNICO comportamiento permitido al tocar Ver Catalogo. PROHIBIDO: preguntar qué producto busca, listar categorías, delegar en subagente_catalogo o en subagente_pedido, o responder sin el marcador. ÚNICA excepción: si habilitado_pedidos=NO, no emitas el marcador y explícale cálido que su código aún no está habilitado para pedidos por este medio.\n- 'Hacer un pedido' (o id hacer_pedido): el cliente quiere armar su pedido en el chat → delega en subagente_pedido (este revisa si ya tiene un pedido pendiente y lo muestra, o pregunta que producto busca).\n- 'Buscar productos' (o id buscar_productos): el cliente quiere explorar productos → delega en subagente_catalogo.\n\nLOOKUP_FALLIDO:\n'{mensaje_lookup}. ¿Me confirmas tu *código de cliente*?'\n\nSIN_LOOKUP con marca en memoria:\nProcede normal. Usa los valores de la marca para pasar cliente_id/empresa/tienda a los subagentes. NO repitas la marca.\n\n═══════════════════════════════════════════════\nBOTONES INTERACTIVOS (los emite el router)\n═══════════════════════════════════════════════\nPara ofrecer opciones como botones (WhatsApp reply buttons), emite al FINAL de tu respuesta, en una sola línea sin espacios extra:\n[SEND_BUTTONS:{\"body\":\"texto de la pregunta\",\"buttons\":[{\"id\":\"identificador_corto\",\"title\":\"Texto del Botón\"}]}]\n\nREGLAS del marcador:\n- body: el texto que verá el cliente arriba de los botones (máx 1024 caracteres).\n- buttons: array de 1 a 3 botones. Cada botón tiene id (snake_case, ej. ver_catalogo) y title (texto visible, MÁX 20 caracteres).\n- El marcador debe ir en una sola línea (los saltos de línea DENTRO del body van como \\n).\n- El body admite emojis y *negritas* (un asterisco a cada lado). Hazlo cálido y breve.\n- Úsalo en: (1) confirmación de identidad — botones 'Sí, soy yo' (confirmar_si) y 'No, no soy yo' (confirmar_no); (2) menú de acciones — botón 'Ver Catalogo' (ver_catalogo).\n\nNUNCA confundas 'Sí, soy yo' (confirmación de IDENTIDAD) con confirmar un PEDIDO. Son cosas distintas. La confirmación de pedido por texto la maneja subagente_pedido (emite [ORDER_ACTION:...]).\n\n═══════════════════════════════════════════════\nCIERRE / LINK DEL CARRITO\n═══════════════════════════════════════════════\ngenerar_link_carrito HABILITADA: cuando el cliente quiera el link del catálogo/carrito o toque 'Ver Catalogo', NO uses ninguna tool ni subagente. Responde TÚ con texto cálido breve y agrega en la ÚLTIMA línea el marcador [SEND_CART_LINK:{\"codcliente\":\"<cliente_id>\",\"empresa\":\"00010\"}], con el cliente_id de DATOS o de la marca <!--SESSION...-->. El sistema genera el link FRESCO (UN SOLO USO) y detecta pedidos pendientes automáticamente. Incluye SIEMPRE el codcliente correcto; sin él el sistema no puede generar el link. NUNCA escribas tú una URL ni reutilices un link anterior de tu memoria. NUNCA emitas [SEND_CART_LINK] si habilitado_pedidos=NO.\n\ngenerar_link_carrito DESHABILITADA: dile que la generación automática del carrito no está activa y ofrécele el contacto del negocio (vía subagente_faq).\n\n═══════════════════════════════════════════════\nFINALIZAR CONVERSACIÓN\n═══════════════════════════════════════════════\nCuando el usuario pida terminar, cerrar, salir, reiniciar o resetear la conversación — con cualquier frase como 'FINALIZAR', 'quiero terminar', 'hasta luego', 'cierra el chat', 'empieza de nuevo', 'reinicia', 'olvida todo', 'nueva conversación', 'adiós' u otras similares — llama de inmediato `finalizar_chat` sin preguntar nada. Luego responde con un breve mensaje de despedida amigable indicando que la conversación terminó y que puede escribir nuevamente cuando quiera.\n\n═══════════════════════════════════════════════\nREGLAS CRÍTICAS\n═══════════════════════════════════════════════\n- La marca <!--SESSION...--> SOLO va en el mensaje donde identificas por primera vez.\n- Llama EXACTAMENTE UN subagente por turno y reenvía su salida VERBATIM, preservando todos los marcadores.\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- NUNCA inventes ni adivines el nombre del cliente. Solo lo usas si estado=IDENTIFICADO_AHORA y nombre no está vacío; si no, pide el código de cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta. No dejes espacios pegados por dentro de los asteriscos.\n- Si pregunta quién te hizo: 'Soy IsaCodisa, la asistente de ventas.'"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -133928,
+        -9084
+      ],
+      "id": "5c4d9e48-9290-478f-84e1-3cecedd04244",
+      "name": "IsaCodisa Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {
+          "temperature": 0.3,
+          "topK": 40,
+          "topP": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -134368,
+        -8860
+      ],
+      "id": "e7fd6148-0eb2-4319-8deb-f4a30f3f2b2c",
+      "name": "Gemini Model",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "VFfmru0ImTrgxd2x",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Entrada').first().json.from + '_' + $('Entrada').first().json.phone_number_id + '_v' + (($('Agregar Version Sesion').item.json.session_version) || '0') }}",
+        "contextWindowLength": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -134240,
+        -8860
+      ],
+      "id": "ce986363-b4e8-4c46-ac38-97298713f939",
+      "name": "Memoria Compartida"
+    },
+    {
+      "parameters": {
+        "description": "Últimas 5 órdenes del cliente. NOTA: actualmente DESHABILITADA.",
+        "workflowId": {
+          "__rl": true,
+          "value": "PLACEHOLDER_HISTORIAL",
+          "mode": "list"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente', 'string') }}"
+          },
+          "matchingColumns": [
+            "cliente_id"
+          ],
+          "schema": [
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -134112,
+        -8860
+      ],
+      "id": "6e89ce4c-1fca-4372-92f7-380af5c474f4",
+      "name": "Tool: Historial"
+    },
+    {
+      "parameters": {
+        "description": "Genera un link de sesión para que el cliente acceda al portal de pedidos (catálogo + carrito + checkout). Úsala cuando el cliente quiera hacer un pedido y esté identificado. Parámetros: empresa (del SESSION), codcliente (cliente_id del SESSION), phone (número WhatsApp del cliente).",
+        "workflowId": {
+          "__rl": true,
+          "value": "KgddeoiMeC7Rgill",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/KgddeoiMeC7Rgill",
+          "cachedResultName": "ISA Tool - Generar Link Carrito"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phone": "=={{ $('Entrada').first().json.from }}",
+            "codcliente": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('codcliente', ``, 'string') }}",
+            "empresa": "00010",
+            "phone_number_id": "={{ $('Entrada').first().json.phone_number_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "codcliente",
+              "displayName": "codcliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone_number_id",
+              "displayName": "phone_number_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -133984,
+        -8860
+      ],
+      "id": "d561ba03-4ff1-47a6-9073-dde7a91ce614",
+      "name": "Tool: Generar link carrito"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "es-accion-pedido-01",
+              "leftValue": "={{ $json.boton_id }}",
+              "rightValue": "ORDER_",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -136608,
+        -8868
+      ],
+      "id": "c9d03fd8-2029-4f36-8888-5b9072d67769",
+      "name": "Es Accion Pedido?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/process-action",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.boton_id }}\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -136384,
+        -8972
+      ],
+      "id": "0cb1838c-6bc9-48a1-8fd5-50ffbde07d15",
+      "name": "Procesar Accion Pedido",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "let respuesta = $input.first().json.output || '';\nlet ordenConfirmada = false;\nlet esTplPlantilla  = false;\nlet esCartLink      = false;\nlet cartLinkUrl     = '';\nlet cartCodcliente  = '';\nlet cartEmpresa     = '';\nlet cartMode = '';\nlet esProductos = false;\nlet productosList = [];\nlet tplNombre = '';\nlet tplLang   = 'es_MX';\nlet tplVars   = [];\n\n// Extrae [SEND_TEMPLATE:{...}] respetando llaves anidadas\nconst MARKER = '[SEND_TEMPLATE:';\nconst mStart = respuesta.indexOf(MARKER);\nif (mStart !== -1) {\n  const jsonStart = mStart + MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esTplPlantilla = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      tplNombre = d.name || '';\n      tplLang   = d.lang || 'es_MX';\n      tplVars   = Array.isArray(d.vars) ? d.vars : [];\n    } catch {}\n    respuesta = (respuesta.substring(0, mStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// Extrae [SEND_CART_LINK:{...}]\nconst CART_MARKER = '[SEND_CART_LINK:';\nconst cStart = respuesta.indexOf(CART_MARKER);\nif (cStart !== -1) {\n  const jsonStart = cStart + CART_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esCartLink = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      cartLinkUrl = d.url || '';\n      cartCodcliente = d.codcliente || '';\n      cartEmpresa = d.empresa || '';\n      cartMode = d.mode || '';\n    } catch {}\n    respuesta = (respuesta.substring(0, cStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n\n// Extrae [SEND_PRODUCTS] ... [/SEND_PRODUCTS] (una linea por producto: sku|nombre|precio|img|promo)\nconst P_OPEN = '[SEND_PRODUCTS]';\nconst P_CLOSE = '[/SEND_PRODUCTS]';\nconst pOpen = respuesta.indexOf(P_OPEN);\nconst pClose = respuesta.indexOf(P_CLOSE);\nif (pOpen !== -1 && pClose !== -1 && pClose > pOpen) {\n  const bloque = respuesta.substring(pOpen + P_OPEN.length, pClose);\n  const lineas = bloque.split('\\n').map(l => l.trim()).filter(l => l && l.includes('|'));\n  for (const ln of lineas) {\n    const parts = ln.split('|').map(s => s.trim());\n    if (!parts[0]) continue;\n    productosList.push({\n      sku: parts[0],\n      nombre: parts[1] || '',\n      precio: parts[2] || '',\n      img: (parts[3] || '0') === '1' || (parts[3] || '').toLowerCase() === 'si',\n      promo: parts[4] || ''\n    });\n  }\n  if (productosList.length > 0) esProductos = true;\n  respuesta = (respuesta.substring(0, pOpen) + respuesta.substring(pClose + P_CLOSE.length)).trim();\n}\n\n// ===== GATE DURO: catalogo/carrito solo para codigos habilitados =====\n// Soporte basico queda abierto a todos; aqui solo se gatea el link del carrito.\nif (esCartLink) {\n  const cp = $('Construir Perfil').first().json || {};\n  const allowed = Array.isArray(cp.allowed_client_codes) ? cp.allowed_client_codes : [];\n  if (allowed.length > 0 && !allowed.includes(String(cartCodcliente))) {\n    esCartLink = false;\n    cartLinkUrl = '';\n    cartCodcliente = '';\n    cartEmpresa = '';\n    cartMode = '';\n    respuesta = cp.mensaje_bloqueo || 'Por el momento tu codigo no esta habilitado para hacer pedidos por este medio.';\n  }\n}\n\n// Extrae [SEND_BUTTONS:{...}] respetando llaves anidadas\nlet esBotones   = false;\nlet botonesBody = '';\nlet botonesList = [];\nconst BTN_MARKER = '[SEND_BUTTONS:';\nconst bStart = respuesta.indexOf(BTN_MARKER);\nif (bStart !== -1) {\n  const jsonStart = bStart + BTN_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esBotones = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      botonesBody = d.body || '';\n      botonesList = Array.isArray(d.buttons) ? d.buttons : [];\n    } catch {}\n    respuesta = (respuesta.substring(0, bStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// Extrae [SEND_IMAGE] (usa imagen de bienvenida fija) o [SEND_IMAGE:{\"url\":\"...\"}]\nlet esImagen  = false;\nlet imagenUrl = '';\nconst IMG_MARKER = '[SEND_IMAGE';\nconst iStart = respuesta.indexOf(IMG_MARKER);\nif (iStart !== -1) {\n  const afterMarker = iStart + IMG_MARKER.length;\n  if (respuesta[afterMarker] === ']') {\n    esImagen = true;\n    respuesta = (respuesta.substring(0, iStart) + respuesta.substring(afterMarker + 1)).trim();\n  } else if (respuesta[afterMarker] === ':') {\n    const jsonStart = afterMarker + 1;\n    let depth = 0, jsonEnd = -1;\n    for (let k = jsonStart; k < respuesta.length; k++) {\n      if      (respuesta[k] === '{') depth++;\n      else if (respuesta[k] === '}') { depth--; if (depth === 0) { jsonEnd = k; break; } }\n    }\n    if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n      esImagen = true;\n      try {\n        const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n        imagenUrl = d.url || '';\n      } catch {}\n      respuesta = (respuesta.substring(0, iStart) + respuesta.substring(jsonEnd + 2)).trim();\n    }\n  }\n}\n\n// Extrae [ORDER_ACTION:{...}] (confirmar/modificar/cancelar pedido por texto)\nlet esOrderAction = false;\nlet orderBotonId  = '';\nconst OA_MARKER = '[ORDER_ACTION:';\nconst oaStart = respuesta.indexOf(OA_MARKER);\nif (oaStart !== -1) {\n  const jsonStart = oaStart + OA_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    try {\n      const oa = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      const act = (oa.action || '').toUpperCase();\n      const map = { CONFIRM: 'ORDER_CONFIRM', MODIFY: 'ORDER_MODIFY', CANCEL: 'ORDER_CANCEL' };\n      if (map[act]) { esOrderAction = true; orderBotonId = map[act]; }\n    } catch {}\n    respuesta = (respuesta.substring(0, oaStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\nif (respuesta.includes('[ORDEN_CONFIRMADA]')) {\n  ordenConfirmada = true;\n  respuesta = respuesta.replace('[ORDEN_CONFIRMADA]', '').trim();\n}\n\nrespuesta = respuesta.replace(/<!--SESSION:[^>]*-->/g, '').trim();\n\nfunction limpiarTexto(s) {\n  if (!s) return s;\n  return s\n    .replace(/\\*\\*+/g, '*')\n    .split('\\n').map(l => l.replace(/[ \\t]{2,}/g, ' ').replace(/[ \\t]+$/, '')).join('\\n')\n    .trim();\n}\nrespuesta = limpiarTexto(respuesta);\nbotonesBody = limpiarTexto(botonesBody);\n\nconst sessionId = $('Entrada').first().json.from;\n\nreturn [{ json: {\n  output:          respuesta,\n  orden_confirmada: ordenConfirmada,\n  es_plantilla:    esTplPlantilla,\n  es_cart_link:    esCartLink,\n  cart_link_url:   cartLinkUrl,\n  cart_codcliente: cartCodcliente,\n  cart_empresa:    cartEmpresa,\n  cart_mode:       cartMode,\n  es_productos:    esProductos,\n  productos_list:  productosList,\n  es_botones:      esBotones,\n  botones_body:    botonesBody,\n  botones_list:    botonesList,\n  es_imagen:       esImagen,\n  imagen_send_url: imagenUrl,\n  template_nombre: tplNombre,\n  template_lang:   tplLang,\n  template_vars:   tplVars,\n  es_order_action: esOrderAction,\n  order_boton_id:  orderBotonId,\n  sessionId:       sessionId\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -133136,
+        -9076
+      ],
+      "id": "bcc3dc01-6c8c-42e5-9ec0-ed25d0923c22",
+      "name": "Filtro"
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $('Filtro').first().json;\nreturn [{ json: {\n  output:          f.output,\n  es_plantilla:    f.es_plantilla,\n  es_cart_link:    f.es_cart_link,\n  cart_link_url:   f.cart_link_url,\n  cart_codcliente: f.cart_codcliente,\n  cart_empresa:    f.cart_empresa,\n  cart_mode:       f.cart_mode,\n  es_productos:    f.es_productos,\n  productos_list:  f.productos_list,\n  es_botones:      f.es_botones,\n  botones_body:    f.botones_body,\n  botones_list:    f.botones_list,\n  es_imagen:       f.es_imagen,\n  imagen_send_url: f.imagen_send_url,\n  template_nombre: f.template_nombre,\n  template_lang:   f.template_lang,\n  template_vars:   f.template_vars,\n  es_order_action: f.es_order_action,\n  order_boton_id:  f.order_boton_id,\n  sessionId:       f.sessionId\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -132912,
+        -9076
+      ],
+      "id": "bbcec93e-bf08-44be-9a86-7af064e5ccc7",
+      "name": "Restaurar Output"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        -131344,
+        -8148
+      ],
+      "id": "a3bef3b8-a504-4c24-a17e-a82abd172024",
+      "name": "WhatsApp Send",
+      "webhookId": "6b2a6b13-f8e4-4250-8958-1fcf86aaef2e",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://authentication-api.dev.pdctechco.com/api/auth/login",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"email\": \"cc.auth\",\n    \"password\": \"@cc350CC\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -138176,
+        -8652
+      ],
+      "id": "f1d09d96-cd03-4766-91ee-d6380d8c770f",
+      "name": "GET TOKEN",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/n8n/status/{{ String($('Entrada').first().json.from || '').replace(/^\\+/, '') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('GET TOKEN').first().json.data.token }}"
+            },
+            {
+              "name": "X-Tenant-Id",
+              "value": "00010"
+            },
+            {
+              "name": "X-Company-Id",
+              "value": "79D26EDA-8DF0-4687-911C-B5DC83149367"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -137952,
+        -8724
+      ],
+      "id": "4bb5cb72-954c-47d9-a17a-36ca6ea000a5",
+      "name": "Inbox Estado",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $input.first().json || {};\nconst tok = $('GET TOKEN').first().json || {};\nconst e = $('Entrada').first().json || {};\nconst norm = (p) => String(p || '').replace(/^\\+/, '');\nconst phone = norm(e.from);\n// El estado viene del endpoint agnostico de agente /n8n/status/{phone};\n// detecta la sesion activa sin importar que agente tenga la conversacion.\nconst activo = resp?.data?.has_active_conversation === true;\nreturn [{ json: { ...tok, en_agente: activo, gate_phone: phone, gate_text: String(e.text || ''), gate_message_id: String(e.message_id || '') } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -137728,
+        -8724
+      ],
+      "id": "343d630a-e4ec-41c7-8088-905e8374407f",
+      "name": "Eval Agente"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "gate-en-agente-0001",
+              "leftValue": "={{ $json.en_agente }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -137504,
+        -8724
+      ],
+      "id": "54ba337b-4b19-4957-b831-eced1add1300",
+      "name": "En Agente?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/n8n/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Tenant-Id",
+              "value": "00010"
+            },
+            {
+              "name": "X-Company-Id",
+              "value": "79D26EDA-8DF0-4687-911C-B5DC83149367"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ phone_number: $json.gate_phone, message_text: $json.gate_text, message_type: 'TEXT', provider_message_id: $json.gate_message_id }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -137280,
+        -8820
+      ],
+      "id": "3d122070-3deb-4e45-8e5a-2f78bef83ef7",
+      "name": "Reenviar a Agente",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/organizations/00010/companies/79D26EDA-8DF0-4687-911C-B5DC83149367/salesagent/runtime-config",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.data.token }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -137280,
+        -8628
+      ],
+      "id": "adb94969-03e3-40f9-9707-a1eac253e64b",
+      "name": "CONFIGRUACION",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Procesa la respuesta del endpoint y arma flags para el resto del flujo.\nconst resp = $input.first().json;\nconst config = Array.isArray(resp) ? resp[0]?.data : resp?.data;\n\nif (!config) {\n  throw new Error('Respuesta de configuración inválida');\n}\n\nconst caps = config.agentCapabilities || {};\nconst kb = config.knowledgeBase || {};\nconst convStart = config.conversationStart || {};\nconst recom = config.recommendations || {};\n\nconst result = {\n  // Banderas para tools del agente (GATES FORZADOS: todo aprobado, ignora config remota)\n  tools_enabled: {\n    listar_categorias:       true,\n    buscar_productos:        true,\n    obtener_recomendaciones: true,\n    ver_historial_compras:   true,\n    generar_link_carrito:    true,\n    obtener_plantillas:      true\n  },\n\n  // Banderas para procesamiento multimedia (FORZADO true)\n  multimedia_enabled: {\n    imagen: true,\n    audio:  true\n  },\n\n  // Otras capabilities (FORZADO true)\n  can_escalate_to_human:  true,\n  can_request_additional: true,\n\n  // Configuración de recomendaciones (cómo presentarlas)\n  recomendaciones: {\n    enabled:                  true,\n    max_recommendations:      recom.maxRecommendations || 5,\n    max_recommended_products: recom.maxRecommendedProducts || 4,\n    format:                   recom.format || 'CAROUSEL'\n  },\n\n  // Bienvenida configurable\n  welcome_message: convStart.welcomeMessage || '¡Hola! ¿En qué puedo ayudarte?',\n\n  // Knowledge base\n  business_info: kb.businessGeneralInfo || [],\n  faq:           kb.faq || [],\n  contact:       kb.contact || {}\n};\n\nreturn [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -137056,
+        -8700
+      ],
+      "id": "ee860df4-dbc5-46b2-b27c-468b271eb934",
+      "name": "Procesar Configuracion",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.audio_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data0"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -136160,
+        -8676
+      ],
+      "id": "363a0018-f1d4-4ecc-a8c9-a04e25923ab7",
+      "name": "Descargar Audio",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst pnid = $('Entrada').first().json.phone_number_id || '';\nconst phone = data.sessionId + '_' + pnid;\nconst globalData = $getWorkflowStaticData('global');\nconst version = globalData['conv_' + phone] || '0';\nglobalData['__current_phone__'] = phone;\nreturn [{ json: { ...data, session_version: version } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -134592,
+        -8980
+      ],
+      "id": "70993ccb-d928-4d0f-83a5-08f6f3934426",
+      "name": "Agregar Version Sesion"
+    },
+    {
+      "parameters": {
+        "description": "Escala la conversación a un agente humano. Llámala cuando el cliente pida hablar con una persona, cuando no puedas resolver su problema, o cuando lo solicite explícitamente. Parámetros: historial (transcripción completa de la conversación desde el inicio, en formato 'Usuario: mensaje\\nAsistente: respuesta'); customer_name (el nombre del cliente de la marca SESSION, vacío si no lo tienes); contact_reason (motivo breve de la escalación en pocas palabras, ej. 'Consulta de factura').",
+        "workflowId": {
+          "__rl": true,
+          "value": "O40iUM2dQiNty0IS",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/O40iUM2dQiNty0IS",
+          "cachedResultName": "ISA Tool - Escalar a Humano"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "historial": "={{ $fromAI('historial', 'Transcripción completa de la conversación desde el inicio, en formato Usuario: mensaje / Asistente: respuesta', 'string') }}",
+            "phone_number": "={{ $('Entrada').first().json.from }}",
+            "provider_message_id": "={{ $('Entrada').first().json.message_id }}",
+            "token": "={{ $('GET TOKEN').first().json.data.token }}",
+            "customer_name": "={{ $fromAI('customer_name', 'El nombre del cliente de la marca SESSION en tu memoria. Vacio si no lo tienes.', 'string') }}",
+            "contact_reason": "={{ $fromAI('contact_reason', 'Motivo breve de la escalacion en pocas palabras.', 'string') }}"
+          },
+          "matchingColumns": [
+            "historial"
+          ],
+          "schema": [
+            {
+              "id": "historial",
+              "displayName": "historial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "provider_message_id",
+              "displayName": "provider_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "token",
+              "displayName": "token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact_reason",
+              "displayName": "contact_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -133728,
+        -8860
+      ],
+      "id": "4296edd5-1af9-4be2-9fea-38305568ebf8",
+      "name": "Tool: Escalar a Humano"
+    },
+    {
+      "parameters": {
+        "name": "finalizar_chat",
+        "description": "Finaliza la conversación actual y reinicia la sesión del usuario para que el próximo mensaje inicie una conversación completamente nueva desde cero. Llámala cuando el usuario pida terminar, finalizar, cerrar, salir, resetear o reiniciar la conversación. Ejemplos: 'FINALIZAR', 'quiero terminar', 'hasta luego', 'cierra el chat', 'empieza de nuevo', 'reinicia', 'olvida todo', 'nueva conversación', 'adiós'.",
+        "jsCode": "const globalData = $getWorkflowStaticData('global');\nconst phone = globalData['__current_phone__'] || '';\nif (phone) {\n  const key = 'conv_' + phone;\n  const current = parseInt(globalData[key] || '0');\n  globalData[key] = String(current + 1);\n}\nreturn 'Conversación finalizada correctamente. La próxima vez que el usuario escriba iniciará una sesión completamente nueva desde cero.';"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        -133856,
+        -8860
+      ],
+      "id": "bc895ae5-fd65-49f3-b02e-ea11535df603",
+      "name": "Tool: Finalizar Chat"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "r1",
+                    "leftValue": "={{ $json.es_plantilla }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PLANTILLA"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "TEXTO"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -131568,
+        -8244
+      ],
+      "id": "27357913-9a3a-44e1-95f8-4978cf6e1355",
+      "name": "Router Mensaje"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst vars = Array.isArray(data.template_vars) ? data.template_vars : [];\n\nconst components = vars.length > 0\n  ? [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: String(v) })) }]\n  : [];\n\nreturn [{ json: {\n  ...data,\n  template_components: components\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -131344,
+        -8340
+      ],
+      "id": "788e54df-d098-4f24-8efa-4c9b14ed7cb7",
+      "name": "Preparar Componentes"
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        -131120,
+        -8340
+      ],
+      "id": "d1c3f293-a4a9-4c6f-b22a-23980a07a849",
+      "name": "WhatsApp Send Template",
+      "webhookId": "764acd07-642b-4634-aa01-d24278049173",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cart-link-check-01",
+              "leftValue": "={{ $json.es_cart_link }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -132016,
+        -8404
+      ],
+      "id": "3905cdc4-5023-444c-8b9b-72f3912c946e",
+      "name": "Si Es Cart Link?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"cta_url\",\n    \"body\": { \"text\": {{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? JSON.stringify('✅ ¡Listo! Aquí puedes revisar tu pedido y finalizar la compra. 🛒') : JSON.stringify('👉 Presiona el botón *Ver Catalogo* para ingresar a nuestro catálogo 🛒.\\n\\n¡Aquí estaré para ayudarte con tu pedido! 😉' || 'Toca el botón para ir al catálogo y hacer tu pedido.') }} },\n    \"action\": {\n      \"name\": \"cta_url\",\n      \"parameters\": {\n        \"display_text\": \"{{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? 'Ver mi pedido' : 'Ver Catalogo' }}\",\n        \"url\": \"{{ $('Generar Link Fresco').first().json.url }}\"\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -131344,
+        -8724
+      ],
+      "id": "c1447f86-bbe4-49d2-847a-b76da565bee7",
+      "name": "WhatsApp Send CTA Button",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "botones-check-01",
+              "leftValue": "={{ $json.es_botones }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -131792,
+        -8148
+      ],
+      "id": "f1ff9bab-7776-4812-ad78-e2239146d61e",
+      "name": "Si Es Botones?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst list = Array.isArray(data.botones_list) ? data.botones_list : [];\n\nconst buttons = list.slice(0, 3).map(b => ({\n  type: 'reply',\n  reply: {\n    id: String(b.id || b.title || '').slice(0, 256),\n    title: String(b.title || '').slice(0, 20)\n  }\n}));\n\nconst to = $('Entrada').first().json.from;\nconst bodyText = (data.botones_body || data.output || '¿Qué quieres hacer?').slice(0, 1024);\n\nconst payload = {\n  messaging_product: 'whatsapp',\n  to: to,\n  type: 'interactive',\n  interactive: {\n    type: 'button',\n    body: { text: bodyText },\n    action: { buttons: buttons }\n  }\n};\n\nreturn [{ json: { ...data, wa_payload: payload } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -131568,
+        -7956
+      ],
+      "id": "e72be43f-7968-4cab-8540-dd2460eacd49",
+      "name": "Preparar Botones"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.wa_payload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -131344,
+        -7956
+      ],
+      "id": "44c81b90-4d14-4344-b6f7-b522dd09d6f7",
+      "name": "WhatsApp Send Buttons",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "imagen-check-01",
+              "leftValue": "={{ $json.es_imagen }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -132016,
+        -9040
+      ],
+      "id": "16f4677a-ed7b-412b-96b2-7a583abb3475",
+      "name": "Si Es Imagen?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.imagen_send_url || 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg' }}\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -131792,
+        -9040
+      ],
+      "id": "ae4e2053-723b-4a0e-a535-bacd9de11b0d",
+      "name": "WhatsApp Send Imagen",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "KgddeoiMeC7Rgill",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/KgddeoiMeC7Rgill",
+          "cachedResultName": "ISA Tool - Generar Link Carrito"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa": "={{ $('Restaurar Output').first().json.cart_empresa || '00010' }}",
+            "codcliente": "={{ $('Restaurar Output').first().json.cart_codcliente }}",
+            "phone": "={{ $('Entrada').first().json.from }}",
+            "phone_number_id": "={{ $('Entrada').first().json.phone_number_id }}",
+            "mode": "={{ $('Restaurar Output').first().json.cart_mode || '' }}",
+            "company_number": "={{ $('Entrada').first().json.company_number }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "codcliente",
+              "displayName": "codcliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone_number_id",
+              "displayName": "phone_number_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "mode",
+              "displayName": "mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "company_number",
+              "displayName": "company_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -131792,
+        -8628
+      ],
+      "id": "2fa202da-ad15-4389-b6a7-b44a290a40fc",
+      "name": "Generar Link Fresco",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "linkok-01",
+              "leftValue": "={{ $json.url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -131568,
+        -8628
+      ],
+      "id": "d49cb273-6306-48b5-ae73-1b7acf364c3f",
+      "name": "Link OK?"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "textBody": "Disculpa, ahorita no pude generar tu link del catálogo. Intenta de nuevo en un momento, por favor.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -131344,
+        -8532
+      ],
+      "id": "c0029181-5f12-41c0-8150-9fc7dcbee675",
+      "name": "WhatsApp Send Link Error",
+      "webhookId": "6581c54e-58d6-48bc-8343-caec165c0acc",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88ecafdd-be7c-44de-ad81-8b3e4918181b",
+              "leftValue": "={{ $json.es_order_action }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -132464,
+        -8944
+      ],
+      "id": "3c900812-b7ab-4ef9-941d-46b8f0d2c107",
+      "name": "Si Es Order Action?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/process-action",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.order_boton_id }}\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -132240,
+        -8848
+      ],
+      "id": "e8201b91-d8be-42d8-88f5-5e6c55aa704c",
+      "name": "Procesar Accion Pedido (texto)",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a8a16aef-c956-403f-841b-39a37ce01fcf",
+              "leftValue": "={{ $json.acceso_bloqueado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -134816,
+        -8676
+      ],
+      "id": "657cb9a1-17a3-4b9c-8110-251dba753c21",
+      "name": "Acceso Permitido?"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "textBody": "={{ $json.mensaje_bloqueo }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        -133864,
+        -8492
+      ],
+      "id": "bb302a21-90f8-491b-8292-7cc690c98019",
+      "name": "WhatsApp Bloqueado",
+      "webhookId": "13c35db0-545b-4017-a831-2ab62fc8124d",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "textBody": "Disculpa, en este momento tengo un problema tecnico y no puedo atenderte. Por favor intenta de nuevo en unos minutos. Gracias por tu paciencia.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        -132912,
+        -8884
+      ],
+      "id": "757aa742-da81-470a-bc50-154ddc81677e",
+      "name": "WhatsApp Error Tecnico",
+      "webhookId": "a1111111-2222-3333-4444-555555555555",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nodo canonico de entrada: normaliza WhatsApp y n8n Chat a una sola forma.\n// Detecta canal por la forma del input (no por refs cruzadas).\nconst all = $input.first().json;\n\nif (Array.isArray(all.messages) && all.messages.length) {\n  const msg = all.messages[0] || {};\n  const botonReply = (msg.interactive && (msg.interactive.button_reply || msg.interactive.list_reply)) || null;\n  const text = (botonReply && botonReply.title) || (msg.text && msg.text.body) || (msg.image && msg.image.caption) || '';\n  return [{ json: {\n    canal: 'whatsapp',\n    from: msg.from || '',\n    phone_number_id: (all.metadata && all.metadata.phone_number_id) || '',\n    company_number: (all.metadata && all.metadata.display_phone_number) || '',\n    message_id: msg.id || '',\n    text: text,\n    boton_id: (botonReply && botonReply.id) || '',\n    msg_type: msg.type || 'text',\n    image_url: (msg.image && msg.image.url) || '',\n    image_id: (msg.image && msg.image.id) || '',\n    audio_url: (msg.audio && msg.audio.url) || (msg.voice && msg.voice.url) || '',\n    audio_id: (msg.audio && msg.audio.id) || (msg.voice && msg.voice.id) || ''\n  }}];\n}\n\n// n8n Chat: el Chat Trigger expone chatInput y sessionId.\nconst text = all.chatInput || all.message || all.text || '';\nconst sid = all.sessionId || all.session_id || all.sessionKey || '';\nconst execId = (typeof $execution !== 'undefined' && $execution && $execution.id) ? String($execution.id) : '';\nreturn [{ json: {\n  canal: 'chat',\n  from: String(sid),\n  message_id: 'chat-' + (String(sid) || 'anon') + (execId ? '-' + execId : ''),\n  text: String(text),\n  boton_id: '',\n  msg_type: 'text',\n  image_url: '',\n  image_id: '',\n  audio_url: '',\n  audio_id: ''\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -138400,
+        -8652
+      ],
+      "id": "defdce1f-8971-4f41-b619-bdf6f73a7367",
+      "name": "Entrada"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "canal-chat-cond-0001",
+              "leftValue": "={{ $('Entrada').first().json.canal }}",
+              "rightValue": "chat",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -132688,
+        -9076
+      ],
+      "id": "562f1ff3-29ec-4f1d-83f5-497c040ad7fc",
+      "name": "Canal Chat?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Render para n8n Chat. Texto y flags vienen de Restaurar Output (siempre ejecutado);\n// la url del carrito viene de Generar Link Chat (rama true) o del fallback del Filtro.\nconst r = $('Restaurar Output').first().json;\nconst parts = [];\nconst out = (r.output || '').trim();\nif (out) parts.push(out);\n\nif (r.es_botones && Array.isArray(r.botones_list) && r.botones_list.length) {\n  if (r.botones_body) parts.push((r.botones_body || '').trim());\n  parts.push(r.botones_list.map((b, i) => (i + 1) + '. ' + (b.title || '')).join('\\n'));\n}\n\nconst cartUrl = ($json && $json.url) || r.cart_link_url || '';\nif (r.es_cart_link) {\n  if (cartUrl) parts.push('Abre tu catalogo aqui: ' + cartUrl);\n  else parts.push('Ahorita no pude generar tu link del catalogo. Intenta de nuevo en un momento, por favor.');\n}\n\nif (r.es_imagen && r.imagen_send_url) parts.push(r.imagen_send_url);\nif (r.es_plantilla && r.template_nombre) parts.push('[Plantilla: ' + r.template_nombre + ']');\n\nreturn [{ json: { output: parts.join('\\n\\n').trim() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -132016,
+        -9448
+      ],
+      "id": "31eaa4c0-761a-4ab0-ae74-e765e59b110e",
+      "name": "Responder Chat"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "chat-cartlink-0001",
+              "leftValue": "={{ $json.es_cart_link }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -132464,
+        -9448
+      ],
+      "id": "bc4d9f87-1dda-450c-b17d-e7da7d1d00d2",
+      "name": "Chat Cart Link?"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "KgddeoiMeC7Rgill",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/KgddeoiMeC7Rgill",
+          "cachedResultName": "ISA Tool - Generar Link Carrito"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa": "={{ $json.cart_empresa || '00010' }}",
+            "codcliente": "={{ $json.cart_codcliente }}",
+            "phone": "={{ $('Entrada').first().json.from }}",
+            "phone_number_id": "={{ $('Entrada').first().json.phone_number_id }}",
+            "mode": "={{ $json.cart_mode || '' }}",
+            "company_number": "={{ $('Entrada').first().json.company_number }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "codcliente",
+              "displayName": "codcliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone_number_id",
+              "displayName": "phone_number_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "mode",
+              "displayName": "mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "company_number",
+              "displayName": "company_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -132240,
+        -9520
+      ],
+      "id": "c11dd3fc-32f5-4fc8-aebf-8bde8274736e",
+      "name": "Generar Link Chat",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "canalerr01",
+              "leftValue": "={{ $('Entrada').first().json.canal }}",
+              "rightValue": "chat",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -133136,
+        -8112
+      ],
+      "id": "35ecde5a-a330-432f-98ee-312e8030743f",
+      "name": "Canal Error?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "canalblo01",
+              "leftValue": "={{ $('Entrada').first().json.canal }}",
+              "rightValue": "chat",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -134592,
+        -8528
+      ],
+      "id": "fc9167af-d358-4558-a0e3-3b1e1d3878d9",
+      "name": "Canal Bloqueo?"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { output: 'Disculpa, tuve un problema tecnico y no pude procesar tu mensaje. Intenta de nuevo en un momento, por favor.' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -132912,
+        -8028
+      ],
+      "id": "71c5bd19-8a6f-4835-9fff-4324b5555f25",
+      "name": "Responder Error Chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $json || {};\nconst msg = r.mensaje_bloqueo || 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio.';\nreturn [{ json: { output: msg } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -133864,
+        -8684
+      ],
+      "id": "37a3b279-e1b8-4350-bc12-7e8fa87ed470",
+      "name": "Responder Bloqueo Chat"
+    },
+    {
+      "parameters": {
+        "description": "Subagente de PEDIDO. Llámalo cuando el cliente quiera armar/confirmar su pedido, manejar el carrito (agregar/quitar productos), pedir recomendaciones del carrito o terminar el pedido. Devuelve el texto que debes reenviar VERBATIM al cliente. Parámetros: query (mensaje del cliente y contexto), cliente_id, empresa, tienda, sessionId.",
+        "workflowId": {
+          "__rl": true,
+          "value": "i1Ln0FONDRTfb9su",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/i1Ln0FONDRTfb9su",
+          "cachedResultName": "ISA Subagente - Pedido"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query', 'Mensaje del cliente y contexto relevante para armar o confirmar el pedido.', 'string') }}",
+            "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Si recién se identificó, sale del bloque DATOS DEL CLIENTE. Si no, sale de la marca <!--SESSION...--> de tu memoria.', 'string') }}",
+            "empresa": "=00010",
+            "tienda": "=10000",
+            "sessionId": "={{ $('Entrada').first().json.from }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tienda",
+              "displayName": "tienda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -133600,
+        -8860
+      ],
+      "id": "8a3044eb-b8bf-4168-92a7-938daccd04cb",
+      "name": "Tool: Subagente Pedido"
+    },
+    {
+      "parameters": {
+        "description": "Subagente de CATALOGO. Llámalo cuando el cliente quiera ver productos, explorar categorías, consultar precios o buscar artículos. Devuelve el texto que debes reenviar VERBATIM al cliente. Parámetros: query (mensaje del cliente y contexto), cliente_id, empresa, tienda.",
+        "workflowId": {
+          "__rl": true,
+          "value": "kIY1iqeT8toJqcli",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/kIY1iqeT8toJqcli",
+          "cachedResultName": "ISA Subagente - Catalogo"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query', 'Mensaje del cliente y contexto relevante para explorar el catálogo.', 'string') }}",
+            "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Si recién se identificó, sale del bloque DATOS DEL CLIENTE. Si no, sale de la marca <!--SESSION...--> de tu memoria.', 'string') }}",
+            "empresa": "=00010",
+            "tienda": "=10000"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tienda",
+              "displayName": "tienda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -133472,
+        -8860
+      ],
+      "id": "f85e99bf-4123-4b67-bce6-b777f3a5f3df",
+      "name": "Tool: Subagente Catalogo"
+    },
+    {
+      "parameters": {
+        "description": "Subagente de PREGUNTAS FRECUENTES / NEGOCIO. Llámalo cuando el cliente pregunte por dudas del negocio, políticas, horarios, contacto o plantillas. Devuelve el texto que debes reenviar VERBATIM al cliente. Parámetros: query (mensaje del cliente), business_info, faq, contact.",
+        "workflowId": {
+          "__rl": true,
+          "value": "r6QMXxbGCWQeh8Nn",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/r6QMXxbGCWQeh8Nn",
+          "cachedResultName": "ISA Subagente - FAQ"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query', 'Pregunta o mensaje del cliente sobre el negocio, políticas, horarios o contacto.', 'string') }}",
+            "business_info": "={{ JSON.stringify($json.business_info) }}",
+            "faq": "={{ JSON.stringify($json.faq) }}",
+            "contact": "={{ JSON.stringify($json.contact) }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "business_info",
+              "displayName": "business_info",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "faq",
+              "displayName": "faq",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact",
+              "displayName": "contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -133344,
+        -8860
+      ],
+      "id": "c5cd9c4a-0d9d-4552-a42a-610d51ce1b9e",
+      "name": "Tool: Subagente FAQ"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "productos-check-01",
+              "leftValue": "={{ $json.es_productos }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -132240,
+        -9040
+      ],
+      "id": "8ae1e6bc-f7dc-4af1-b771-7556696d9d74",
+      "name": "Si Es Productos?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Restaurar Output').first().json;\nconst entrada = $('Entrada').first().json;\nconst lista = Array.isArray(base.productos_list) ? base.productos_list : [];\nconst placeholder = 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg';\nconst items = lista.map(p => {\n  const url = p.img ? ('https://data.pdctechco.com/Fotos/FFA/' + p.sku + '.jpg') : placeholder;\n  let caption = '*' + (p.nombre || '') + '*';\n  if (p.precio) caption += '\\nQ' + p.precio;\n  if (p.promo) caption += '\\n' + p.promo;\n  caption += '\\n\\nDime cuantas quieres para agregarlo.';\n  return { json: { to: entrada.from, phone_number_id: entrada.phone_number_id, image_url: url, caption } };\n});\nreturn items.length ? items : [{ json: { skip: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -132016,
+        -9232
+      ],
+      "id": "1f2a77db-4316-4809-8424-acac97ab1e9b",
+      "name": "Preparar Productos"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.phone_number_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.to }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.image_url }}\", \"caption\": {{ JSON.stringify($json.caption) }} }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -131792,
+        -9232
+      ],
+      "id": "82b498a4-d479-4cc8-8c69-94b36711e791",
+      "name": "WhatsApp Send Productos",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "resumen-tiene-texto",
+              "leftValue": "={{ ($('Restaurar Output').first().json.output || '').trim().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -132012,
+        -8768
+      ],
+      "id": "tiene-resumen-cartlink",
+      "name": "Tiene Resumen Cart Link?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": {{ JSON.stringify(($('Restaurar Output').first().json.output || '').trim().slice(0, 4000)) }} }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -132012,
+        -8588
+      ],
+      "id": "wa-send-resumen-texto",
+      "name": "WhatsApp Send Resumen Texto",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "rnJ1RDSva88nhBTX",
+          "name": "WhatsApp account TEST"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Es un Mensaje Nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es un Mensaje Nuevo?": {
+      "main": [
+        [
+          {
+            "node": "Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Multimedia": {
+      "main": [
+        [
+          {
+            "node": "Es Accion Pedido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Accion Pedido?": {
+      "main": [
+        [
+          {
+            "node": "Procesar Accion Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Multimedia?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Multimedia?": {
+      "main": [
+        [
+          {
+            "node": "Descargar Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Descargar Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pasar sin multimedia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar Imagen": {
+      "main": [
+        [
+          {
+            "node": "Analizar Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizar Imagen": {
+      "main": [
+        [
+          {
+            "node": "Combinar contexto imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar Audio": {
+      "main": [
+        [
+          {
+            "node": "Analizar Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizar Audio": {
+      "main": [
+        [
+          {
+            "node": "Combinar contexto audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar contexto imagen": {
+      "main": [
+        [
+          {
+            "node": "Detectar Identificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar contexto audio": {
+      "main": [
+        [
+          {
+            "node": "Detectar Identificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pasar sin multimedia": {
+      "main": [
+        [
+          {
+            "node": "Detectar Identificador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Identificador": {
+      "main": [
+        [
+          {
+            "node": "Lookup Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Cliente": {
+      "main": [
+        [
+          {
+            "node": "Construir Perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Perfil": {
+      "main": [
+        [
+          {
+            "node": "Acceso Permitido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar Version Sesion": {
+      "main": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Compartida": {
+      "ai_memory": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Historial": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Generar link carrito": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Finalizar Chat": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Escalar a Humano": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IsaCodisa Agent": {
+      "main": [
+        [
+          {
+            "node": "Filtro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Canal Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro": {
+      "main": [
+        [
+          {
+            "node": "Restaurar Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restaurar Output": {
+      "main": [
+        [
+          {
+            "node": "Canal Chat?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Si Es Imagen?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Si Es Cart Link?": {
+      "main": [
+        [
+          {
+            "node": "Tiene Resumen Cart Link?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Si Es Botones?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Si Es Botones?": {
+      "main": [
+        [
+          {
+            "node": "Preparar Botones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Router Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Botones": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send Buttons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Preparar Componentes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Componentes": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET TOKEN": {
+      "main": [
+        [
+          {
+            "node": "Inbox Estado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Canal Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox Estado": {
+      "main": [
+        [
+          {
+            "node": "Eval Agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eval Agente": {
+      "main": [
+        [
+          {
+            "node": "En Agente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "En Agente?": {
+      "main": [
+        [
+          {
+            "node": "Reenviar a Agente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CONFIGRUACION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONFIGRUACION": {
+      "main": [
+        [
+          {
+            "node": "Procesar Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Canal Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Detectar Multimedia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Canal Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Link Fresco": {
+      "main": [
+        [
+          {
+            "node": "Link OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link OK?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send CTA Button",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Send Link Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Si Es Order Action?": {
+      "main": [
+        [
+          {
+            "node": "Procesar Accion Pedido (texto)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Si Es Productos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acceso Permitido?": {
+      "main": [
+        [
+          {
+            "node": "Canal Bloqueo?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agregar Version Sesion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entrada": {
+      "main": [
+        [
+          {
+            "node": "GET TOKEN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canal Chat?": {
+      "main": [
+        [
+          {
+            "node": "Chat Cart Link?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Si Es Order Action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Cart Link?": {
+      "main": [
+        [
+          {
+            "node": "Generar Link Chat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Link Chat": {
+      "main": [
+        [
+          {
+            "node": "Responder Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canal Error?": {
+      "main": [
+        [
+          {
+            "node": "Responder Error Chat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Error Tecnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canal Bloqueo?": {
+      "main": [
+        [
+          {
+            "node": "Responder Bloqueo Chat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Bloqueado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Subagente Pedido": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Subagente Catalogo": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Subagente FAQ": {
+      "ai_tool": [
+        [
+          {
+            "node": "IsaCodisa Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Si Es Productos?": {
+      "main": [
+        [
+          {
+            "node": "Preparar Productos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Si Es Imagen?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Si Es Cart Link?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Productos": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send Productos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tiene Resumen Cart Link?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send Resumen Texto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generar Link Fresco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Send Resumen Texto": {
+      "main": [
+        [
+          {
+            "node": "Generar Link Fresco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b67af7a3-d508-41a3-9643-0f25890ec8fe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "2UYWahSbZl5OP4D0",
+  "tags": []
+}

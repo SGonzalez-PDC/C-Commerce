@@ -1,0 +1,125 @@
+{
+  "name": "ISA Tool - Recomendaciones",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "tienda"
+            },
+            {
+              "name": "codcliente"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        -48
+      ],
+      "id": "isatool-recomendaciones-t",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/get-or-create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        -48
+      ],
+      "id": "isatool-recomendaciones-g",
+      "name": "Obtener Carrito"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/recommendations",
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.codcliente }}\",\n  \"cart_id\": \"{{ $('Obtener Carrito').first().json.data.cart_id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1088,
+        -48
+      ],
+      "id": "op-node-0001",
+      "name": "Recomendar"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nif (!r || r.status >= 400) return [{ json: { ok: false, error: r?.message || 'Error al obtener recomendaciones' } }];\nconst items = Array.isArray(r?.data) ? r.data : [];\nreturn [{ json: { ok: true, items } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -48
+      ],
+      "id": "isatool-recomendaciones-p",
+      "name": "Parsear Respuesta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Obtener Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Carrito": {
+      "main": [
+        [
+          {
+            "node": "Recomendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recomendar": {
+      "main": [
+        [
+          {
+            "node": "Parsear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "isatool-recomendaciones-v",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "ISATOOL-RECOMENDACIONES",
+  "tags": []
+}

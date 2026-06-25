@@ -1,0 +1,139 @@
+{
+  "name": "ISA Tool - Generar Link Carrito",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "codcliente"
+            },
+            {
+              "name": "phone"
+            },
+            {
+              "name": "phone_number_id"
+            },
+            {
+              "name": "mode"
+            },
+            {
+              "name": "company_number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        128
+      ],
+      "id": "15609d92-67c6-4c98-bca3-db4694cff6e8",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 cart_id FROM ffa_tbl_txn_header_cart WHERE codcliente = '{{ $json.codcliente }}' AND empresa = '{{ $json.empresa }}' AND status IN ('ACTIVE','ENVIADO_WHATSAPP') AND total > 0 ORDER BY created_at DESC"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        128
+      ],
+      "id": "8c2bebb4-8553-429a-90e8-7f71673d1f0a",
+      "name": "Verificar Carrito Activo",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "wwcq6MS87shlA3Zw",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/generate-cart-link",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.codcliente }}\",\n  \"phone\": \"{{ $('When Called by Agent').first().json.phone }}\",\n  \"phone_number_id\": \"{{ $('When Called by Agent').first().json.phone_number_id }}\",\n  \"mode\": \"{{ $('When Called by Agent').first().json.mode }}\",\n  \"company_number\": \"{{ $('When Called by Agent').first().json.company_number }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        128
+      ],
+      "id": "94ff603c-3b40-410a-8df3-e510979a2fe9",
+      "name": "Llamar C Commerce"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nif (!response || response.status >= 400) {\n  return [{ json: { error: response?.message || 'Error al generar el link del carrito', url: null, tiene_carrito_activo: false } }];\n}\nlet url = response?.data?.url || response?.url || null;\nif (!url) {\n  return [{ json: { error: 'No se recibió URL en la respuesta', url: null, tiene_carrito_activo: false } }];\n}\nconst carritoRow = $('Verificar Carrito Activo').first()?.json;\nconst tiene_carrito_activo = !!(carritoRow?.cart_id);\nif (tiene_carrito_activo && !url.includes('mode=')) {\n  url += '&mode=modify';\n}\nreturn [{ json: { url, tiene_carrito_activo } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        128
+      ],
+      "id": "21bf8093-ec70-47ef-805d-0dadc4360a4f",
+      "name": "Extraer URL"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Verificar Carrito Activo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Carrito Activo": {
+      "main": [
+        [
+          {
+            "node": "Llamar C Commerce",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar C Commerce": {
+      "main": [
+        [
+          {
+            "node": "Extraer URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "95b1f159-4988-49fe-bbee-aa5c41085122",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "BK3iTuvFjZPe6lyT",
+  "tags": []
+}

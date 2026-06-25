@@ -1,0 +1,94 @@
+{
+  "name": "ISA Tool - Identificar Cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "identificador"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        96
+      ],
+      "id": "2df6b00f-6af4-4578-84fe-f40514504abe",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT\n        COUNT(*) AS total_ordenes,\n        MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa\n      AND f.cliente = cli.CodCliente\n      AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df\n        ON df.empresa = f.Empresa\n        AND df.tienda = f.Tienda\n        AND df.no_tx = f.no_tx\n    LEFT JOIN DEV_FFA.dbo.ARTICULO a\n        ON a.EMPRESA = df.empresa\n        AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat\n        ON cat.empresa = a.EMPRESA\n        AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa\n      AND f.cliente = cli.CodCliente\n      AND f.statusfac <> 'A'\n      AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (\n        cli.CodCliente = @input\n     OR cli.Telefono1 = @input\n     OR cli.Telefono2 = @input\n     OR cli.Telefono3 = @input\n  );"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        96
+      ],
+      "id": "d499abde-2d2a-4924-b778-0ef63f389464",
+      "name": "Lookup Cliente",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "nfXUqIrinWAQRi4a",
+          "name": "SQL STAGE FFA - SEBAS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first()?.json;\n\nif (!row || !row.cliente_id) {\n  return [{\n    json: {\n      encontrado: false,\n      mensaje: 'No encontré ningún cliente con ese dato. Verifícalo o intenta con el otro (código o teléfono).'\n    }\n  }];\n}\n\nconst esRecurrente = (row.total_ordenes || 0) > 0;\n\nreturn [{\n  json: {\n    encontrado: true,\n    es_nuevo: !esRecurrente,\n    es_recurrente: esRecurrente,\n    cliente_id: row.cliente_id,\n    empresa: row.empresa,\n    nombre: row.nombre,\n    telefono: row.telefono,\n    total_ordenes: row.total_ordenes || 0,\n    ultima_compra_fecha: row.ultima_compra_fecha,\n    producto_mas_frecuente: row.producto_mas_frecuente_id ? {\n      sku: row.producto_mas_frecuente_id,\n      nombre: row.producto_mas_frecuente_nombre,\n      precio: parseFloat(row.producto_mas_frecuente_precio),\n      categoria: row.producto_mas_frecuente_categoria\n    } : null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        96
+      ],
+      "id": "9fc3ba04-c773-474f-8660-df555a17c985",
+      "name": "Formatear Perfil"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Lookup Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Cliente": {
+      "main": [
+        [
+          {
+            "node": "Formatear Perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e6e12a86-59dc-41da-abf6-c21e0e659658",
+  "meta": {
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "aP3GVmYHyj8z0QAT",
+  "tags": []
+}

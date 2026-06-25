@@ -1,0 +1,8 @@
+{
+  "folder": "workflows",
+  "comment": "DEV es la fuente canonica: los archivos ya tienen valores dev, por eso no hay reemplazos. credentials vacio = usa el id de credencial que ya trae el archivo.",
+  "replacements": {},
+  "credentials": {},
+  "exclude": ["ISA Subagente - Catalogo CON IMAGENES", "IsaCodisa Agent CON IMAGENES"],
+  "activate": []
+}

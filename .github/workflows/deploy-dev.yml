@@ -1,0 +1,25 @@
+name: Deploy n8n (dev)
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "workflows/**"
+      - "envs/dev.json"
+      - "scripts/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Desplegar workflows a n8n dev
+        run: node scripts/n8n-sync.js --env dev
+        env:
+          N8N_URL: ${{ secrets.N8N_URL }}
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}

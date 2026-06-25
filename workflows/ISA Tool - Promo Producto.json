@@ -1,0 +1,62 @@
+{
+  "name": "ISA Tool - Promo Producto",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            { "name": "empresa" },
+            { "name": "sku" },
+            { "name": "qty" },
+            { "name": "codcliente" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [848, -48],
+      "id": "a7b1c2d3-e4f5-6789-abcd-ef0000010001",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/product-promotions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"sku\": \"{{ $json.sku }}\",\n  \"qty\": {{ $json.qty || 'null' }},\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1072, -48],
+      "id": "a7b1c2d3-e4f5-6789-abcd-ef0000010002",
+      "name": "Llamar C Commerce"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\n\nif (!response || response.status >= 400) {\n  return [{ json: { ok: false, error: response?.message || 'Error al obtener promociones del producto' } }];\n}\n\nconst promos = response?.data || [];\n\nreturn [{ json: { ok: true, promos } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1296, -48],
+      "id": "a7b1c2d3-e4f5-6789-abcd-ef0000010003",
+      "name": "Parsear Respuesta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Agent": {
+      "main": [[{ "node": "Llamar C Commerce", "type": "main", "index": 0 }]]
+    },
+    "Llamar C Commerce": {
+      "main": [[{ "node": "Parsear Respuesta", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "a7b1c2d3-e4f5-6789-abcd-ef0000010010",
+  "meta": { "templateCredsSetupCompleted": true },
+  "id": "ISATool-PromoProducto",
+  "tags": []
+}

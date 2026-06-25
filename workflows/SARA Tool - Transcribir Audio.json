@@ -1,0 +1,103 @@
+{
+  "name": "SARA Tool - Transcribir Audio",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "trigger"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        48
+      ],
+      "id": "11f6635b-ba68-4d07-b411-ab3f8161ec9b",
+      "name": "When Called by Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "inputType": "binary",
+        "binaryPropertyName": "data0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        48
+      ],
+      "id": "63c0c06d-f4f8-4b88-90fb-373b20f18d60",
+      "name": "Gemini Audio",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dmDyRdDA9oCzXOwY",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Resource: Audio, Operation: Transcribe. binaryPropertyName debe coincidir con el pin del binario que llega (típicamente 'data0')."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Procesa la transcripción y devuelve el texto + el contexto para el agente\nconst raw = $input.first().json;\n\n// La respuesta puede estar en distintas ubicaciones según la versión\nlet transcripcion = '';\nif (raw.content?.parts?.[0]?.text) {\n  transcripcion = raw.content.parts[0].text;\n} else if (raw.response?.text) {\n  transcripcion = raw.response.text;\n} else if (raw.text) {\n  transcripcion = raw.text;\n} else if (typeof raw === 'string') {\n  transcripcion = raw;\n}\n\ntranscripcion = (transcripcion || '').trim();\n\n// Casos donde el audio no aporta nada útil\nif (!transcripcion || transcripcion === '[AUDIO_INAUDIBLE]' || transcripcion === '[SIN_VOZ]') {\n  return {\n    json: {\n      ok: false,\n      transcripcion: '',\n      contexto_audio: '[AUDIO RECIBIDO PERO INAUDIBLE] Pide al cliente que repita por escrito o con un audio más claro.',\n      mensaje_inyectar: 'No se pudo entender el audio'\n    }\n  };\n}\n\n// OK: hay transcripción válida\nreturn {\n  json: {\n    ok: true,\n    transcripcion,\n    contexto_audio: `[MENSAJE RECIBIDO POR AUDIO] El cliente envió un nota de voz que fue transcrita. Procesa el contenido como si lo hubiera escrito, pero ten en cuenta que viene de audio (puede tener errores de transcripción menores o tono coloquial).`,\n    mensaje_inyectar: transcripcion\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        48
+      ],
+      "id": "4dc45ab2-f832-4b5c-b524-b1380e692771",
+      "name": "Parsear Transcripción"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Workflow": {
+      "main": [
+        [
+          {
+            "node": "Gemini Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Audio": {
+      "main": [
+        [
+          {
+            "node": "Parsear Transcripción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "13a0f5a0-57d7-4d93-bef2-09220a134dbf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+  },
+  "id": "vNKog2nwEWHghdam",
+  "tags": []
+}
