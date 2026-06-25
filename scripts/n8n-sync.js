@@ -75,13 +75,19 @@ function applyReplacements(str) {
 }
 
 // ---- remapear credenciales por nombre (si el env lo define) ----
+// credMap: { "<nombre en dev>": "<id destino>" }  o  { "<nombre dev>": {"id","name"} }.
+// Setea el id (y el nombre destino si se da) en cada nodo cuya credencial coincide por nombre.
 function remapCreds(wf) {
   if (!Object.keys(credMap).length) return;
   for (const n of wf.nodes || []) {
     if (!n.credentials) continue;
     for (const k of Object.keys(n.credentials)) {
       const c = n.credentials[k];
-      if (c && c.name && credMap[c.name]) c.id = credMap[c.name];
+      if (!c || !c.name) continue;
+      const target = credMap[c.name];
+      if (target === undefined) continue;
+      if (typeof target === "string") { c.id = target; }
+      else { if (target.id) c.id = target.id; if (target.name) c.name = target.name; }
     }
   }
 }

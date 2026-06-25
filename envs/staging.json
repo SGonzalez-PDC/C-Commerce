@@ -8,7 +8,11 @@
     "DEV_FFA": "STAGE_FFA"
   },
   "credentials": {
-    "Microsoft SQL account": "JNSFnSi0I0HScdSk"
+    "Microsoft SQL account": { "id": "JNSFnSi0I0HScdSk" },
+    "Google Gemini(PaLM) Api account": { "id": "eXbcEzjnNufJXTFf" },
+    "Google Gemini(PaLM) Api account 2": { "id": "eXbcEzjnNufJXTFf", "name": "Google Gemini(PaLM) Api account" },
+    "WhatsApp account TEST": { "id": "FE2n8PgBTsx6uiig" },
+    "WhatsApp OAuth account TEST": { "id": "BznAgDmXRAXgQXpT" }
   },
   "exclude": ["ISA Subagente - Catalogo CON IMAGENES", "IsaCodisa Agent CON IMAGENES"],
   "activate": []
