@@ -8,8 +8,8 @@
     "DEV_FFA": "STAGE_FFA"
   },
   "credentials": {
-    "Microsoft SQL account": "REEMPLAZA_CON_ID_CRED_STAGE"
+    "Microsoft SQL account": "JNSFnSi0I0HScdSk"
   },
-  "exclude": [],
+  "exclude": ["ISA Subagente - Catalogo CON IMAGENES", "IsaCodisa Agent CON IMAGENES"],
   "activate": []
 }
