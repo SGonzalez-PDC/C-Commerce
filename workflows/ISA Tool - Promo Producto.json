@@ -5,16 +5,27 @@
       "parameters": {
         "workflowInputs": {
           "values": [
-            { "name": "empresa" },
-            { "name": "sku" },
-            { "name": "qty" },
-            { "name": "codcliente" }
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "sku"
+            },
+            {
+              "name": "qty"
+            },
+            {
+              "name": "codcliente"
+            }
           ]
         }
       },
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [848, -48],
+      "position": [
+        848,
+        -48
+      ],
       "id": "a7b1c2d3-e4f5-6789-abcd-ef0000010001",
       "name": "When Called by Agent"
     },
@@ -25,11 +36,16 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"sku\": \"{{ $json.sku }}\",\n  \"qty\": {{ $json.qty || 'null' }},\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1072, -48],
+      "position": [
+        1072,
+        -48
+      ],
       "id": "a7b1c2d3-e4f5-6789-abcd-ef0000010002",
       "name": "Llamar C Commerce"
     },
@@ -39,7 +55,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1296, -48],
+      "position": [
+        1296,
+        -48
+      ],
       "id": "a7b1c2d3-e4f5-6789-abcd-ef0000010003",
       "name": "Parsear Respuesta"
     }
@@ -47,16 +66,36 @@
   "pinData": {},
   "connections": {
     "When Called by Agent": {
-      "main": [[{ "node": "Llamar C Commerce", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Llamar C Commerce",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Llamar C Commerce": {
-      "main": [[{ "node": "Parsear Respuesta", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parsear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
-  "settings": { "executionOrder": "v1" },
+  "settings": {
+    "executionOrder": "v1"
+  },
   "versionId": "a7b1c2d3-e4f5-6789-abcd-ef0000010010",
-  "meta": { "templateCredsSetupCompleted": true },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
   "id": "ISATool-PromoProducto",
   "tags": []
 }

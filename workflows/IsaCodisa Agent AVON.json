@@ -150,7 +150,8 @@
               "responseFormat": "file",
               "outputPropertyName": "data0"
             }
-          }
+          },
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -734,7 +735,7 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.boton_id }}\"\n}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -810,7 +811,7 @@
         "specifyBody": "json",
         "jsonBody": "{\n    \"email\": \"cc.auth\",\n    \"password\": \"@cc350CC\"\n}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -847,7 +848,7 @@
           ]
         },
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -928,7 +929,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ phone_number: $json.gate_phone, message_text: $json.gate_text, message_type: 'TEXT', provider_message_id: $json.gate_message_id }) }}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -954,7 +955,7 @@
           ]
         },
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -995,7 +996,8 @@
               "responseFormat": "file",
               "outputPropertyName": "data0"
             }
-          }
+          },
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -1314,7 +1316,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"cta_url\",\n    \"body\": { \"text\": {{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? JSON.stringify('👉 Tienes un pedido pendiente. Presiona el botón para revisarlo o modificarlo antes de confirmar.') : JSON.stringify($('Restaurar Output').first().json.output || 'Toca el botón para ir al catálogo y hacer tu pedido.') }} },\n    \"action\": {\n      \"name\": \"cta_url\",\n      \"parameters\": {\n        \"display_text\": \"{{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? 'Ver mi pedido' : 'Ver Catalogo' }}\",\n        \"url\": \"{{ $('Generar Link Fresco').first().json.url }}\"\n      }\n    }\n  }\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -1390,7 +1394,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.wa_payload) }}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -1453,7 +1459,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.imagen_send_url || 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg' }}\" }\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -1650,7 +1658,7 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.order_boton_id }}\"\n}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",

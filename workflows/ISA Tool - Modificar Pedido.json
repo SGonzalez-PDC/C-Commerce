@@ -5,15 +5,24 @@
       "parameters": {
         "workflowInputs": {
           "values": [
-            { "name": "empresa" },
-            { "name": "phone" },
-            { "name": "phone_number_id" }
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "phone"
+            },
+            {
+              "name": "phone_number_id"
+            }
           ]
         }
       },
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [848, -48],
+      "position": [
+        848,
+        -48
+      ],
       "id": "f1a2b3c4-d5e6-7890-abcd-ef2222220001",
       "name": "When Called by Agent"
     },
@@ -24,11 +33,16 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"phone_number_id\": \"{{ $json.phone_number_id }}\",\n  \"boton_id\": \"ORDER_MODIFY\"\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1072, -48],
+      "position": [
+        1072,
+        -48
+      ],
       "id": "f1a2b3c4-d5e6-7890-abcd-ef2222220002",
       "name": "Llamar C Commerce"
     },
@@ -38,7 +52,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1296, -48],
+      "position": [
+        1296,
+        -48
+      ],
       "id": "f1a2b3c4-d5e6-7890-abcd-ef2222220003",
       "name": "Parsear Respuesta"
     }

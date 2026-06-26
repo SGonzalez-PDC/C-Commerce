@@ -63,7 +63,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.codcliente }}\",\n  \"phone\": \"{{ $('When Called by Agent').first().json.phone }}\",\n  \"phone_number_id\": \"{{ $('When Called by Agent').first().json.phone_number_id }}\",\n  \"mode\": \"{{ $('When Called by Agent').first().json.mode }}\",\n  \"company_number\": \"{{ $('When Called by Agent').first().json.company_number }}\"\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,

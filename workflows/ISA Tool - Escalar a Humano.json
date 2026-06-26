@@ -66,7 +66,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ (() => { const t = $('When Called by Agent').first().json; const ctx = { customer_code: String($json.ticket) }; if (t.customer_name) ctx.customer_name = String(t.customer_name); if (t.contact_reason) ctx.contact_reason = String(t.contact_reason); const body = { phone_number: t.phone_number, message_text: t.historial, message_type: 'TEXT', provider_message_id: t.provider_message_id, context: ctx }; return JSON.stringify(body); })() }}",
-        "options": {},
+        "options": {
+          "timeout": 60000
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

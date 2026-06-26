@@ -36,7 +36,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -51,7 +53,9 @@
       "parameters": {
         "method": "DELETE",
         "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/items/' + $('When Called by Agent').first().json.sku }}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,

@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3-flash-preview",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
           "temperature": 0.1,
           "topK": 40,
@@ -157,98 +157,6 @@
       ],
       "id": "7a936c04-7b72-45ab-893f-a055c510be3f",
       "name": "Tool: Buscar Productos"
-    },
-    {
-      "parameters": {
-        "description": "Crea u obtiene el carrito activo del cliente. Llamar al agregar el primer producto. Devuelve cart_id.",
-        "workflowId": {
-          "__rl": true,
-          "value": "dZ4lD6jqV2eehifd",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/dZ4lD6jqV2eehifd",
-          "cachedResultName": "ISA Tool - Iniciar Carrito"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "empresa": "=00010",
-            "tienda": "=10000",
-            "codcliente": "={{ $fromAI('codcliente', 'Código del cliente. Sale del bloque DATOS DE ESTA LLAMADA del system message.', 'string') }}",
-            "price_list": "={{ $fromAI('price_list', 'Lista de precios del cliente. Opcional, dejar vacío si no se conoce.', 'string', '') }}",
-            "id_direccion": "={{ $fromAI('id_direccion', 'Identificador de la dirección de entrega. Opcional, dejar vacío si no se conoce.', 'string', '') }}",
-            "direccion": "={{ $fromAI('direccion', 'Dirección de entrega en texto. Opcional, dejar vacío si no se conoce.', 'string', '') }}"
-          },
-          "matchingColumns": [
-            "codcliente"
-          ],
-          "schema": [
-            {
-              "id": "empresa",
-              "displayName": "empresa",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "tienda",
-              "displayName": "tienda",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "codcliente",
-              "displayName": "codcliente",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "price_list",
-              "displayName": "price_list",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "id_direccion",
-              "displayName": "id_direccion",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "direccion",
-              "displayName": "direccion",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2.2,
-      "position": [
-        11728,
-        32
-      ],
-      "id": "05647fdb-3f80-4331-88b9-f7b8cfa20a33",
-      "name": "Tool: Iniciar Carrito"
     },
     {
       "parameters": {
@@ -612,7 +520,7 @@
     },
     {
       "parameters": {
-        "description": "Devuelve el bonus/promo calculado por cada producto del carrito. Usar AL FINALIZAR, antes del checkout, para mostrar el bonus aplicado. Parametro: cart_id.",
+        "description": "Devuelve el bonus/promo calculado por cada producto del carrito. Usar AL FINALIZAR, antes del checkout, para mostrar el bonus aplicado. Parametro: codcliente (la tool resuelve el carrito activo del cliente).",
         "workflowId": {
           "__rl": true,
           "value": "aIkD8CIngCKCxLs7",
@@ -676,7 +584,7 @@
       "parameters": {
         "sessionIdType": "customKey",
         "sessionKey": "={{ $('When Called by Agent').first().json.sessionId }}",
-        "contextWindowLength": 15
+        "contextWindowLength": 30
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
@@ -713,17 +621,6 @@
       ]
     },
     "Tool: Buscar Productos": {
-      "ai_tool": [
-        [
-          {
-            "node": "Subagente Pedido",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tool: Iniciar Carrito": {
       "ai_tool": [
         [
           {

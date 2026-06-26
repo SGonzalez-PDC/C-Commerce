@@ -5,18 +5,33 @@
       "parameters": {
         "workflowInputs": {
           "values": [
-            { "name": "empresa" },
-            { "name": "tienda" },
-            { "name": "codcliente" },
-            { "name": "price_list" },
-            { "name": "id_direccion" },
-            { "name": "direccion" }
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "tienda"
+            },
+            {
+              "name": "codcliente"
+            },
+            {
+              "name": "price_list"
+            },
+            {
+              "name": "id_direccion"
+            },
+            {
+              "name": "direccion"
+            }
           ]
         }
       },
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [848, -48],
+      "position": [
+        848,
+        -48
+      ],
       "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330001",
       "name": "When Called by Agent"
     },
@@ -27,11 +42,16 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\",\n  \"price_list\": \"{{ $json.price_list }}\",\n  \"id_direccion\": \"{{ $json.id_direccion }}\",\n  \"direccion\": \"{{ $json.direccion }}\"\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1072, -48],
+      "position": [
+        1072,
+        -48
+      ],
       "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330002",
       "name": "Llamar C Commerce"
     },
@@ -41,7 +61,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1296, -48],
+      "position": [
+        1296,
+        -48
+      ],
       "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330003",
       "name": "Parsear Respuesta"
     }
