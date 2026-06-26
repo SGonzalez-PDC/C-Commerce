@@ -13,6 +13,7 @@ GO
 * DESCRIPCION: Calcula promociones (descuento % y bonificacion) por carrito (accion CART) o por un sku (accion SKU), leyendo las tablas ffa_promocion / ffa_promocion_articulo / ffa_condiciones_promocion / ffa_beneficios_promocion.
 * MODIFICACIONES:
 *   - 23-06-2026 / Saul Gonzalez: Creacion.
+*   - 26-06-2026 / Saul Gonzalez: Alinear elegibilidad de promos con el portal web (sp_GetBestSellers_V2): solo promos estado=1, dentro de vigencia, con territorio y asignacion (segmentacion/geografia via ffa_asignacion_promocion) que apliquen al cliente. Antes regalaba promos no publicadas.
 */
 CREATE OR ALTER PROCEDURE [dbo].[c_commerce_cart_promo_sp_R_V1]
     @accion         VARCHAR(5),
@@ -37,6 +38,58 @@ BEGIN
             FROM DEV_FFA..ffa_tbl_txn_header_cart h
             WHERE h.cart_id = @cart_id;
         END
+
+        -- ============================================================
+        -- Promos ELEGIBLES para este cliente: misma regla que el portal
+        -- web (DEV_FFA..sp_GetBestSellers_V2, bandera promocion='S').
+        -- Solo estos codigos de promocion pueden aplicar/mostrarse.
+        -- ============================================================
+        DECLARE @territorio_cliente VARCHAR(100) =
+            (SELECT territorio FROM DEV_FFA..clientes
+             WHERE empresa = @empresa AND codcliente = @codcliente);
+
+        ;WITH JerarquiaSegmentacion AS (
+            SELECT n.id_nivel, n.empresa, n.id_nivel_padre, 0 AS prof
+            FROM DEV_FFA..FFAniveles n
+            INNER JOIN DEV_FFA..CLIENTES c ON c.segmentacion_cliente = n.id_nivel
+            WHERE c.codcliente = @codcliente AND c.ACTIVO = 'S' AND c.empresa = @empresa AND n.status = 1
+            UNION ALL
+            SELECT n.id_nivel, n.empresa, n.id_nivel_padre, j.prof + 1
+            FROM DEV_FFA..FFAniveles n
+            INNER JOIN JerarquiaSegmentacion j ON n.id_nivel = j.id_nivel_padre
+            WHERE n.status = 1 AND j.prof < 10
+        ),
+        JerarquiaGeografia AS (
+            SELECT n.id_nivel, n.empresa, n.id_nivel_padre, 0 AS prof
+            FROM DEV_FFA..FFAniveles n
+            INNER JOIN DEV_FFA..CLIENTES c ON c.geografia = n.id_nivel
+            WHERE c.codcliente = @codcliente AND c.ACTIVO = 'S' AND c.empresa = @empresa AND n.status = 1
+            UNION ALL
+            SELECT n.id_nivel, n.empresa, n.id_nivel_padre, j.prof + 1
+            FROM DEV_FFA..FFAniveles n
+            INNER JOIN JerarquiaGeografia j ON n.id_nivel = j.id_nivel_padre
+            WHERE n.status = 1 AND j.prof < 10
+        )
+        SELECT DISTINCT f.codigo
+        INTO #promos_ok
+        FROM DEV_FFA..ffa_promocion f
+        LEFT JOIN DEV_FFA..ffa_asignacion_promocion fa
+            ON fa.id_referencia = f.codigo
+        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad
+            ON fa.id_asignacion = fad.id_asignacion
+        LEFT JOIN JerarquiaSegmentacion js
+            ON js.id_nivel = fad.id_referencia AND js.empresa = f.empresa
+        LEFT JOIN JerarquiaGeografia jg
+            ON jg.id_nivel = fad.id_referencia AND jg.empresa = f.empresa
+        WHERE f.empresa = @empresa
+            AND @fecha BETWEEN CAST(f.fecha_inicio AS DATE) AND CAST(f.fecha_fin AS DATE)
+            AND (f.cod_cliente IS NULL OR f.cod_cliente = @codcliente)
+            AND f.estado = 1
+            AND (f.territorio IS NULL OR f.territorio = @territorio_cliente)
+            AND (
+                f.cod_cliente = @codcliente
+                OR (f.cod_cliente IS NULL AND (js.id_nivel IS NOT NULL OR jg.id_nivel IS NOT NULL))
+            );
 
         -- Lineas a evaluar (sku, qty, subtotal). En CART salen del carrito; en SKU es una sola.
         CREATE TABLE #lineas (sku VARCHAR(20), qty DECIMAL(18,4), subtotal DECIMAL(18,4));
@@ -93,6 +146,9 @@ BEGIN
             AND p.fecha_inicio <= @fecha
             AND (p.fecha_fin IS NULL OR p.fecha_fin >= @fecha)
             AND (p.cod_cliente IS NULL OR @codcliente IS NULL OR p.cod_cliente = @codcliente)
+        -- Solo promos elegibles para el cliente (misma regla que el portal web).
+        INNER JOIN #promos_ok pv
+            ON pv.codigo = p.codigo
         -- Mejor condicion aplicable segun el pivot (mayor apartir_de que cumple)
         OUTER APPLY (
             SELECT TOP 1 c.condiciones_promocion_id, c.apartir_de, c.hasta, c.por_cada, c.isMonetario
@@ -122,9 +178,11 @@ BEGIN
         ORDER BY l.sku, p.codigo;
 
         DROP TABLE #lineas;
+        DROP TABLE #promos_ok;
     END TRY
     BEGIN CATCH
         IF OBJECT_ID('tempdb..#lineas') IS NOT NULL DROP TABLE #lineas;
+        IF OBJECT_ID('tempdb..#promos_ok') IS NOT NULL DROP TABLE #promos_ok;
         THROW;
     END CATCH
 END;
