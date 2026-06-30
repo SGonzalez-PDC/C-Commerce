@@ -1,6 +1,6 @@
 {
   "folder": "workflows",
-  "comment": "Reemplaza valores dev por pre-produccion (PREP).",
+  "comment": "PREP: mismas credenciales n8n que staging (mismos credential ids), pero URLs (.pre-production) y prefijos de BD (PREP_*) propios de prep.",
   "replacements": {
     ".dev.pdctechco.com": ".pre-production.pdctechco.com",
     "DEV_C_COMMERCE": "PREP_C_COMMERCE",
@@ -8,8 +8,12 @@
     "DEV_FFA": "PREP_FFA"
   },
   "credentials": {
-    "Microsoft SQL account": "REEMPLAZA_CON_ID_CRED_PREP"
+    "Microsoft SQL account": { "id": "JNSFnSi0I0HScdSk" },
+    "Google Gemini(PaLM) Api account": { "id": "eXbcEzjnNufJXTFf" },
+    "Google Gemini(PaLM) Api account 2": { "id": "eXbcEzjnNufJXTFf", "name": "Google Gemini(PaLM) Api account" },
+    "WhatsApp account TEST": { "id": "FE2n8PgBTsx6uiig" },
+    "WhatsApp OAuth account TEST": { "id": "BznAgDmXRAXgQXpT" }
   },
-  "exclude": [],
+  "exclude": ["ISA Subagente - Catalogo CON IMAGENES", "IsaCodisa Agent CON IMAGENES"],
   "activate": []
 }

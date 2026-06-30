@@ -8,21 +8,24 @@ on:
     branches: [prep]
     paths:
       - "workflows/**"
-      - "envs/staging.json"
+      - "envs/prep.json"
       - "scripts/**"
   workflow_dispatch: {}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Mismo n8n y credenciales que staging (secrets del environment 'staging').
     environment: staging
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Desplegar workflows a n8n (prep = staging)
-        run: node scripts/n8n-sync.js --env staging
+      # --env prep: URLs (.pre-production) y prefijos de BD (PREP_*) propios de prep,
+      # pero con las credenciales n8n de staging (definidas en envs/prep.json).
+      - name: Desplegar workflows a n8n (prep)
+        run: node scripts/n8n-sync.js --env prep
         env:
           N8N_URL: ${{ secrets.N8N_URL }}
           N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
