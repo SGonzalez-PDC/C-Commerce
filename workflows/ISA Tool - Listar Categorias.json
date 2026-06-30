@@ -17,10 +17,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        944,
-        144
+        -272,
+        176
       ],
-      "id": "d27b16d7-58e6-4e03-bb17-9a08ed157172",
+      "id": "310f1966-90e4-4012-9754-6f102ee8f0e2",
       "name": "When Called by Agent"
     },
     {
@@ -31,10 +31,10 @@
       "type": "n8n-nodes-base.microsoftSql",
       "typeVersion": 1.1,
       "position": [
-        1168,
-        144
+        -48,
+        176
       ],
-      "id": "151d8bc1-25d9-4512-8c8b-d735c1c7e8a0",
+      "id": "68c50fde-8375-4076-9689-695d4f81cf72",
       "name": "Query Categorias",
       "alwaysOutputData": true,
       "credentials": {
@@ -51,14 +51,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1392,
-        144
+        176,
+        176
       ],
-      "id": "0923cc49-35b6-44fe-816a-5d51eafcbe21",
+      "id": "4c8e0078-e581-4215-a5b3-e57ab83cca73",
       "name": "Formatear Categorías"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -83,15 +82,16 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "9b441ba8-4b5d-4207-852c-efdbc4f14622",
+  "versionId": "03219245-a8bc-4aad-a81f-ff669c199056",
   "meta": {
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+    "templateCredsSetupCompleted": true
   },
-  "id": "85JCkzXmVhbcvS6S",
+  "id": "wVY2PnMkD46IT7Yp",
   "tags": []
 }

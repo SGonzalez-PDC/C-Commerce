@@ -29,10 +29,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -208,
-        128
+        448,
+        288
       ],
-      "id": "15609d92-67c6-4c98-bca3-db4694cff6e8",
+      "id": "565c2691-f40f-49d3-93b7-7c501ac4d582",
       "name": "When Called by Agent"
     },
     {
@@ -43,10 +43,10 @@
       "type": "n8n-nodes-base.microsoftSql",
       "typeVersion": 1.1,
       "position": [
-        16,
-        128
+        672,
+        288
       ],
-      "id": "8c2bebb4-8553-429a-90e8-7f71673d1f0a",
+      "id": "7adee1a0-0898-4961-b041-916c86e27c37",
       "name": "Verificar Carrito Activo",
       "alwaysOutputData": true,
       "credentials": {
@@ -63,17 +63,15 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.codcliente }}\",\n  \"phone\": \"{{ $('When Called by Agent').first().json.phone }}\",\n  \"phone_number_id\": \"{{ $('When Called by Agent').first().json.phone_number_id }}\",\n  \"mode\": \"{{ $('When Called by Agent').first().json.mode }}\",\n  \"company_number\": \"{{ $('When Called by Agent').first().json.company_number }}\"\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        240,
-        128
+        896,
+        288
       ],
-      "id": "94ff603c-3b40-410a-8df3-e510979a2fe9",
+      "id": "6ddacd4a-4a77-4f88-bb78-e39fafdf40fa",
       "name": "Llamar C Commerce"
     },
     {
@@ -83,14 +81,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        464,
-        128
+        1120,
+        288
       ],
-      "id": "21bf8093-ec70-47ef-805d-0dadc4360a4f",
+      "id": "297db33b-102b-48e8-8ff2-a36449d34dfd",
       "name": "Extraer URL"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -126,15 +123,15 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "95b1f159-4988-49fe-bbee-aa5c41085122",
+  "versionId": "4e9c0cd2-1204-4d44-a814-5e79b593c343",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+    "templateCredsSetupCompleted": true
   },
   "id": "BK3iTuvFjZPe6lyT",
   "tags": []

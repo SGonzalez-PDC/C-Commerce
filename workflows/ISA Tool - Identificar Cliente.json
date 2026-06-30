@@ -14,24 +14,24 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        960,
-        96
+        0,
+        0
       ],
-      "id": "2df6b00f-6af4-4578-84fe-f40514504abe",
+      "id": "03e41f9f-3105-4aa0-adb0-1e45f495281f",
       "name": "When Called by Agent"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT\n        COUNT(*) AS total_ordenes,\n        MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa\n      AND f.cliente = cli.CodCliente\n      AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df\n        ON df.empresa = f.Empresa\n        AND df.tienda = f.Tienda\n        AND df.no_tx = f.no_tx\n    LEFT JOIN DEV_FFA.dbo.ARTICULO a\n        ON a.EMPRESA = df.empresa\n        AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat\n        ON cat.empresa = a.EMPRESA\n        AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa\n      AND f.cliente = cli.CodCliente\n      AND f.statusfac <> 'A'\n      AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (\n        cli.CodCliente = @input\n     OR cli.Telefono1 = @input\n     OR cli.Telefono2 = @input\n     OR cli.Telefono3 = @input\n  );"
+        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT\n        COUNT(*) AS total_ordenes,\n        MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa\n      AND f.cliente = cli.CodCliente\n      AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df\n        ON df.empresa = f.Empresa\n        AND df.tienda = f.Tienda\n        AND df.no_tx = f.no_tx\n    LEFT JOIN FFA.dbo.ARTICULO a\n        ON a.EMPRESA = df.empresa\n        AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat\n        ON cat.empresa = a.EMPRESA\n        AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa\n      AND f.cliente = cli.CodCliente\n      AND f.statusfac <> 'A'\n      AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (\n        cli.CodCliente = @input\n     OR cli.Telefono1 = @input\n     OR cli.Telefono2 = @input\n     OR cli.Telefono3 = @input\n  );"
       },
       "type": "n8n-nodes-base.microsoftSql",
       "typeVersion": 1.1,
       "position": [
-        1184,
-        96
+        224,
+        0
       ],
-      "id": "d499abde-2d2a-4924-b778-0ef63f389464",
+      "id": "d1ce9a55-e5a0-4b1c-93f0-0929383760b0",
       "name": "Lookup Cliente",
       "alwaysOutputData": true,
       "credentials": {
@@ -48,14 +48,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1408,
-        96
+        448,
+        0
       ],
-      "id": "9fc3ba04-c773-474f-8660-df555a17c985",
+      "id": "d41422b4-b022-4ebc-88fc-7260db9f4a6b",
       "name": "Formatear Perfil"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -80,15 +79,16 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "e6e12a86-59dc-41da-abf6-c21e0e659658",
+  "versionId": "177bc68a-6ef7-47de-a0a8-9f355492f47b",
   "meta": {
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+    "templateCredsSetupCompleted": true
   },
-  "id": "aP3GVmYHyj8z0QAT",
+  "id": "PKktkgoolczNhCEv",
   "tags": []
 }

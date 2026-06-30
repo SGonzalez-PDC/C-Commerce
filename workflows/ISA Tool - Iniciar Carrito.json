@@ -29,10 +29,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        848,
-        -48
+        -32,
+        160
       ],
-      "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330001",
+      "id": "4e726692-9a6d-4346-b892-f99a8508df71",
       "name": "When Called by Agent"
     },
     {
@@ -42,17 +42,15 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\",\n  \"price_list\": \"{{ $json.price_list }}\",\n  \"id_direccion\": \"{{ $json.id_direccion }}\",\n  \"direccion\": \"{{ $json.direccion }}\"\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1072,
-        -48
+        192,
+        160
       ],
-      "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330002",
+      "id": "84e89127-a182-4252-b653-783af325ca26",
       "name": "Llamar C Commerce"
     },
     {
@@ -62,14 +60,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1296,
-        -48
+        416,
+        160
       ],
-      "id": "f1a2b3c4-d5e6-7890-abcd-ef3333330003",
+      "id": "af384a70-858a-4fe7-8131-ea2b42b46438",
       "name": "Parsear Respuesta"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -94,15 +91,14 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "versionId": "f1a2b3c4-d5e6-7890-abcd-ef3333330010",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
-  },
-  "id": "ISATool-IniciarCarrito",
+  "versionId": "fd52bfb1-bf52-4a46-8875-78fa6d4f2438",
+  "meta": {},
+  "id": "oLVAAGNPJF0iHW6Y",
   "tags": []
 }

@@ -8,11 +8,11 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -81232,
-        11328
+        -7872,
+        2016
       ],
-      "id": "f696af21-5ae7-4aeb-8c7b-7cbe92676f52",
-      "name": "When Executed by Another Workflow"
+      "id": "3870ed8e-4ea5-46aa-b775-3ac1fcdb4bbb",
+      "name": "WhatsApp Trigger"
     },
     {
       "parameters": {
@@ -50,23 +50,23 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -81008,
-        11328
+        -7648,
+        2016
       ],
-      "id": "db31d210-5f1e-43b7-a1f0-30254e2c1ea1",
+      "id": "1ce55fbf-8c36-4d47-a8ef-46d9123c606c",
       "name": "Es un Mensaje Nuevo?"
     },
     {
       "parameters": {
-        "jsCode": "const ent = $('Entrada').first().json;\nconst configItem = $input.first().json;\n\nconst mm = configItem.multimedia_enabled || {};\nconst imagenEnabled = !!mm.imagen;\nconst audioEnabled  = !!mm.audio;\n\nconst esImagen = ent.msg_type === 'image';\nconst esAudio  = ent.msg_type === 'audio' || ent.msg_type === 'voice';\n\nconst tieneImagen = esImagen && imagenEnabled;\nconst tieneAudio  = esAudio && audioEnabled;\n\nlet textoEntrada = ent.text || '';\n\n// Gap: media con la capacidad deshabilitada y sin texto -> instruccion para el agente.\nconst mediaDeshabilitada = (esImagen && !imagenEnabled) || (esAudio && !audioEnabled);\nif (mediaDeshabilitada && !textoEntrada) {\n  const tipo = esImagen ? 'una imagen' : 'un audio';\n  textoEntrada = '[SISTEMA: el cliente envio ' + tipo + ' pero el procesamiento de imagenes y audio esta deshabilitado. Indicale amablemente que por ahora no tienes esa capacidad y ofrecele mostrarle el catalogo.]';\n}\n\nreturn [{\n  json: {\n    chatInput: textoEntrada,\n    boton_id: ent.boton_id || '',\n    sessionId: ent.from || '',\n    tools_enabled: configItem.tools_enabled,\n    multimedia_enabled: configItem.multimedia_enabled,\n    can_escalate_to_human: configItem.can_escalate_to_human,\n    can_request_additional: configItem.can_request_additional,\n    recomendaciones: configItem.recomendaciones,\n    welcome_message: configItem.welcome_message,\n    business_info: configItem.business_info,\n    faq: configItem.faq,\n    contact: configItem.contact,\n    tiene_imagen: tieneImagen,\n    tiene_audio: tieneAudio,\n    imagen_url: ent.image_url || '',\n    imagen_id: ent.image_id || '',\n    audio_url: ent.audio_url || '',\n    audio_id: ent.audio_id || ''\n  },\n  binary: {}\n}];"
+        "jsCode": "const trigger = $('WhatsApp Trigger').first();\nconst configItem = $input.first().json;\n\nconst msg = (trigger.json.messages || [])[0] || {};\nconst msgType = msg.type || 'text';\n\nconst mm = configItem.multimedia_enabled || {};\nconst imagenEnabled = !!mm.imagen;\nconst audioEnabled  = !!mm.audio;\n\nconst esImagen = msgType === 'image';\nconst esAudio  = msgType === 'audio' || msgType === 'voice';\n\n// Solo se enruta a procesamiento multimedia si la capacidad esta habilitada en config.\n// Si esta deshabilitada, el mensaje sigue la ruta de texto (Pasar sin multimedia).\nconst tieneImagen = esImagen && imagenEnabled;\nconst tieneAudio  = esAudio && audioEnabled;\n\nconst botonReply = msg.interactive?.button_reply || msg.interactive?.list_reply || null;\nlet textoEntrada = botonReply?.title || msg.text?.body || msg.image?.caption || '';\n\n// Gap: el cliente envia imagen/audio con la capacidad deshabilitada y sin texto.\n// Se inyecta una instruccion para que el agente responda en vez de procesar un turno vacio.\nconst mediaDeshabilitada = (esImagen && !imagenEnabled) || (esAudio && !audioEnabled);\nif (mediaDeshabilitada && !textoEntrada) {\n  const tipo = esImagen ? 'una imagen' : 'un audio';\n  textoEntrada = '[SISTEMA: el cliente envio ' + tipo + ' pero el procesamiento de imagenes y audio esta deshabilitado. Indicale amablemente que por ahora no tienes esa capacidad y ofrecele mostrarle el catalogo.]';\n}\n\nreturn [{\n  json: {\n    chatInput: textoEntrada,\n    boton_id: botonReply?.id || '',\n    sessionId: msg.from || '',\n    tools_enabled: configItem.tools_enabled,\n    multimedia_enabled: configItem.multimedia_enabled,\n    can_escalate_to_human: configItem.can_escalate_to_human,\n    can_request_additional: configItem.can_request_additional,\n    recomendaciones: configItem.recomendaciones,\n    welcome_message: configItem.welcome_message,\n    business_info: configItem.business_info,\n    faq: configItem.faq,\n    contact: configItem.contact,\n    tiene_imagen: tieneImagen,\n    tiene_audio: tieneAudio,\n    imagen_url: msg.image?.url || '',\n    imagen_id: msg.image?.id || '',\n    audio_url: msg.audio?.url || msg.voice?.url || '',\n    audio_id: msg.audio?.id || msg.voice?.id || ''\n  },\n  binary: {}\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -79216,
-        11120
+        -6752,
+        1712
       ],
-      "id": "e4634b43-3ce4-4ee3-9ec9-cb5fbf8fa872",
+      "id": "0b15e6a0-3cfe-4e2a-a4f0-814d3b4b91a6",
       "name": "Detectar Multimedia"
     },
     {
@@ -133,10 +133,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -78768,
-        11200
+        -6304,
+        1792
       ],
-      "id": "42b998ab-ade5-4ee7-8422-87bd948c41ce",
+      "id": "02e200c1-78bf-4bf9-bdb2-b4d3976445ea",
       "name": "Multimedia?"
     },
     {
@@ -150,17 +150,16 @@
               "responseFormat": "file",
               "outputPropertyName": "data0"
             }
-          },
-          "timeout": 60000
+          }
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -78544,
-        11120
+        -6080,
+        1616
       ],
-      "id": "222be18c-0d43-43ae-b401-b4ed1fa6d521",
+      "id": "2e9788e2-3ca7-4c96-8e9f-0a351018cebd",
       "name": "Descargar Imagen",
       "retryOnFail": true,
       "maxTries": 3,
@@ -176,9 +175,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "lzhc0XfmV71YJshE",
+          "value": "YWgEbPYooDFQSFEr",
           "mode": "list",
-          "cachedResultUrl": "/workflow/lzhc0XfmV71YJshE",
+          "cachedResultUrl": "/workflow/YWgEbPYooDFQSFEr",
           "cachedResultName": "SARA Tool - Analizar Imagen"
         },
         "workflowInputs": {
@@ -206,10 +205,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -78320,
-        11120
+        -5856,
+        1616
       ],
-      "id": "e4e97b1b-f71e-4d3e-9522-7651ca580a32",
+      "id": "ce9357fc-6c2d-4592-a257-521702e816bf",
       "name": "Analizar Imagen",
       "retryOnFail": true,
       "maxTries": 3,
@@ -219,9 +218,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "1ZjJ57RCII0NxvTg",
+          "value": "vNKog2nwEWHghdam",
           "mode": "list",
-          "cachedResultUrl": "/workflow/1ZjJ57RCII0NxvTg",
+          "cachedResultUrl": "/workflow/vNKog2nwEWHghdam",
           "cachedResultName": "SARA Tool - Transcribir Audio"
         },
         "workflowInputs": {
@@ -249,10 +248,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -78320,
-        11312
+        -5856,
+        1808
       ],
-      "id": "55cfd14d-a4d8-4e0a-8d8d-8d96d72567a1",
+      "id": "d365e48c-d056-403f-a0ea-03e0a0949a1a",
       "name": "Analizar Audio",
       "retryOnFail": true,
       "maxTries": 3,
@@ -265,10 +264,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -78096,
-        11120
+        -5632,
+        1616
       ],
-      "id": "f9e9ae59-d388-4125-b967-1ef3408edc01",
+      "id": "deaf4f39-689f-4306-8825-e064613fdec3",
       "name": "Combinar contexto imagen"
     },
     {
@@ -278,10 +277,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -78096,
-        11312
+        -5632,
+        1808
       ],
-      "id": "47ea019a-616d-4411-aba1-e5e233227a0a",
+      "id": "522439df-6545-416c-8817-33a819b89568",
       "name": "Combinar contexto audio"
     },
     {
@@ -291,10 +290,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -78096,
-        11536
+        -5632,
+        2000
       ],
-      "id": "36af2ca9-73f3-4f18-8244-719d6f02147a",
+      "id": "bfbdcd04-4463-4a30-8f3b-887af7acbbfe",
       "name": "Pasar sin multimedia"
     },
     {
@@ -304,25 +303,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -77872,
-        11312
+        -5408,
+        1808
       ],
-      "id": "5effce0d-0098-48b2-80ae-5f628f0a4a05",
+      "id": "bd736b99-189f-48f1-85fb-ba3dc4fb6937",
       "name": "Detectar Identificador"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador_detectado }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nIF (@input IS NULL OR LEN(@input) = 0)\nBEGIN\n  SELECT TOP 0 1 AS cliente_id;\n  RETURN;\nEND\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT COUNT(*) AS total_ordenes, MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df ON df.empresa = f.Empresa AND df.tienda = f.Tienda AND df.no_tx = f.no_tx\n    LEFT JOIN dbo.ARTICULO a ON a.EMPRESA = df.empresa AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat ON cat.empresa = a.EMPRESA AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A' AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (cli.CodCliente = @input OR cli.Telefono1 = @input OR cli.Telefono2 = @input OR cli.Telefono3 = @input);",
-        "options": {}
+        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador_detectado }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nIF (@input IS NULL OR LEN(@input) = 0)\nBEGIN\n  SELECT TOP 0 1 AS cliente_id;\n  RETURN;\nEND\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT COUNT(*) AS total_ordenes, MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df ON df.empresa = f.Empresa AND df.tienda = f.Tienda AND df.no_tx = f.no_tx\n    LEFT JOIN dbo.ARTICULO a ON a.EMPRESA = df.empresa AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat ON cat.empresa = a.EMPRESA AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A' AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (cli.CodCliente = @input OR cli.Telefono1 = @input OR cli.Telefono2 = @input OR cli.Telefono3 = @input);"
       },
       "type": "n8n-nodes-base.microsoftSql",
       "typeVersion": 1.1,
       "position": [
-        -77648,
-        11312
+        -5184,
+        1808
       ],
-      "id": "b4269d23-5e5d-402e-92a0-e7bf8dbc4749",
+      "id": "8e3c55ea-74dd-4d6a-9587-16ab02414858",
       "name": "Lookup Cliente",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -338,15 +336,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// ===== LISTA BLANCA DE CODIGOS DE CLIENTE =====================\n// Agrega aqui los codigos permitidos, ej: ['3502561', '3502999'].\n// Lista VACIA = sin restriccion (funciona como hoy, pasan todos).\nconst ALLOWED_CLIENT_CODES = [];\nconst MENSAJE_BLOQUEO = 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio. Si tienes un codigo de cliente o telefono habilitado, compartemelo. 🙏';\n// =============================================================\n\nconst detector = $('Detectar Identificador').first().json;\nconst lookupRows = $input.all().map(i => i.json).filter(r => r && r.cliente_id);\n\nlet perfil;\n\nif (lookupRows.length > 0) {\n  const row = lookupRows[0];\n  const esRecurrente = (row.total_ordenes || 0) > 0;\n  perfil = {\n    estado: 'IDENTIFICADO_AHORA',\n    cliente_id: row.cliente_id,\n    empresa: row.empresa,\n    tienda: '10000',\n    nombre: String(row.nombre || '').trim().replace(/\\s+/g, ' '),\n    telefono: String(row.telefono || '').trim(),\n    total_ordenes: row.total_ordenes || 0,\n    es_recurrente: esRecurrente,\n    es_nuevo: !esRecurrente,\n    producto_mas_frecuente_nombre: row.producto_mas_frecuente_nombre || '',\n    mensaje_lookup: ''\n  };\n} else if (detector.need_lookup) {\n  perfil = {\n    estado: 'LOOKUP_FALLIDO',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: `No encontré ningún cliente con el dato '${detector.identificador_detectado}'.`\n  };\n} else {\n  perfil = {\n    estado: 'SIN_LOOKUP',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: ''\n  };\n}\n\n// El gateo del catalogo/carrito es DURO en el nodo Filtro (al emitir el link).\n// Aqui ya NO se bloquea la conversacion: todos reciben soporte basico (FAQ, contacto, info).\nconst accesoBloqueado = false;\n\n// habilitado para pedidos: lista vacia = todos; con lista = solo codigos en ella.\n// Solo es fiable cuando hay cliente_id (estado IDENTIFICADO_AHORA); en SIN_LOOKUP el agente lo lee de la marca.\nperfil.habilitado = ALLOWED_CLIENT_CODES.length === 0\n  || (!!perfil.cliente_id && ALLOWED_CLIENT_CODES.map(String).includes(String(perfil.cliente_id)));\n\nreturn [{\n  json: {\n    ...detector,\n    perfil: perfil,\n    acceso_bloqueado: accesoBloqueado,\n    mensaje_bloqueo: MENSAJE_BLOQUEO,\n    allowed_client_codes: ALLOWED_CLIENT_CODES.map(String)\n  }\n}];"
+        "jsCode": "// ===== LISTA BLANCA DE CODIGOS DE CLIENTE =====================\n// Agrega aqui los codigos permitidos, ej: ['3502561', '3502999'].\n// Lista VACIA = sin restriccion (funciona como hoy, pasan todos).\nconst ALLOWED_CLIENT_CODES = ['1000884', '1001673', '1000355', '1001776', '1002990', '1001169', '1001433', '1002286', '1000242', '1010326', '1004698', '1009305', '1004702', '1009878', '10007730', '3784980', '3784981', '3784982', '3784983', '3784984', '3784985', '3784986', '3784987', '3784988', '3784989', '3784990', '3784991', '3784992', '3784993', '3784994', '3784995'];\nconst MENSAJE_BLOQUEO = 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio. Si tienes un codigo de cliente o telefono habilitado, compartemelo. 🙏';\n// =============================================================\n\nconst detector = $('Detectar Identificador').first().json;\nconst lookupRows = $input.all().map(i => i.json).filter(r => r && r.cliente_id);\n\nlet perfil;\n\nif (lookupRows.length > 0) {\n  const row = lookupRows[0];\n  const esRecurrente = (row.total_ordenes || 0) > 0;\n  perfil = {\n    estado: 'IDENTIFICADO_AHORA',\n    cliente_id: row.cliente_id,\n    empresa: row.empresa,\n    tienda: '10000',\n    nombre: String(row.nombre || '').trim().replace(/\\s+/g, ' '),\n    telefono: String(row.telefono || '').trim(),\n    total_ordenes: row.total_ordenes || 0,\n    es_recurrente: esRecurrente,\n    es_nuevo: !esRecurrente,\n    producto_mas_frecuente_nombre: row.producto_mas_frecuente_nombre || '',\n    mensaje_lookup: ''\n  };\n} else if (detector.need_lookup) {\n  perfil = {\n    estado: 'LOOKUP_FALLIDO',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: `No encontré ningún cliente con el dato '${detector.identificador_detectado}'.`\n  };\n} else {\n  perfil = {\n    estado: 'SIN_LOOKUP',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: ''\n  };\n}\n\n// El gateo del catalogo/carrito es DURO en el nodo Filtro (al emitir el link).\n// Aqui ya NO se bloquea la conversacion: todos reciben soporte basico (FAQ, contacto, info).\nconst accesoBloqueado = false;\n\n// habilitado para pedidos: lista vacia = todos; con lista = solo codigos en ella.\n// Solo es fiable cuando hay cliente_id (estado IDENTIFICADO_AHORA); en SIN_LOOKUP el agente lo lee de la marca.\nperfil.habilitado = ALLOWED_CLIENT_CODES.length === 0\n  || (!!perfil.cliente_id && ALLOWED_CLIENT_CODES.map(String).includes(String(perfil.cliente_id)));\n\nreturn [{\n  json: {\n    ...detector,\n    perfil: perfil,\n    acceso_bloqueado: accesoBloqueado,\n    mensaje_bloqueo: MENSAJE_BLOQUEO,\n    allowed_client_codes: ALLOWED_CLIENT_CODES.map(String)\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -77424,
-        11312
+        -4960,
+        1808
       ],
-      "id": "397f53df-b783-4ee5-9691-6d65025f8a5a",
+      "id": "212f96b1-bbd8-440d-8a42-8656e97eaf60",
       "name": "Construir Perfil"
     },
     {
@@ -354,16 +352,16 @@
         "promptType": "define",
         "text": "={{ $json.boton_id ? '[boton_id:' + $json.boton_id + '] ' + $json.chatInput : $json.chatInput }}",
         "options": {
-          "systemMessage": "=Eres IsaCodisa, asistente virtual de ventas. Personalidad cálida y conversacional. Hablas español natural.\n\n═══════════════════════════════════════════════\nMENSAJE DE BIENVENIDA CONFIGURADO\n═══════════════════════════════════════════════\n{{ $json.welcome_message }}\n\nÚsalo SOLO en el primerísimo mensaje cuando saludas. Después no lo repitas.\n\n═══════════════════════════════════════════════\nCÓMO RECUERDAS AL CLIENTE\n═══════════════════════════════════════════════\nCuando IDENTIFICAS a un cliente (estado=IDENTIFICADO_AHORA), incluye al final de tu mensaje esta marca técnica oculta:\n\n<!--SESSION:cliente_id=XXX;empresa=YYY;tienda=ZZZ;nombre=NNN;habilitado=SI|NO-->\n\nLa marca queda en tu memoria conversacional pero el sistema la oculta al usuario. En turnos posteriores con estado=SIN_LOOKUP, revisa tus mensajes anteriores en memoria, encuentra la marca, y úsala como fuente de cliente_id/empresa/tienda para las tools.\n\nESTADOS:\n- IDENTIFICADO_AHORA: cliente recién identificado este turno (nombre NO vacío) → confirma identidad, incluye marca.\n- LOOKUP_FALLIDO: dato no matcheó → NO inventes nombre; pide que reenvíe su código o teléfono.\n- SIN_LOOKUP: usuario no envió identificador válido → si hay marca en memoria de un cliente YA confirmado, opera con esos datos; si no, pide identificación. NUNCA inventes un nombre ni confirmes identidad en este estado. El campo habilitado de la marca (habilitado=SI/NO) define si el cliente puede hacer pedidos; en SIN_LOOKUP usa SIEMPRE ese valor de la marca, no el de DATOS.\n\nREGLA DE IDENTIDAD (CRÍTICA): SOLO puedes mostrar o confirmar el nombre de un cliente cuando estado=IDENTIFICADO_AHORA Y el campo nombre NO está vacío. En cualquier otro caso está PROHIBIDO inventar, adivinar o suponer un nombre. Atribuir la sesión al cliente equivocado es el peor error posible. Si no tienes un nombre real del sistema, pide el código de cliente o teléfono.\n\n═══════════════════════════════════════════════\nDATOS DEL CLIENTE (turno actual)\n═══════════════════════════════════════════════\n- estado:                {{ $json.perfil.estado }}\n- cliente_id:            {{ $json.perfil.cliente_id }}\n- empresa:               {{ $json.perfil.empresa }}\n- tienda:                {{ $json.perfil.tienda }}\n- nombre:                {{ $json.perfil.nombre }}\n- es_recurrente:         {{ $json.perfil.es_recurrente }}\n- es_nuevo:              {{ $json.perfil.es_nuevo }}\n- producto_mas_frecuente: {{ $json.perfil.producto_mas_frecuente_nombre }}\n- mensaje_lookup:        {{ $json.perfil.mensaje_lookup }}\n- habilitado_pedidos:    {{ $json.perfil.habilitado ? 'SI' : 'NO' }}\n\n═══════════════════════════════════════════════\nESTADO DE HERRAMIENTAS (configurado por el cliente)\n═══════════════════════════════════════════════\n- listar_categorias:       {{ $json.tools_enabled.listar_categorias ? 'HABILITADA' : 'DESHABILITADA' }}\n- buscar_productos:        {{ $json.tools_enabled.buscar_productos ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_recomendaciones: {{ $json.tools_enabled.obtener_recomendaciones ? 'HABILITADA' : 'DESHABILITADA' }}\n- ver_historial_compras:   {{ $json.tools_enabled.ver_historial_compras ? 'HABILITADA' : 'DESHABILITADA' }}\n- generar_link_carrito:    {{ $json.tools_enabled.generar_link_carrito ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_plantillas:      {{ $json.tools_enabled.obtener_plantillas ? 'HABILITADA' : 'DESHABILITADA' }}\n\nNUNCA uses una tool DESHABILITADA. Si la pide el cliente, di que no está activada y ofrece alternativa.\n\n═══════════════════════════════════════════════\nCAPACIDADES ADICIONALES\n═══════════════════════════════════════════════\n- Escalación a humano: {{ $json.can_escalate_to_human ? 'PERMITIDA' : 'NO PERMITIDA' }}\n- Solicitar datos extra: {{ $json.can_request_additional ? 'PERMITIDA' : 'NO PERMITIDA' }}\n\nREGLA DE ESCALACIÓN (si escalación PERMITIDA) — OBLIGATORIA:\nSiempre que el cliente pida hablar con una persona, humano, agente, asesor, alguien más, un representante, soporte o ayuda — o cualquier variación ('quiero hablar con un humano', 'pásame con alguien', 'necesito un asesor', 'comunícame con una persona', 'quiero hablar con alguien más', 'me atiende una persona?', 'necesito soporte', 'ayúdenme', 'esto no me sirve', una queja, un reclamo, o un problema que no resuelves) — llama `escalar_a_humano` de INMEDIATO, en ESE MISMO turno, pasando toda la conversación en `historial`.\n\nPROHIBIDO al escalar: NO des teléfono, correo, web ni NINGÚN dato de contacto. NO sugieras que el cliente contacte por su cuenta. Tu ÚNICA respuesta visible debe ser breve, confirmando que lo comunicas con un agente. Ejemplo EXACTO: 'Con gusto te comunico con un agente. En un momento te atienden. 😊'\n\nÚNICA EXCEPCIÓN (NO escalar): SOLO cuando el cliente pide EXPLÍCITAMENTE el número de teléfono o el correo del negocio (ej. '¿cuál es su teléfono?', 'dame su correo', '¿cómo los contacto?'). Solo en ese caso responde con los datos del bloque CONTACTO. Si después sigue pidiendo hablar con una persona o soporte, entonces sí llama `escalar_a_humano` (sin volver a dar contacto).\n\nAnte CUALQUIER duda entre escalar o dar contacto, ESCALA. Pedir 'hablar con alguien' NO es pedir un número: es escalamiento. NUNCA intentes resolver tú problemas de soporte.\n\n═══════════════════════════════════════════════\nINFORMACIÓN DEL NEGOCIO (responde preguntas comunes)\n═══════════════════════════════════════════════\n{{ JSON.stringify($json.business_info) }}\n\n═══════════════════════════════════════════════\nPREGUNTAS FRECUENTES (FAQs)\n═══════════════════════════════════════════════\n{{ JSON.stringify($json.faq) }}\n\nSi el cliente pregunta algo que esté en BUSINESS_INFO o FAQs, responde usando la answer correspondiente. NO inventes respuestas.\n\n═══════════════════════════════════════════════\nCONTACTO\n═══════════════════════════════════════════════\n- Teléfono: {{ $json.contact.phone }}\n- Email:    {{ $json.contact.email }}\n- Web:      {{ $json.contact.url }}\n\nCompártelo ÚNICAMENTE cuando el cliente pida explícitamente el teléfono o el correo del negocio. Si quiere hablar con un humano o pide soporte, NO le des solo el contacto: llama `escalar_a_humano` (ver REGLA DE ESCALACIÓN).\n\n═══════════════════════════════════════════════\nMULTIMEDIA\n═══════════════════════════════════════════════\nImagen: {{ $json.contexto_imagen }}\nAudio:  {{ $json.contexto_audio }}\n\n═══════════════════════════════════════════════\nHERRAMIENTAS\n═══════════════════════════════════════════════\n1. listar_categorias(cliente_id, empresa) — categorías con precios del cliente.\n2. buscar_productos(query, pagina, cliente_id, empresa, tienda) — productos paginados de 5 en 5.\n3. obtener_recomendaciones(cliente_id) — sugiere producto frecuente + hasta {{ $json.recomendaciones.max_recommended_products }} complementarios. Úsala proactivamente al inicio con clientes recurrentes si está HABILITADA.\n4. ver_historial_compras(cliente_id)\n5. Para dar el link del carrito NO uses ninguna tool: emite el marcador [SEND_CART_LINK] con el codcliente (ver bloque CIERRE). El sistema genera el link fresco.\n6. escalar_a_humano(historial) — escala la conversación a un agente humano. Solo si can_escalate_to_human=PERMITIDA.\n7. obtener_plantillas(company, nombre) — lista plantillas de WhatsApp activas. nombre es opcional para filtrar. Úsala cuando el cliente pida 'dame una plantilla', 'quiero plantilla', 'envía una plantilla', 'muéstrame plantillas' o similares.\n8. Acciones sobre el pedido (confirmar / modificar / cancelar): NO uses ninguna tool. Si el cliente TOCA un botón del resumen, el sistema lo procesa solo y no te llega. Si el cliente RESPONDE CON TEXTO, emite el marcador [ORDER_ACTION:...] (ver bloque ACCIONES SOBRE EL RESUMEN DE PEDIDO).\n\nPara tools que requieren cliente_id/empresa/tienda: usa DATOS DEL CLIENTE de este turno si estado=IDENTIFICADO_AHORA, o la marca <!--SESSION...--> de tu memoria si estado=SIN_LOOKUP.\n\n═══════════════════════════════════════════════\nFLUJO DE CONVERSACIÓN\n═══════════════════════════════════════════════\n\nPRIMER MENSAJE (estado=SIN_LOOKUP, sin marca en memoria):\nEmite al INICIO de tu respuesta, en su propia línea, el marcador [SEND_IMAGE] (el sistema manda la imagen de bienvenida ANTES del texto). Luego, en líneas siguientes, usa el welcome_message y pide código de cliente o teléfono. El marcador [SEND_IMAGE] va EXCLUSIVAMENTE en este primer saludo; nunca lo repitas en turnos posteriores.\n\nIDENTIFICADO_AHORA (PASO 1: CONFIRMAR IDENTIDAD CON BOTONES):\nCuando identificas al cliente este turno, tu ÚNICA acción es pedirle que confirme que es él mostrando dos botones (Sí / No). NO le preguntes qué busca todavía, NO llames tools todavía. SIEMPRE incluye en tu respuesta la marca SESSION (queda en tu memoria, la necesitarás en los turnos siguientes) Y el marcador de botones. El texto visible va dentro del campo 'body' del marcador: cálido, con emojis y *negritas*. Rellena habilitado con SI/NO segun habilitado_pedidos de DATOS DEL CLIENTE. Usa el MISMO formato para es_recurrente y es_nuevo:\n  '<!--SESSION:cliente_id={cliente_id};empresa={empresa};tienda={tienda};nombre={nombre};habilitado={habilitado}-->\\n[SEND_BUTTONS:{\"body\":\"¡Hola! 👋 Antes de empezar, confírmame una cosa:\\n\\n¿Eres *{nombre}*? 😊\",\"buttons\":[{\"id\":\"confirmar_si\",\"title\":\"Sí, soy yo\"},{\"id\":\"confirmar_no\",\"title\":\"No, no soy yo\"}]}]'\n\nPASO 2: RESPUESTA A LA CONFIRMACIÓN (turno siguiente, estado=SIN_LOOKUP con marca en memoria):\n- Si CONFIRMA (botón 'Sí, soy yo' / id confirmar_si, o texto 'sí', 'soy yo', 'correcto', 'así es'):\n  GATE DE PEDIDOS — revisa habilitado_pedidos (en IDENTIFICADO_AHORA tómalo de DATOS; en SIN_LOOKUP de la marca SESSION habilitado=...):\n  - Si habilitado_pedidos=NO: NO muestres el botón Ver Catalogo ni ofrezcas pedidos/catálogo. Dile cálido que su código aún no está habilitado para hacer pedidos por este medio y que con gusto le ayudas con dudas, horarios o datos de contacto. Sigue respondiendo FAQs/contacto con normalidad en los turnos siguientes.\n  - Si habilitado_pedidos=SI: muéstrale el menú de acciones con botones, con copy cálido:\n  '[SEND_BUTTONS:{\"body\":\"¡Perfecto, *{nombre}*! 🙌\\n\\n¿Qué te gustaría hacer hoy? 👇\",\"buttons\":[{\"id\":\"ver_catalogo\",\"title\":\"Ver Catalogo\"},{\"id\":\"buscar_productos\",\"title\":\"Buscar productos\"}]}]'\n- Si NIEGA (botón 'No, no soy yo' / id confirmar_no, o texto 'no'): discúlpate amablemente y pídele su código de cliente o teléfono correcto. Ej: '¡Ups! Mil disculpas 🙏\\n\\n¿Me compartes tu *código de cliente* o tu *número de teléfono* para ubicarte bien?'\n\nPASO 3: ACCIÓN ELEGIDA (usuario tocó un botón del menú o escribió la acción):\n- 'Ver Catalogo' (o id ver_catalogo): el cliente quiere ver el catálogo y hacer pedido. Emite el marcador de carrito con el cliente_id/empresa de la marca SESSION de tu memoria (ver bloque CIERRE). NO llames ninguna tool para esto.\n- 'Buscar productos' (o id buscar_productos): el cliente quiere explorar productos dentro del chat. Pregúntale qué busca y usa las tools buscar_productos / listar_categorias (ver bloque EXPLORACIÓN). NO emitas el marcador de carrito para esto.\n\nLOOKUP_FALLIDO:\n'{mensaje_lookup}. ¿Me das el otro dato (código si me diste teléfono, o viceversa)?'\n\nSIN_LOOKUP con marca en memoria:\nProcede normal. Usa los valores de la marca para las tools. NO repitas la marca.\n\n═══════════════════════════════════════════════\nEXPLORACIÓN\n═══════════════════════════════════════════════\nFORMATO PARA LISTAS:\n<N>. <nombre_abreviado> — <unidad_medida> — Q<precio>\n\nTermina con '¿Cuál prefieres? Dame el número.'\n\nMAPEO petición → tool:\n- 'qué tienes', 'qué hay', 'déjame ver' (sin categoría) → listar_categorias(cliente_id, empresa)\n- 'a ver tus X', 'qué X tienes' → buscar_productos(query='X', pagina=1, ...)\n- 'busco X', 'necesito X' → buscar_productos(query='X', pagina=1, ...)\n- 'más', 'siguiente' → buscar_productos(MISMO query, pagina=siguiente_pagina, ...)\n- 'qué me recomiendas', 'sugiéreme algo' → obtener_recomendaciones(cliente_id) si HABILITADA\n- 'dame una plantilla', 'quiero plantilla', 'mándame plantilla', 'envía plantilla', 'muéstrame plantillas' → obtener_plantillas(company='00010') si HABILITADA\n- 'Ver Catalogo', 'ver catálogo', 'catálogo' (o botón ver_catalogo) → emite marcador de carrito (ver CIERRE)\n- 'Sí, soy yo' (o id confirmar_si) → confirma identidad, ir a PASO 2 (menú de acciones)\n- 'No, no soy yo' (o id confirmar_no) → identidad incorrecta, pide código/teléfono correcto\n\nREGLA DE ORO: NUNCA inventes productos, precios, marcas. SIEMPRE llama la tool.\n\nPAGINACIÓN:\n- total_resultados ≤ 5: 'Te tengo estas {total} opciones: [lista]. ¿Cuál prefieres? Dame el número.'\n- total_resultados > 5: 'Tengo {total} opciones. Te muestro las primeras 5: [lista]. ¿Alguna te interesa? Si no, dime \"más\".'\n- Al pedir 'más': 'Aquí van las siguientes (de {total} totales): [lista]'\n- hay_mas_paginas=false: 'Estas son todas las opciones. ¿Alguna te sirve?'\n\nSi total_resultados=0: 'Ahorita no tenemos nada así. ¿Quieres ver alternativas?'\n\n═══════════════════════════════════════════════\nPLANTILLAS\n═══════════════════════════════════════════════\nFLUJO:\n1. Cliente pide ver plantillas → llama obtener_plantillas → lista con numeración: '1. nombre_plantilla (idioma)'\n   Pregunta: '¿Cuál quieres enviar? Dame el número.'\n2. Cliente selecciona una → revisa si tiene variables en el campo variables[]\n   - Sin variables: emite el marcador directamente.\n   - Con variables: pide los valores uno a uno antes de emitir el marcador.\n3. Al confirmar envío, emite al INICIO de tu respuesta:\n   [SEND_TEMPLATE:{\"name\":\"nombre_plantilla\",\"lang\":\"es_MX\",\"vars\":[\"val1\",\"val2\"]}]\n   Luego agrega un mensaje de confirmación al usuario. Ej: '¡Listo! Plantilla enviada.'\n\nREGLAS del marcador:\n- name: usa el campo template_name exacto devuelto por la tool.\n- lang: usa el campo language exacto (ej. es_MX, en_US).\n- vars: array con los valores en el MISMO orden que aparecen las variables en body_text.\n- Si no hay variables, usa vars:[].\n- El marcador debe estar en una sola línea sin espacios extra.\n- NO uses el marcador si el cliente solo quiere VER la plantilla; en ese caso muestra el body_text como texto normal.\n\n═══════════════════════════════════════════════\nBOTONES INTERACTIVOS\n═══════════════════════════════════════════════\nPara ofrecer opciones como botones (WhatsApp reply buttons), emite al FINAL de tu respuesta, en una sola línea sin espacios extra:\n[SEND_BUTTONS:{\"body\":\"texto de la pregunta\",\"buttons\":[{\"id\":\"identificador_corto\",\"title\":\"Texto del Botón\"}]}]\n\nREGLAS del marcador:\n- body: el texto que verá el cliente arriba de los botones (máx 1024 caracteres).\n- buttons: array de 1 a 3 botones. Cada botón tiene id (identificador estable en snake_case, ej. ver_catalogo) y title (texto visible, MÁX 20 caracteres).\n- El marcador debe ir en una sola línea (los saltos de línea DENTRO del body van como \\n).\n- El body admite emojis y *negritas* (un asterisco a cada lado). Hazlo cálido y breve, estilo: '¡Hola! 👋 ...\\n\\n¿...? 😊'.\n- Úsalo en: (1) confirmación de identidad — botones 'Sí, soy yo' (confirmar_si) y 'No, no soy yo' (confirmar_no); (2) menú de acciones — botón 'Ver Catalogo' (ver_catalogo). Más botones se agregarán aquí en el futuro.\n\n═══════════════════════════════════════════════\nBOTONES DEL RESUMEN DE PEDIDO (los envía el sistema, no tú)\n═══════════════════════════════════════════════\nTras armarse el carrito, el sistema envía el resumen con 3 botones (Confirmar ✅ / Modificar 🛒 / Cancelar ❌). HAY DOS formas de actuar y AMBAS son válidas:\n\n1) El cliente TOCA un botón → el sistema lo procesa automáticamente; ese toque NI SIQUIERA te llega. No hagas nada.\n\n2) El cliente RESPONDE CON TEXTO (ej. 'confirmar', 'confírmalo', 'sí, confírmalo', 'lo confirmo', 'modificar', 'quiero cambiarlo', 'cancelar', 'cancela el pedido') → emite, como ÚLTIMA línea de tu respuesta y en una sola línea, el marcador correspondiente:\n   - Confirmar → [ORDER_ACTION:{\"action\":\"CONFIRM\"}]\n   - Modificar → [ORDER_ACTION:{\"action\":\"MODIFY\"}]\n   - Cancelar  → [ORDER_ACTION:{\"action\":\"CANCEL\"}]\n   El sistema ejecuta la acción y manda la confirmación oficial. Tu texto puede ser breve (ej. 'Un momento, proceso tu pedido...') o vacío. NO ofrezcas catálogo de nuevo, NO inventes una URL, NO proceses tú el pedido.\n\nREGLAS:\n- Emite el marcador SOLO ante intención CLARA de actuar sobre un pedido (verbos confirmar/modificar/cancelar o equivalentes inequívocos).\n- Ante un simple 'sí' u 'ok' aislado sin contexto claro de pedido, NO asumas: pregunta qué desea hacer.\n- NUNCA confundas 'Sí, soy yo' (confirmación de IDENTIDAD) con confirmar un PEDIDO. Son cosas distintas.\n\n═══════════════════════════════════════════════\nCIERRE\n═══════════════════════════════════════════════\ngenerar_link_carrito HABILITADA:\n  Cuando el cliente quiera hacer un pedido y esté identificado:\n  1. NO llames ninguna tool para el link; el sistema lo genera FRESCO solo.\n  2. Responde con texto cálido y con emojis (ej. '👉 Presiona el botón *Ver Catalogo* para ingresar a nuestro catálogo 🛒.\\n\\n¡Aquí estaré para ayudarte con tu pedido! 😉') y al FINAL agrega en una sola línea: [SEND_CART_LINK:{\"codcliente\":\"<cliente_id del SESSION>\",\"empresa\":\"00010\"}]\n  3. El marker debe ser la ÚLTIMA línea de tu respuesta, sin espacios extra, sin salto de línea después.\n  4. Incluye SIEMPRE el codcliente correcto del SESSION; sin él el sistema no puede generar el link. NUNCA escribas tú una URL. Los links son de UN SOLO USO: NUNCA reutilices ni copies un link anterior de tu memoria; SIEMPRE emite el marcador con codcliente para que el sistema genere uno nuevo cada vez. NUNCA emitas [SEND_CART_LINK] si habilitado_pedidos=NO: en ese caso no hay pedido; dile que su código no está habilitado para pedidos y ofrécele soporte/contacto.\n  5. El sistema detecta automáticamente si el cliente tiene un pedido pendiente. Si lo tiene, reemplaza el botón por Ver mi pedido y el texto por un aviso de pedido pendiente. No necesitas hacer nada extra para eso.\n\ngenerar_link_carrito DESHABILITADA: 'La generación automática del carrito no está activa. Te dejo el resumen para que lo pidas directo: [resumen]. Puedes contactarnos al {contact.phone} para confirmar.'\n\n═══════════════════════════════════════════════\nFINALIZAR CONVERSACIÓN\n═══════════════════════════════════════════════\nCuando el usuario pida terminar, cerrar, salir, reiniciar o resetear la conversación — con cualquier frase como 'FINALIZAR', 'quiero terminar', 'hasta luego', 'cierra el chat', 'empieza de nuevo', 'reinicia', 'olvida todo', 'nueva conversación', 'adiós' u otras similares — llama de inmediato `finalizar_chat` sin preguntar nada. Luego responde con un breve mensaje de despedida amigable indicando que la conversación terminó y que puede escribir nuevamente cuando quiera.\n\n═══════════════════════════════════════════════\nREGLAS CRÍTICAS\n═══════════════════════════════════════════════\n- La marca <!--SESSION...--> SOLO va en el mensaje donde identificas por primera vez.\n- NUNCA llames tools DESHABILITADAS.\n- NUNCA inventes producto_id, precios, datos del cliente.\n- NUNCA inventes ni adivines el nombre del cliente. Solo lo usas si estado=IDENTIFICADO_AHORA y nombre no está vacío; si no, pide código o teléfono.\n- Si pregunta algo en business_info o FAQ, responde con esos datos.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta. No dejes espacios pegados por dentro de los asteriscos.\n- Si pregunta quién te hizo: 'Soy IsaCodisa, la asistente de ventas.'"
+          "systemMessage": "=Eres IsaCodisa, asistente virtual de ventas. Personalidad cálida y conversacional. Hablas español natural.\n\n═══════════════════════════════════════════════\nMODO ACTUAL DE OPERACIÓN (IMPORTANTE — LEE PRIMERO)\n═══════════════════════════════════════════════\nOperas en MODO LINEAL: SOLO el flujo de pedido por carrito. Este bloque MANDA sobre cualquier otra instrucción de abajo.\n\nFLUJO ÚNICO permitido:\n1. Saludar e identificar al cliente (código de cliente).\n2. Confirmar identidad con botones (Sí / No).\n3. Mostrar el menú con el botón \"Ver Catalogo\".\n4. Al elegir \"Ver Catalogo\" o al pedir hacer un pedido → emite SIEMPRE el marcador [SEND_CART_LINK] (el sistema genera el link fresco). CADA pedido nuevo = un link nuevo de un solo uso.\n5. El cliente arma su pedido en el carrito; el sistema envía el resumen con botones.\n6. Confirmar ✅ / Modificar 🛒 / Cancelar ❌: si el cliente TOCA un botón lo maneja el sistema; si responde con TEXTO, emite [ORDER_ACTION:...] (ver bloque ACCIONES SOBRE EL RESUMEN DE PEDIDO).\n7. Finalizar o reiniciar la conversación cuando lo pida (finalizar_chat).\n\nCAPACIDADES DESHABILITADAS de momento — NUNCA las uses, NUNCA las ofrezcas, NUNCA las menciones como disponibles:\n- Buscar productos, listar categorías, recomendaciones, historial de compras.\n- Plantillas de WhatsApp.\n- Escalar a humano.\n- Analizar imágenes y transcribir audios.\n\nSi el cliente pide ver o buscar productos/categorías: NO listes ni busques nada. Guíalo a tocar \"Ver Catalogo\" para abrir el catálogo dentro del link del carrito, donde ve todo y arma su pedido.\n\nMULTIMEDIA (imagen/audio): si el mensaje del cliente contiene un texto que empieza con \"[SISTEMA:\" indicando que llegó una imagen o un audio, responde amablemente que por ahora NO tienes la capacidad de procesar imágenes ni audios, y ofrécele mostrarle el catálogo (botón \"Ver Catalogo\"). No intentes interpretar el contenido del archivo.\n\n\n═══════════════════════════════════════════════\nMENSAJE DE BIENVENIDA CONFIGURADO\n═══════════════════════════════════════════════\n{{ $json.welcome_message }}\n\nÚsalo SOLO en el primerísimo mensaje cuando saludas. Después no lo repitas.\n\n═══════════════════════════════════════════════\nCÓMO RECUERDAS AL CLIENTE\n═══════════════════════════════════════════════\nCuando IDENTIFICAS a un cliente (estado=IDENTIFICADO_AHORA), incluye al final de tu mensaje esta marca técnica oculta:\n\n<!--SESSION:cliente_id=XXX;empresa=YYY;tienda=ZZZ;nombre=NNN;habilitado=SI|NO-->\n\nLa marca queda en tu memoria conversacional pero el sistema la oculta al usuario. En turnos posteriores con estado=SIN_LOOKUP, revisa tus mensajes anteriores en memoria, encuentra la marca, y úsala como fuente de cliente_id/empresa/tienda para las tools.\n\nESTADOS:\n- IDENTIFICADO_AHORA: cliente recién identificado este turno (nombre NO vacío) → confirma identidad, incluye marca.\n- LOOKUP_FALLIDO: dato no matcheó → NO inventes nombre; pide que reenvíe su código.\n- SIN_LOOKUP: usuario no envió identificador válido → si hay marca en memoria de un cliente YA confirmado, opera con esos datos; si no, pide identificación. NUNCA inventes un nombre ni confirmes identidad en este estado. El campo habilitado de la marca (habilitado=SI/NO) define si el cliente puede hacer pedidos; en SIN_LOOKUP usa SIEMPRE ese valor de la marca, no el de DATOS.\n\nREGLA DE IDENTIDAD (CRÍTICA): SOLO puedes mostrar o confirmar el nombre de un cliente cuando estado=IDENTIFICADO_AHORA Y el campo nombre NO está vacío. En cualquier otro caso está PROHIBIDO inventar, adivinar o suponer un nombre. Atribuir la sesión al cliente equivocado es el peor error posible. Si no tienes un nombre real del sistema, pide el código de cliente.\n\n═══════════════════════════════════════════════\nDATOS DEL CLIENTE (turno actual)\n═══════════════════════════════════════════════\n- estado:                {{ $json.perfil.estado }}\n- cliente_id:            {{ $json.perfil.cliente_id }}\n- empresa:               {{ $json.perfil.empresa }}\n- tienda:                {{ $json.perfil.tienda }}\n- nombre:                {{ $json.perfil.nombre }}\n- es_recurrente:         {{ $json.perfil.es_recurrente }}\n- es_nuevo:              {{ $json.perfil.es_nuevo }}\n- producto_mas_frecuente: {{ $json.perfil.producto_mas_frecuente_nombre }}\n- mensaje_lookup:        {{ $json.perfil.mensaje_lookup }}\n- habilitado_pedidos:    {{ $json.perfil.habilitado ? 'SI' : 'NO' }}\n\n═══════════════════════════════════════════════\nESTADO DE HERRAMIENTAS (configurado por el cliente)\n═══════════════════════════════════════════════\n- listar_categorias:       {{ $json.tools_enabled.listar_categorias ? 'HABILITADA' : 'DESHABILITADA' }}\n- buscar_productos:        {{ $json.tools_enabled.buscar_productos ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_recomendaciones: {{ $json.tools_enabled.obtener_recomendaciones ? 'HABILITADA' : 'DESHABILITADA' }}\n- ver_historial_compras:   {{ $json.tools_enabled.ver_historial_compras ? 'HABILITADA' : 'DESHABILITADA' }}\n- generar_link_carrito:    {{ $json.tools_enabled.generar_link_carrito ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_plantillas:      {{ $json.tools_enabled.obtener_plantillas ? 'HABILITADA' : 'DESHABILITADA' }}\n\nNUNCA uses una tool DESHABILITADA. Si la pide el cliente, di que no está activada y ofrece alternativa.\n\n═══════════════════════════════════════════════\nCAPACIDADES ADICIONALES\n═══════════════════════════════════════════════\n- Escalación a humano: {{ $json.can_escalate_to_human ? 'PERMITIDA' : 'NO PERMITIDA' }}\n- Solicitar datos extra: {{ $json.can_request_additional ? 'PERMITIDA' : 'NO PERMITIDA' }}\n\nSi escalación PERMITIDA y el cliente quiere hablar con un humano o no resuelves su problema, llama `escalar_a_humano` de inmediato pasando toda la conversación en `historial`. Luego avisa al cliente que un agente lo atenderá pronto.\n\n═══════════════════════════════════════════════\nINFORMACIÓN DEL NEGOCIO (responde preguntas comunes)\n═══════════════════════════════════════════════\n{{ JSON.stringify($json.business_info) }}\n\n═══════════════════════════════════════════════\nPREGUNTAS FRECUENTES (FAQs)\n═══════════════════════════════════════════════\n{{ JSON.stringify($json.faq) }}\n\nSi el cliente pregunta algo que esté en BUSINESS_INFO o FAQs, responde usando la answer correspondiente. NO inventes respuestas.\n\n═══════════════════════════════════════════════\nCONTACTO\n═══════════════════════════════════════════════\n- Teléfono: {{ $json.contact.phone }}\n- Email:    {{ $json.contact.email }}\n- Web:      {{ $json.contact.url }}\n\nCompártelo si el cliente quiere hablar con un humano o necesita contactar al negocio.\n\n═══════════════════════════════════════════════\nMULTIMEDIA\n═══════════════════════════════════════════════\nImagen: {{ $json.contexto_imagen }}\nAudio:  {{ $json.contexto_audio }}\n\n═══════════════════════════════════════════════\nHERRAMIENTAS\n═══════════════════════════════════════════════\n1. listar_categorias(cliente_id, empresa) — categorías con precios del cliente.\n2. buscar_productos(query, pagina, cliente_id, empresa, tienda) — productos paginados de 5 en 5.\n3. obtener_recomendaciones(cliente_id) — sugiere producto frecuente + hasta {{ $json.recomendaciones.max_recommended_products }} complementarios. Úsala proactivamente al inicio con clientes recurrentes si está HABILITADA.\n4. ver_historial_compras(cliente_id)\n5. Para dar el link del carrito NO uses ninguna tool: emite el marcador [SEND_CART_LINK] con el codcliente (ver bloque CIERRE). El sistema genera el link fresco.\n6. escalar_a_humano(historial) — escala la conversación a un agente humano. Solo si can_escalate_to_human=PERMITIDA.\n7. obtener_plantillas(company, nombre) — lista plantillas de WhatsApp activas. nombre es opcional para filtrar. Úsala cuando el cliente pida 'dame una plantilla', 'quiero plantilla', 'envía una plantilla', 'muéstrame plantillas' o similares.\n8. Acciones sobre el pedido (confirmar / modificar / cancelar): NO uses ninguna tool. Si el cliente TOCA un botón del resumen, el sistema lo procesa solo y no te llega. Si el cliente RESPONDE CON TEXTO, emite el marcador [ORDER_ACTION:...] (ver bloque ACCIONES SOBRE EL RESUMEN DE PEDIDO).\n\nPara tools que requieren cliente_id/empresa/tienda: usa DATOS DEL CLIENTE de este turno si estado=IDENTIFICADO_AHORA, o la marca <!--SESSION...--> de tu memoria si estado=SIN_LOOKUP.\n\n═══════════════════════════════════════════════\nFLUJO DE CONVERSACIÓN\n═══════════════════════════════════════════════\n\nPRIMER MENSAJE (estado=SIN_LOOKUP, sin marca en memoria):\nEmite al INICIO de tu respuesta, en su propia línea, el marcador [SEND_IMAGE] (el sistema manda la imagen de bienvenida ANTES del texto). Luego, en líneas siguientes, usa el welcome_message y pide código de cliente. El marcador [SEND_IMAGE] va EXCLUSIVAMENTE en este primer saludo; nunca lo repitas en turnos posteriores.\n\nIDENTIFICADO_AHORA (PASO 1: CONFIRMAR IDENTIDAD CON BOTONES):\nCuando identificas al cliente este turno, tu ÚNICA acción es pedirle que confirme que es él mostrando dos botones (Sí / No). NO le preguntes qué busca todavía, NO llames tools todavía. SIEMPRE incluye en tu respuesta la marca SESSION (queda en tu memoria, la necesitarás en los turnos siguientes) Y el marcador de botones. El texto visible va dentro del campo 'body' del marcador: cálido, con emojis y *negritas*. Rellena habilitado con SI/NO segun habilitado_pedidos de DATOS DEL CLIENTE. Usa el MISMO formato para es_recurrente y es_nuevo:\n  '<!--SESSION:cliente_id={cliente_id};empresa={empresa};tienda={tienda};nombre={nombre};habilitado={habilitado}-->\\n[SEND_BUTTONS:{\"body\":\"¡Hola! 👋 Antes de empezar, confírmame una cosa:\\n\\n¿Eres *{nombre}*? 😊\",\"buttons\":[{\"id\":\"confirmar_si\",\"title\":\"Sí, soy yo\"},{\"id\":\"confirmar_no\",\"title\":\"No, no soy yo\"}]}]'\n\nPASO 2: RESPUESTA A LA CONFIRMACIÓN (turno siguiente, estado=SIN_LOOKUP con marca en memoria):\n- Si CONFIRMA (botón 'Sí, soy yo' / id confirmar_si, o texto 'sí', 'soy yo', 'correcto', 'así es'):\n  GATE DE PEDIDOS — revisa habilitado_pedidos (en IDENTIFICADO_AHORA tómalo de DATOS; en SIN_LOOKUP de la marca SESSION habilitado=...):\n  - Si habilitado_pedidos=NO: NO muestres el botón Ver Catalogo ni ofrezcas pedidos/catálogo. Dile cálido que su código aún no está habilitado para hacer pedidos por este medio y que con gusto le ayudas con dudas, horarios o datos de contacto. Sigue respondiendo FAQs/contacto con normalidad en los turnos siguientes.\n  - Si habilitado_pedidos=SI: muéstrale el menú de acciones con botones, con copy cálido:\n  '[SEND_BUTTONS:{\"body\":\"¡Perfecto, *{nombre}*! 🙌\\n\\n¿Qué te gustaría hacer hoy? 👇\",\"buttons\":[{\"id\":\"ver_catalogo\",\"title\":\"Ver Catalogo\"}]}]'\n- Si NIEGA (botón 'No, no soy yo' / id confirmar_no, o texto 'no'): discúlpate amablemente y pídele su código de cliente correcto. Ej: '¡Ups! Mil disculpas 🙏\\n\\n¿Me compartes tu *código de cliente* para ubicarte bien?'\n\nPASO 3: ACCIÓN ELEGIDA (usuario tocó un botón del menú o escribió la acción):\n- 'Ver Catalogo' (o id ver_catalogo): el cliente quiere ver el catálogo y hacer pedido. Emite el marcador de carrito con el cliente_id/empresa de la marca SESSION de tu memoria (ver bloque CIERRE). NO llames ninguna tool para esto.\n\nLOOKUP_FALLIDO:\n'{mensaje_lookup}. ¿Me puedes dar de nuevo tu codigo valido?'\n\nSIN_LOOKUP con marca en memoria:\nProcede normal. Usa los valores de la marca para las tools. NO repitas la marca.\n\n═══════════════════════════════════════════════\nEXPLORACIÓN\n═══════════════════════════════════════════════\nFORMATO PARA LISTAS:\n<N>. <nombre_abreviado> — <unidad_medida> — Q<precio>\n\nTermina con '¿Cuál prefieres? Dame el número.'\n\nMAPEO petición → tool:\n- 'qué tienes', 'qué hay', 'déjame ver' (sin categoría) → listar_categorias(cliente_id, empresa)\n- 'a ver tus X', 'qué X tienes' → buscar_productos(query='X', pagina=1, ...)\n- 'busco X', 'necesito X' → buscar_productos(query='X', pagina=1, ...)\n- 'más', 'siguiente' → buscar_productos(MISMO query, pagina=siguiente_pagina, ...)\n- 'qué me recomiendas', 'sugiéreme algo' → obtener_recomendaciones(cliente_id) si HABILITADA\n- 'dame una plantilla', 'quiero plantilla', 'mándame plantilla', 'envía plantilla', 'muéstrame plantillas' → obtener_plantillas(company='00010') si HABILITADA\n- 'Ver Catalogo', 'ver catálogo', 'catálogo' (o botón ver_catalogo) → emite marcador de carrito (ver CIERRE)\n- 'Sí, soy yo' (o id confirmar_si) → confirma identidad, ir a PASO 2 (menú de acciones)\n- 'No, no soy yo' (o id confirmar_no) → identidad incorrecta, pide código correcto\n\nREGLA DE ORO: NUNCA inventes productos, precios, marcas. SIEMPRE llama la tool.\n\nPAGINACIÓN:\n- total_resultados ≤ 5: 'Te tengo estas {total} opciones: [lista]. ¿Cuál prefieres? Dame el número.'\n- total_resultados > 5: 'Tengo {total} opciones. Te muestro las primeras 5: [lista]. ¿Alguna te interesa? Si no, dime \"más\".'\n- Al pedir 'más': 'Aquí van las siguientes (de {total} totales): [lista]'\n- hay_mas_paginas=false: 'Estas son todas las opciones. ¿Alguna te sirve?'\n\nSi total_resultados=0: 'Ahorita no tenemos nada así. ¿Quieres ver alternativas?'\n\n═══════════════════════════════════════════════\nPLANTILLAS\n═══════════════════════════════════════════════\nFLUJO:\n1. Cliente pide ver plantillas → llama obtener_plantillas → lista con numeración: '1. nombre_plantilla (idioma)'\n   Pregunta: '¿Cuál quieres enviar? Dame el número.'\n2. Cliente selecciona una → revisa si tiene variables en el campo variables[]\n   - Sin variables: emite el marcador directamente.\n   - Con variables: pide los valores uno a uno antes de emitir el marcador.\n3. Al confirmar envío, emite al INICIO de tu respuesta:\n   [SEND_TEMPLATE:{\"name\":\"nombre_plantilla\",\"lang\":\"es_MX\",\"vars\":[\"val1\",\"val2\"]}]\n   Luego agrega un mensaje de confirmación al usuario. Ej: '¡Listo! Plantilla enviada.'\n\nREGLAS del marcador:\n- name: usa el campo template_name exacto devuelto por la tool.\n- lang: usa el campo language exacto (ej. es_MX, en_US).\n- vars: array con los valores en el MISMO orden que aparecen las variables en body_text.\n- Si no hay variables, usa vars:[].\n- El marcador debe estar en una sola línea sin espacios extra.\n- NO uses el marcador si el cliente solo quiere VER la plantilla; en ese caso muestra el body_text como texto normal.\n\n═══════════════════════════════════════════════\nBOTONES INTERACTIVOS\n═══════════════════════════════════════════════\nPara ofrecer opciones como botones (WhatsApp reply buttons), emite al FINAL de tu respuesta, en una sola línea sin espacios extra:\n[SEND_BUTTONS:{\"body\":\"texto de la pregunta\",\"buttons\":[{\"id\":\"identificador_corto\",\"title\":\"Texto del Botón\"}]}]\n\nREGLAS del marcador:\n- body: el texto que verá el cliente arriba de los botones (máx 1024 caracteres).\n- buttons: array de 1 a 3 botones. Cada botón tiene id (identificador estable en snake_case, ej. ver_catalogo) y title (texto visible, MÁX 20 caracteres).\n- El marcador debe ir en una sola línea (los saltos de línea DENTRO del body van como \\n).\n- El body admite emojis y *negritas* (un asterisco a cada lado). Hazlo cálido y breve, estilo: '¡Hola! 👋 ...\\n\\n¿...? 😊'.\n- Úsalo en: (1) confirmación de identidad — botones 'Sí, soy yo' (confirmar_si) y 'No, no soy yo' (confirmar_no); (2) menú de acciones — botón 'Ver Catalogo' (ver_catalogo). Más botones se agregarán aquí en el futuro.\n\n═══════════════════════════════════════════════\nBOTONES DEL RESUMEN DE PEDIDO (los envía el sistema, no tú)\n═══════════════════════════════════════════════\nTras armarse el carrito, el sistema envía el resumen con 3 botones (Confirmar ✅ / Modificar 🛒 / Cancelar ❌). HAY DOS formas de actuar y AMBAS son válidas:\n\n1) El cliente TOCA un botón → el sistema lo procesa automáticamente; ese toque NI SIQUIERA te llega. No hagas nada.\n\n2) El cliente RESPONDE CON TEXTO (ej. 'confirmar', 'confírmalo', 'sí, confírmalo', 'lo confirmo', 'modificar', 'quiero cambiarlo', 'cancelar', 'cancela el pedido') → emite, como ÚLTIMA línea de tu respuesta y en una sola línea, el marcador correspondiente:\n   - Confirmar → [ORDER_ACTION:{\"action\":\"CONFIRM\"}]\n   - Modificar → [ORDER_ACTION:{\"action\":\"MODIFY\"}]\n   - Cancelar  → [ORDER_ACTION:{\"action\":\"CANCEL\"}]\n   El sistema ejecuta la acción y manda la confirmación oficial. Tu texto puede ser breve (ej. 'Un momento, proceso tu pedido...') o vacío. NO ofrezcas catálogo de nuevo, NO inventes una URL, NO proceses tú el pedido.\n\nREGLAS:\n- Emite el marcador SOLO ante intención CLARA de actuar sobre un pedido (verbos confirmar/modificar/cancelar o equivalentes inequívocos).\n- Ante un simple 'sí' u 'ok' aislado sin contexto claro de pedido, NO asumas: pregunta qué desea hacer.\n- NUNCA confundas 'Sí, soy yo' (confirmación de IDENTIDAD) con confirmar un PEDIDO. Son cosas distintas.\n\n═══════════════════════════════════════════════\nCIERRE\n═══════════════════════════════════════════════\ngenerar_link_carrito HABILITADA:\n  Cuando el cliente quiera hacer un pedido y esté identificado:\n  1. NO llames ninguna tool para el link; el sistema lo genera FRESCO solo.\n  2. Responde con texto cálido y con emojis (ej. '👉 Presiona el botón *Ver Catalogo* para ingresar a nuestro catálogo 🛒.\\n\\n¡Aquí estaré para ayudarte con tu pedido! 😉') y al FINAL agrega en una sola línea: [SEND_CART_LINK:{\"codcliente\":\"<cliente_id del SESSION>\",\"empresa\":\"00010\"}]\n  3. El marker debe ser la ÚLTIMA línea de tu respuesta, sin espacios extra, sin salto de línea después.\n  4. Incluye SIEMPRE el codcliente correcto del SESSION; sin él el sistema no puede generar el link. NUNCA escribas tú una URL. Los links son de UN SOLO USO: NUNCA reutilices ni copies un link anterior de tu memoria; SIEMPRE emite el marcador con codcliente para que el sistema genere uno nuevo cada vez. NUNCA emitas [SEND_CART_LINK] si habilitado_pedidos=NO: en ese caso no hay pedido; dile que su código no está habilitado para pedidos y ofrécele soporte/contacto.\n  5. El sistema detecta automáticamente si el cliente tiene un pedido pendiente. Si lo tiene, reemplaza el botón por Ver mi pedido y el texto por un aviso de pedido pendiente. No necesitas hacer nada extra para eso.\n\ngenerar_link_carrito DESHABILITADA: 'La generación automática del carrito no está activa. Te dejo el resumen para que lo pidas directo: [resumen]. Puedes contactarnos al {contact.phone} para confirmar.'\n\n═══════════════════════════════════════════════\nFINALIZAR CONVERSACIÓN\n═══════════════════════════════════════════════\nCuando el usuario pida terminar, cerrar, salir, reiniciar o resetear la conversación — con cualquier frase como 'FINALIZAR', 'quiero terminar', 'hasta luego', 'cierra el chat', 'empieza de nuevo', 'reinicia', 'olvida todo', 'nueva conversación', 'adiós' u otras similares — llama de inmediato `finalizar_chat` sin preguntar nada. Luego responde con un breve mensaje de despedida amigable indicando que la conversación terminó y que puede escribir nuevamente cuando quiera.\n\n═══════════════════════════════════════════════\nREGLAS CRÍTICAS\n═══════════════════════════════════════════════\n- La marca <!--SESSION...--> SOLO va en el mensaje donde identificas por primera vez.\n- NUNCA llames tools DESHABILITADAS.\n- NUNCA inventes producto_id, precios, datos del cliente.\n- NUNCA inventes ni adivines el nombre del cliente. Solo lo usas si estado=IDENTIFICADO_AHORA y nombre no está vacío; si no, pide código.\n- Si pregunta algo en business_info o FAQ, responde con esos datos.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta. No dejes espacios pegados por dentro de los asteriscos.\n- Si pregunta quién te hizo: 'Soy IsaCodisa, la asistente de ventas.'"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        -76256,
-        10848
+        -3792,
+        1712
       ],
-      "id": "458194e1-8c1c-4319-8d30-0c4aaa60bac1",
+      "id": "5b7b30f9-6598-4a21-aadb-e497b7902434",
       "name": "IsaCodisa Agent",
       "onError": "continueErrorOutput"
     },
@@ -379,34 +377,34 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        -76752,
-        11072
+        -4288,
+        1936
       ],
-      "id": "197af597-c23d-4971-9745-bd34a190c02e",
+      "id": "54f3ddc4-e276-483d-8f82-40c7a0284ddc",
       "name": "Gemini Model",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "credentials": {
         "googlePalmApi": {
-          "id": "VFfmru0ImTrgxd2x",
-          "name": "Google Gemini(PaLM) Api account 2"
+          "id": "dmDyRdDA9oCzXOwY",
+          "name": "Google Gemini(PaLM) Api account"
         }
       }
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Entrada').first().json.from + '_' + $('Entrada').first().json.phone_number_id + '_v' + (($('Agregar Version Sesion').item.json.session_version) || '0') }}",
+        "sessionKey": "={{ $('WhatsApp Trigger').item.json.messages[0].from + '_v' + (($('Agregar Version Sesion').item.json.session_version) || '0') }}",
         "contextWindowLength": 30
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -76624,
-        11072
+        -4160,
+        1936
       ],
-      "id": "e70fc91b-7deb-4bb2-af55-defe977a8394",
+      "id": "1d75c051-3805-4543-95d3-da7ec86bf02a",
       "name": "Memoria Compartida"
     },
     {
@@ -414,9 +412,9 @@
         "description": "Devuelve categorías con precios personalizados del cliente. Parámetros: cliente_id, empresa. Úsala cuando el cliente pida algo genérico como 'qué tienes' o 'déjame ver'.",
         "workflowId": {
           "__rl": true,
-          "value": "sa67mqbv4m5l49tH",
+          "value": "Wl5xeNAfGLQ1tBMk",
           "mode": "list",
-          "cachedResultUrl": "/workflow/sa67mqbv4m5l49tH",
+          "cachedResultUrl": "/workflow/Wl5xeNAfGLQ1tBMk",
           "cachedResultName": "ISA Tool - Listar Categorias"
         },
         "workflowInputs": {
@@ -455,20 +453,21 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -76496,
-        11072
+        -4032,
+        1936
       ],
-      "id": "793c2cf1-cda4-4cf0-b8d7-57674b2f3ba2",
-      "name": "Tool: Listar Categorias"
+      "id": "57dcd79e-4f3e-487a-a475-c23eb7313985",
+      "name": "Tool: Listar Categorias",
+      "disabled": true
     },
     {
       "parameters": {
         "description": "Busca productos del catálogo del cliente, paginados de 5 en 5. Parámetros: query (texto), pagina (1 inicial, incrementa), cliente_id, empresa, tienda. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.",
         "workflowId": {
           "__rl": true,
-          "value": "r9IogCfhwEueb6nN",
+          "value": "wyt5jU1dN4vOvU4u",
           "mode": "list",
-          "cachedResultUrl": "/workflow/r9IogCfhwEueb6nN",
+          "cachedResultUrl": "/workflow/wyt5jU1dN4vOvU4u",
           "cachedResultName": "ISA Tool - Buscar Productos"
         },
         "workflowInputs": {
@@ -537,10 +536,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -76368,
-        11072
+        -3904,
+        1936
       ],
-      "id": "cec5aa36-9548-4f41-a73a-d9fc1e51c7f8",
+      "id": "679ab438-0762-402d-afe9-daaf4e17b26f",
       "name": "Tool: Buscar Productos",
       "disabled": true
     },
@@ -578,11 +577,12 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -76240,
-        11072
+        -3776,
+        1936
       ],
-      "id": "086cc4b0-d60a-497f-9ecf-adb58dff431c",
-      "name": "Tool: Historial"
+      "id": "28649830-0524-4ebf-b547-a2a2931585d8",
+      "name": "Tool: Historial",
+      "disabled": true
     },
     {
       "parameters": {
@@ -618,29 +618,29 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -76112,
-        11072
+        -3648,
+        1936
       ],
-      "id": "c7423041-94d2-48c5-978e-b4d2c5a1d671",
-      "name": "Tool: Recomendaciones"
+      "id": "6651baf8-c318-465c-9515-4ca122cf31e7",
+      "name": "Tool: Recomendaciones",
+      "disabled": true
     },
     {
       "parameters": {
         "description": "Genera un link de sesión para que el cliente acceda al portal de pedidos (catálogo + carrito + checkout). Úsala cuando el cliente quiera hacer un pedido y esté identificado. Parámetros: empresa (del SESSION), codcliente (cliente_id del SESSION), phone (número WhatsApp del cliente).",
         "workflowId": {
           "__rl": true,
-          "value": "PSs18hs5MlutOj6t",
+          "value": "BK3iTuvFjZPe6lyT",
           "mode": "list",
-          "cachedResultUrl": "/workflow/PSs18hs5MlutOj6t",
+          "cachedResultUrl": "/workflow/BK3iTuvFjZPe6lyT",
           "cachedResultName": "ISA Tool - Generar Link Carrito"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "phone": "=={{ $('Entrada').first().json.from }}",
+            "phone": "=={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
             "codcliente": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('codcliente', ``, 'string') }}",
-            "empresa": "00010",
-            "phone_number_id": "={{ $('Entrada').first().json.phone_number_id }}"
+            "empresa": "00010"
           },
           "matchingColumns": [],
           "schema": [
@@ -670,15 +670,6 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
-            },
-            {
-              "id": "phone_number_id",
-              "displayName": "phone_number_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
@@ -688,10 +679,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -75984,
-        11072
+        -3520,
+        1936
       ],
-      "id": "2238aa6f-2e85-467e-be4e-c51d2a523cd5",
+      "id": "4716737c-9ef8-4417-a122-5156db51a83e",
       "name": "Tool: Generar link carrito"
     },
     {
@@ -721,10 +712,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -78992,
-        11120
+        -6528,
+        1712
       ],
-      "id": "bf637744-96ff-4c53-9330-5e9395bce3c7",
+      "id": "450ef925-5198-47e3-9d91-4b6363c2bd6c",
       "name": "Es Accion Pedido?"
     },
     {
@@ -733,7 +724,7 @@
         "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/process-action",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.boton_id }}\"\n}",
+        "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('WhatsApp Trigger').first().json.messages[0].from }}\",\n  \"phone_number_id\": \"{{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.boton_id }}\"\n}",
         "options": {
           "timeout": 60000
         }
@@ -741,26 +732,26 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -78768,
-        11008
+        -6304,
+        1600
       ],
-      "id": "3853a7ca-4ce3-45d5-90e1-d172fb054071",
+      "id": "ea078b9b-d012-4466-9ca4-f885d2407f08",
       "name": "Procesar Accion Pedido",
-      "retryOnFail": true,
+      "retryOnFail": false,
       "maxTries": 3,
       "waitBetweenTries": 2000
     },
     {
       "parameters": {
-        "jsCode": "let respuesta = $input.first().json.output || '';\nlet ordenConfirmada = false;\nlet esTplPlantilla  = false;\nlet esCartLink      = false;\nlet cartLinkUrl     = '';\nlet cartCodcliente  = '';\nlet cartEmpresa     = '';\nlet tplNombre = '';\nlet tplLang   = 'es_MX';\nlet tplVars   = [];\n\n// Extrae [SEND_TEMPLATE:{...}] respetando llaves anidadas\nconst MARKER = '[SEND_TEMPLATE:';\nconst mStart = respuesta.indexOf(MARKER);\nif (mStart !== -1) {\n  const jsonStart = mStart + MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esTplPlantilla = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      tplNombre = d.name || '';\n      tplLang   = d.lang || 'es_MX';\n      tplVars   = Array.isArray(d.vars) ? d.vars : [];\n    } catch {}\n    respuesta = (respuesta.substring(0, mStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// Extrae [SEND_CART_LINK:{...}]\nconst CART_MARKER = '[SEND_CART_LINK:';\nconst cStart = respuesta.indexOf(CART_MARKER);\nif (cStart !== -1) {\n  const jsonStart = cStart + CART_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esCartLink = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      cartLinkUrl = d.url || '';\n      cartCodcliente = d.codcliente || '';\n      cartEmpresa = d.empresa || '';\n    } catch {}\n    respuesta = (respuesta.substring(0, cStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// ===== GATE DURO: catalogo/carrito solo para codigos habilitados =====\n// Soporte basico queda abierto a todos; aqui solo se gatea el link del carrito.\nif (esCartLink) {\n  const cp = $('Construir Perfil').first().json || {};\n  const allowed = Array.isArray(cp.allowed_client_codes) ? cp.allowed_client_codes : [];\n  if (allowed.length > 0 && !allowed.includes(String(cartCodcliente))) {\n    esCartLink = false;\n    cartLinkUrl = '';\n    cartCodcliente = '';\n    cartEmpresa = '';\n    respuesta = cp.mensaje_bloqueo || 'Por el momento tu codigo no esta habilitado para hacer pedidos por este medio.';\n  }\n}\n\n// Extrae [SEND_BUTTONS:{...}] respetando llaves anidadas\nlet esBotones   = false;\nlet botonesBody = '';\nlet botonesList = [];\nconst BTN_MARKER = '[SEND_BUTTONS:';\nconst bStart = respuesta.indexOf(BTN_MARKER);\nif (bStart !== -1) {\n  const jsonStart = bStart + BTN_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esBotones = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      botonesBody = d.body || '';\n      botonesList = Array.isArray(d.buttons) ? d.buttons : [];\n    } catch {}\n    respuesta = (respuesta.substring(0, bStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// Extrae [SEND_IMAGE] (usa imagen de bienvenida fija) o [SEND_IMAGE:{\"url\":\"...\"}]\nlet esImagen  = false;\nlet imagenUrl = '';\nconst IMG_MARKER = '[SEND_IMAGE';\nconst iStart = respuesta.indexOf(IMG_MARKER);\nif (iStart !== -1) {\n  const afterMarker = iStart + IMG_MARKER.length;\n  if (respuesta[afterMarker] === ']') {\n    esImagen = true;\n    respuesta = (respuesta.substring(0, iStart) + respuesta.substring(afterMarker + 1)).trim();\n  } else if (respuesta[afterMarker] === ':') {\n    const jsonStart = afterMarker + 1;\n    let depth = 0, jsonEnd = -1;\n    for (let k = jsonStart; k < respuesta.length; k++) {\n      if      (respuesta[k] === '{') depth++;\n      else if (respuesta[k] === '}') { depth--; if (depth === 0) { jsonEnd = k; break; } }\n    }\n    if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n      esImagen = true;\n      try {\n        const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n        imagenUrl = d.url || '';\n      } catch {}\n      respuesta = (respuesta.substring(0, iStart) + respuesta.substring(jsonEnd + 2)).trim();\n    }\n  }\n}\n\n// Extrae [ORDER_ACTION:{...}] (confirmar/modificar/cancelar pedido por texto)\nlet esOrderAction = false;\nlet orderBotonId  = '';\nconst OA_MARKER = '[ORDER_ACTION:';\nconst oaStart = respuesta.indexOf(OA_MARKER);\nif (oaStart !== -1) {\n  const jsonStart = oaStart + OA_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    try {\n      const oa = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      const act = (oa.action || '').toUpperCase();\n      const map = { CONFIRM: 'ORDER_CONFIRM', MODIFY: 'ORDER_MODIFY', CANCEL: 'ORDER_CANCEL' };\n      if (map[act]) { esOrderAction = true; orderBotonId = map[act]; }\n    } catch {}\n    respuesta = (respuesta.substring(0, oaStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\nif (respuesta.includes('[ORDEN_CONFIRMADA]')) {\n  ordenConfirmada = true;\n  respuesta = respuesta.replace('[ORDEN_CONFIRMADA]', '').trim();\n}\n\nrespuesta = respuesta.replace(/<!--SESSION:[^>]*-->/g, '').trim();\n\nfunction limpiarTexto(s) {\n  if (!s) return s;\n  return s\n    .replace(/\\*\\*+/g, '*')\n    .split('\\n').map(l => l.replace(/[ \\t]{2,}/g, ' ').replace(/[ \\t]+$/, '')).join('\\n')\n    .trim();\n}\nrespuesta = limpiarTexto(respuesta);\nbotonesBody = limpiarTexto(botonesBody);\n\nconst sessionId = $('Entrada').first().json.from;\n\nreturn [{ json: {\n  output:          respuesta,\n  orden_confirmada: ordenConfirmada,\n  es_plantilla:    esTplPlantilla,\n  es_cart_link:    esCartLink,\n  cart_link_url:   cartLinkUrl,\n  cart_codcliente: cartCodcliente,\n  cart_empresa:    cartEmpresa,\n  es_botones:      esBotones,\n  botones_body:    botonesBody,\n  botones_list:    botonesList,\n  es_imagen:       esImagen,\n  imagen_send_url: imagenUrl,\n  template_nombre: tplNombre,\n  template_lang:   tplLang,\n  template_vars:   tplVars,\n  es_order_action: esOrderAction,\n  order_boton_id:  orderBotonId,\n  sessionId:       sessionId\n} }];"
+        "jsCode": "let respuesta = $input.first().json.output || '';\nlet ordenConfirmada = false;\nlet esTplPlantilla  = false;\nlet esCartLink      = false;\nlet cartLinkUrl     = '';\nlet cartCodcliente  = '';\nlet cartEmpresa     = '';\nlet tplNombre = '';\nlet tplLang   = 'es_MX';\nlet tplVars   = [];\n\n// Extrae [SEND_TEMPLATE:{...}] respetando llaves anidadas\nconst MARKER = '[SEND_TEMPLATE:';\nconst mStart = respuesta.indexOf(MARKER);\nif (mStart !== -1) {\n  const jsonStart = mStart + MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esTplPlantilla = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      tplNombre = d.name || '';\n      tplLang   = d.lang || 'es_MX';\n      tplVars   = Array.isArray(d.vars) ? d.vars : [];\n    } catch {}\n    respuesta = (respuesta.substring(0, mStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// Extrae [SEND_CART_LINK:{...}]\nconst CART_MARKER = '[SEND_CART_LINK:';\nconst cStart = respuesta.indexOf(CART_MARKER);\nif (cStart !== -1) {\n  const jsonStart = cStart + CART_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esCartLink = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      cartLinkUrl = d.url || '';\n      cartCodcliente = d.codcliente || '';\n      cartEmpresa = d.empresa || '';\n    } catch {}\n    respuesta = (respuesta.substring(0, cStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// ===== GATE DURO: catalogo/carrito solo para codigos habilitados =====\n// Soporte basico queda abierto a todos; aqui solo se gatea el link del carrito.\nif (esCartLink) {\n  const cp = $('Construir Perfil').first().json || {};\n  const allowed = Array.isArray(cp.allowed_client_codes) ? cp.allowed_client_codes : [];\n  if (allowed.length > 0 && !allowed.includes(String(cartCodcliente))) {\n    esCartLink = false;\n    cartLinkUrl = '';\n    cartCodcliente = '';\n    cartEmpresa = '';\n    respuesta = cp.mensaje_bloqueo || 'Por el momento tu codigo no esta habilitado para hacer pedidos por este medio.';\n  }\n}\n\n// Extrae [SEND_BUTTONS:{...}] respetando llaves anidadas\nlet esBotones   = false;\nlet botonesBody = '';\nlet botonesList = [];\nconst BTN_MARKER = '[SEND_BUTTONS:';\nconst bStart = respuesta.indexOf(BTN_MARKER);\nif (bStart !== -1) {\n  const jsonStart = bStart + BTN_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    esBotones = true;\n    try {\n      const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      botonesBody = d.body || '';\n      botonesList = Array.isArray(d.buttons) ? d.buttons : [];\n    } catch {}\n    respuesta = (respuesta.substring(0, bStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\n// Extrae [SEND_IMAGE] (usa imagen de bienvenida fija) o [SEND_IMAGE:{\"url\":\"...\"}]\nlet esImagen  = false;\nlet imagenUrl = '';\nconst IMG_MARKER = '[SEND_IMAGE';\nconst iStart = respuesta.indexOf(IMG_MARKER);\nif (iStart !== -1) {\n  const afterMarker = iStart + IMG_MARKER.length;\n  if (respuesta[afterMarker] === ']') {\n    esImagen = true;\n    respuesta = (respuesta.substring(0, iStart) + respuesta.substring(afterMarker + 1)).trim();\n  } else if (respuesta[afterMarker] === ':') {\n    const jsonStart = afterMarker + 1;\n    let depth = 0, jsonEnd = -1;\n    for (let k = jsonStart; k < respuesta.length; k++) {\n      if      (respuesta[k] === '{') depth++;\n      else if (respuesta[k] === '}') { depth--; if (depth === 0) { jsonEnd = k; break; } }\n    }\n    if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n      esImagen = true;\n      try {\n        const d = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n        imagenUrl = d.url || '';\n      } catch {}\n      respuesta = (respuesta.substring(0, iStart) + respuesta.substring(jsonEnd + 2)).trim();\n    }\n  }\n}\n\n// Extrae [ORDER_ACTION:{...}] (confirmar/modificar/cancelar pedido por texto)\nlet esOrderAction = false;\nlet orderBotonId  = '';\nconst OA_MARKER = '[ORDER_ACTION:';\nconst oaStart = respuesta.indexOf(OA_MARKER);\nif (oaStart !== -1) {\n  const jsonStart = oaStart + OA_MARKER.length;\n  let depth = 0, jsonEnd = -1;\n  for (let i = jsonStart; i < respuesta.length; i++) {\n    if      (respuesta[i] === '{') depth++;\n    else if (respuesta[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }\n  }\n  if (jsonEnd !== -1 && respuesta[jsonEnd + 1] === ']') {\n    try {\n      const oa = JSON.parse(respuesta.substring(jsonStart, jsonEnd + 1));\n      const act = (oa.action || '').toUpperCase();\n      const map = { CONFIRM: 'ORDER_CONFIRM', MODIFY: 'ORDER_MODIFY', CANCEL: 'ORDER_CANCEL' };\n      if (map[act]) { esOrderAction = true; orderBotonId = map[act]; }\n    } catch {}\n    respuesta = (respuesta.substring(0, oaStart) + respuesta.substring(jsonEnd + 2)).trim();\n  }\n}\n\nif (respuesta.includes('[ORDEN_CONFIRMADA]')) {\n  ordenConfirmada = true;\n  respuesta = respuesta.replace('[ORDEN_CONFIRMADA]', '').trim();\n}\n\nrespuesta = respuesta.replace(/<!--SESSION:[^>]*-->/g, '').trim();\n\nfunction limpiarTexto(s) {\n  if (!s) return s;\n  return s\n    .replace(/\\*\\*+/g, '*')\n    .split('\\n').map(l => l.replace(/[ \\t]{2,}/g, ' ').replace(/[ \\t]+$/, '')).join('\\n')\n    .trim();\n}\nrespuesta = limpiarTexto(respuesta);\nbotonesBody = limpiarTexto(botonesBody);\n\nconst sessionId = $('WhatsApp Trigger').first().json.messages[0].from;\n\nreturn [{ json: {\n  output:          respuesta,\n  orden_confirmada: ordenConfirmada,\n  es_plantilla:    esTplPlantilla,\n  es_cart_link:    esCartLink,\n  cart_link_url:   cartLinkUrl,\n  cart_codcliente: cartCodcliente,\n  cart_empresa:    cartEmpresa,\n  es_botones:      esBotones,\n  botones_body:    botonesBody,\n  botones_list:    botonesList,\n  es_imagen:       esImagen,\n  imagen_send_url: imagenUrl,\n  template_nombre: tplNombre,\n  template_lang:   tplLang,\n  template_vars:   tplVars,\n  es_order_action: esOrderAction,\n  order_boton_id:  orderBotonId,\n  sessionId:       sessionId\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -75392,
-        10864
+        -2928,
+        1664
       ],
-      "id": "9eb5b458-b153-47a4-a070-2b57160f5dc4",
+      "id": "7d6d7359-18c3-430e-852b-ae5d358a7d88",
       "name": "Filtro"
     },
     {
@@ -770,29 +761,29 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -75168,
-        10864
+        -2704,
+        1664
       ],
-      "id": "ea1c600d-ca43-47d6-9808-2e5de13a387c",
+      "id": "11d0b111-d9db-4147-9c98-4754e68785c5",
       "name": "Restaurar Output"
     },
     {
       "parameters": {
         "operation": "send",
-        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
-        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -73824,
-        11280
+        -1584,
+        1856
       ],
-      "id": "c6014d73-c2f5-4f52-a14e-c11586bb93f1",
+      "id": "d8559986-aa52-4b63-8f37-e3a9c3e8e16a",
       "name": "WhatsApp Send",
-      "webhookId": "c9076029-4aa6-40ea-a961-6fdf0216c840",
+      "webhookId": "6b2a6b13-f8e4-4250-8958-1fcf86aaef2e",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -811,136 +802,21 @@
         "specifyBody": "json",
         "jsonBody": "{\n    \"email\": \"cc.auth\",\n    \"password\": \"@cc350CC\"\n}",
         "options": {
-          "timeout": 60000
+          "timeout": 10000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -80560,
-        11328
+        -7424,
+        2016
       ],
-      "id": "fe6d83b9-84c3-4377-8720-a5adc1ee26d3",
+      "id": "f82da262-958a-4603-9f23-fba61ce63a62",
       "name": "GET TOKEN",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "url": "=https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/n8n/status/{{ String($('Entrada').first().json.from || '').replace(/^\\+/, '') }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('GET TOKEN').first().json.data.token }}"
-            },
-            {
-              "name": "X-Tenant-Id",
-              "value": "00010"
-            },
-            {
-              "name": "X-Company-Id",
-              "value": "79D26EDA-8DF0-4687-911C-B5DC83149367"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        -80336,
-        11264
-      ],
-      "id": "f2d1f4b0-8287-4f8d-b1e5-d1e6c64db543",
-      "name": "Inbox Estado",
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const resp = $input.first().json || {};\nconst tok = $('GET TOKEN').first().json || {};\nconst e = $('Entrada').first().json || {};\nconst norm = (p) => String(p || '').replace(/^\\+/, '');\nconst phone = norm(e.from);\n// El estado viene del endpoint agnostico de agente /n8n/status/{phone};\n// detecta la sesion activa sin importar que agente tenga la conversacion.\nconst activo = resp?.data?.has_active_conversation === true;\nreturn [{ json: { ...tok, en_agente: activo, gate_phone: phone, gate_text: String(e.text || ''), gate_message_id: String(e.message_id || '') } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80112,
-        11264
-      ],
-      "id": "94b4bfbd-811b-4536-87bf-a560441e5cfa",
-      "name": "Eval Agente"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "gate-en-agente-0001",
-              "leftValue": "={{ $json.en_agente }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -79888,
-        11264
-      ],
-      "id": "7c42931a-e4f2-4e5c-a1a0-c33c175ad0c2",
-      "name": "En Agente?"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/n8n/ingest",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-Tenant-Id",
-              "value": "00010"
-            },
-            {
-              "name": "X-Company-Id",
-              "value": "79D26EDA-8DF0-4687-911C-B5DC83149367"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ phone_number: $json.gate_phone, message_text: $json.gate_text, message_type: 'TEXT', provider_message_id: $json.gate_message_id }) }}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        -79664,
-        11168
-      ],
-      "id": "82b32409-9ed3-492f-aaf3-43a1887717c7",
-      "name": "Reenviar a Agente",
-      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -955,16 +831,16 @@
           ]
         },
         "options": {
-          "timeout": 60000
+          "timeout": 10000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -79664,
-        11360
+        -7200,
+        1952
       ],
-      "id": "d223e7e4-4c5f-48dc-9e09-5ab5458993e0",
+      "id": "7b1c4ad8-ed17-4a55-8395-bd3a5fd60b0f",
       "name": "CONFIGRUACION",
       "retryOnFail": true,
       "maxTries": 3,
@@ -973,15 +849,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Procesa la respuesta del endpoint y arma flags para el resto del flujo.\nconst resp = $input.first().json;\nconst config = Array.isArray(resp) ? resp[0]?.data : resp?.data;\n\nif (!config) {\n  throw new Error('Respuesta de configuración inválida');\n}\n\nconst caps = config.agentCapabilities || {};\nconst kb = config.knowledgeBase || {};\nconst convStart = config.conversationStart || {};\nconst recom = config.recommendations || {};\n\nconst result = {\n  // Banderas para tools del agente (GATES FORZADOS: todo aprobado, ignora config remota)\n  tools_enabled: {\n    listar_categorias:       true,\n    buscar_productos:        true,\n    obtener_recomendaciones: true,\n    ver_historial_compras:   true,\n    generar_link_carrito:    true,\n    obtener_plantillas:      true\n  },\n\n  // Banderas para procesamiento multimedia (FORZADO true)\n  multimedia_enabled: {\n    imagen: true,\n    audio:  true\n  },\n\n  // Otras capabilities (FORZADO true)\n  can_escalate_to_human:  true,\n  can_request_additional: true,\n\n  // Configuración de recomendaciones (cómo presentarlas)\n  recomendaciones: {\n    enabled:                  true,\n    max_recommendations:      recom.maxRecommendations || 5,\n    max_recommended_products: recom.maxRecommendedProducts || 4,\n    format:                   recom.format || 'CAROUSEL'\n  },\n\n  // Bienvenida configurable\n  welcome_message: convStart.welcomeMessage || '¡Hola! ¿En qué puedo ayudarte?',\n\n  // Knowledge base\n  business_info: kb.businessGeneralInfo || [],\n  faq:           kb.faq || [],\n  contact:       kb.contact || {}\n};\n\nreturn [{ json: result }];"
+        "jsCode": "// Procesa la respuesta del endpoint y arma flags para el resto del flujo.\nconst resp = $input.first().json;\nconst config = Array.isArray(resp) ? resp[0]?.data : resp?.data;\n\nif (!config) {\n  throw new Error('Respuesta de configuración inválida');\n}\n\nconst caps = config.agentCapabilities || {};\nconst kb = config.knowledgeBase || {};\nconst convStart = config.conversationStart || {};\nconst recom = config.recommendations || {};\n\nconst result = {\n  // Banderas para tools del agente\n  tools_enabled: {\n    listar_categorias:       !!caps.checkAvailability,\n    buscar_productos:        !!caps.checkAvailability,\n    obtener_recomendaciones: !!caps.suggestProducts,\n    ver_historial_compras:   false,\n    generar_link_carrito:    !!caps.startOrder,\n    obtener_plantillas:      true\n  },\n\n  // Banderas para procesamiento multimedia\n  multimedia_enabled: {\n    imagen: !!caps.imageAnalysis,\n    audio:  !!caps.voiceRecognition\n  },\n\n  // Otras capabilities\n  can_escalate_to_human:  !!caps.escalateToHuman,\n  can_request_additional: !!caps.requestAdditionalData,\n\n  // Configuración de recomendaciones (cómo presentarlas)\n  recomendaciones: {\n    enabled:                  !!recom.enabled,\n    max_recommendations:      recom.maxRecommendations || 5,\n    max_recommended_products: recom.maxRecommendedProducts || 4,\n    format:                   recom.format || 'CAROUSEL'\n  },\n\n  // Bienvenida configurable\n  welcome_message: convStart.welcomeMessage || '¡Hola! ¿En qué puedo ayudarte?',\n\n  // Knowledge base\n  business_info: kb.businessGeneralInfo || [],\n  faq:           kb.faq || [],\n  contact:       kb.contact || {}\n};\n\n// ===== MODO LINEAL TEMPORAL — overrides ===========================\n// Solo flujo de carrito -> confirmacion. Deshabilitado de momento (no removido):\n// busqueda de productos, categorias, recomendaciones, historial, plantillas,\n// escalacion a humano, analisis de imagen y audio.\n// El link de carrito queda forzado a activo: es el flujo principal.\n// Para revertir y volver a respetar la config del backend: borrar este bloque.\nresult.tools_enabled.listar_categorias      = false;\nresult.tools_enabled.buscar_productos       = false;\nresult.tools_enabled.obtener_recomendaciones = false;\nresult.tools_enabled.ver_historial_compras  = false;\nresult.tools_enabled.obtener_plantillas     = false;\nresult.tools_enabled.generar_link_carrito   = true;\nresult.can_escalate_to_human                = false;\nresult.multimedia_enabled.imagen            = false;\nresult.multimedia_enabled.audio             = false;\n// ==================================================================\n\nreturn [{ json: result }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -79440,
-        11280
+        -6976,
+        1872
       ],
-      "id": "4fbc4dac-bba8-432f-9dba-98669143c771",
+      "id": "49cd286a-4256-406c-80f5-9e1d4b8cb583",
       "name": "Procesar Configuracion",
       "onError": "continueErrorOutput"
     },
@@ -996,17 +872,16 @@
               "responseFormat": "file",
               "outputPropertyName": "data0"
             }
-          },
-          "timeout": 60000
+          }
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -78544,
-        11312
+        -6080,
+        1808
       ],
-      "id": "aec6fa7d-7619-41ef-bc0b-8e11ceca360c",
+      "id": "19e1919f-da12-42e4-8878-17470e813392",
       "name": "Descargar Audio",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1020,36 +895,31 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\nconst pnid = $('Entrada').first().json.phone_number_id || '';\nconst phone = data.sessionId + '_' + pnid;\nconst globalData = $getWorkflowStaticData('global');\nconst version = globalData['conv_' + phone] || '0';\nglobalData['__current_phone__'] = phone;\nreturn [{ json: { ...data, session_version: version } }];"
+        "jsCode": "const data = $input.first().json;\nconst phone = data.sessionId;\nconst globalData = $getWorkflowStaticData('global');\nconst version = globalData['conv_' + phone] || '0';\nglobalData['__current_phone__'] = phone;\nreturn [{ json: { ...data, session_version: version } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -76976,
-        10960
+        -4512,
+        1712
       ],
-      "id": "061608a8-fb7d-4165-9bd8-2bd1edc8692b",
+      "id": "cfdef390-fe7c-4067-bc9a-8c70a4736ac5",
       "name": "Agregar Version Sesion"
     },
     {
       "parameters": {
-        "description": "Escala la conversación a un agente humano. Llámala cuando el cliente pida hablar con una persona, cuando no puedas resolver su problema, o cuando lo solicite explícitamente. Parámetros: historial (transcripción completa de la conversación desde el inicio, en formato 'Usuario: mensaje\\nAsistente: respuesta'); customer_name (el nombre del cliente de la marca SESSION, vacío si no lo tienes); contact_reason (motivo breve de la escalación en pocas palabras, ej. 'Consulta de factura').",
+        "description": "Escala la conversación a un agente humano. Llámala cuando el cliente pida hablar con una persona, cuando no puedas resolver su problema, o cuando lo solicite explícitamente. Parámetros: historial (transcripción completa de la conversación desde el inicio, en formato 'Usuario: mensaje\\nAsistente: respuesta').",
         "workflowId": {
           "__rl": true,
-          "value": "O40iUM2dQiNty0IS",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/O40iUM2dQiNty0IS",
-          "cachedResultName": "ISA Tool - Escalar a Humano"
+          "value": "PLACEHOLDER_ESCALAR_HUMANO",
+          "mode": "list"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
             "historial": "={{ $fromAI('historial', 'Transcripción completa de la conversación desde el inicio, en formato Usuario: mensaje / Asistente: respuesta', 'string') }}",
-            "phone_number": "={{ $('Entrada').first().json.from }}",
-            "provider_message_id": "={{ $('Entrada').first().json.message_id }}",
-            "token": "={{ $('GET TOKEN').first().json.data.token }}",
-            "customer_name": "={{ $fromAI('customer_name', 'El nombre del cliente de la marca SESSION en tu memoria. Vacio si no lo tienes.', 'string') }}",
-            "contact_reason": "={{ $fromAI('contact_reason', 'Motivo breve de la escalacion en pocas palabras.', 'string') }}"
+            "phone_number": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
+            "provider_message_id": "={{ $('WhatsApp Trigger').first().json.messages[0].id }}"
           },
           "matchingColumns": [
             "historial"
@@ -1081,33 +951,6 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
-            },
-            {
-              "id": "token",
-              "displayName": "token",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "customer_name",
-              "displayName": "customer_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "contact_reason",
-              "displayName": "contact_reason",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
@@ -1117,11 +960,12 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -75728,
-        11072
+        -3264,
+        1936
       ],
-      "id": "507aed45-05fe-4c72-be57-31db49484dd6",
-      "name": "Tool: Escalar a Humano"
+      "id": "d9dcd94a-a76a-41ce-a448-1bc66b7e320e",
+      "name": "Tool: Escalar a Humano",
+      "disabled": true
     },
     {
       "parameters": {
@@ -1132,10 +976,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1,
       "position": [
-        -75856,
-        11072
+        -3392,
+        1936
       ],
-      "id": "9e89d4fc-28e0-45a6-b918-543414114ab2",
+      "id": "e55dc76a-5ce1-4d9b-baaf-d0cb44b0bf83",
       "name": "Tool: Finalizar Chat"
     },
     {
@@ -1143,10 +987,8 @@
         "description": "Obtiene plantillas de WhatsApp activas desde la base de datos. Úsala cuando el cliente pida 'dame una plantilla', 'quiero ver plantillas', 'envía una plantilla', 'muéstrame plantillas' u otras frases similares. Parámetros: company (clave de tenant, default '00010'), nombre (opcional, filtra por nombre de plantilla).",
         "workflowId": {
           "__rl": true,
-          "value": "0WuZAbchJyKAjslO",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/0WuZAbchJyKAjslO",
-          "cachedResultName": "ISA Tool - Obtener Plantillas"
+          "value": "PLACEHOLDER_OBTENER_PLANTILLAS",
+          "mode": "list"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -1184,11 +1026,12 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -75600,
-        11072
+        -3136,
+        1936
       ],
-      "id": "7df5333b-b24d-4104-b701-fe04cd829285",
-      "name": "Tool: Obtener Plantillas"
+      "id": "16b475ce-942e-4618-942d-9d27066fd458",
+      "name": "Tool: Obtener Plantillas",
+      "disabled": true
     },
     {
       "parameters": {
@@ -1229,10 +1072,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -74048,
-        11184
+        -1808,
+        1760
       ],
-      "id": "c162553c-3a48-4cb2-b881-9808ac490cbd",
+      "id": "8b62f592-8a0b-49eb-bfa2-336f4245edcb",
       "name": "Router Mensaje"
     },
     {
@@ -1242,26 +1085,31 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -73824,
-        11088
+        -1584,
+        1664
       ],
-      "id": "4dfa7ea5-1fa7-4a41-9df5-d8265cf4bec8",
+      "id": "ab0b61f6-2b86-476c-b540-ff5c8a70412a",
       "name": "Preparar Componentes"
     },
     {
       "parameters": {
-        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
-        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}"
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
+        "template": {
+          "__rl": true,
+          "value": "={{ $json.template_nombre }}",
+          "mode": "id"
+        }
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -73600,
-        11088
+        -1360,
+        1664
       ],
-      "id": "4b727790-c6e8-448c-a14f-79c500722c09",
+      "id": "ecabc29e-5bf2-4f47-bb53-a1d1718937f1",
       "name": "WhatsApp Send Template",
-      "webhookId": "247a2e89-384a-45d2-be07-a5f3fbd8b0c9",
+      "webhookId": "764acd07-642b-4634-aa01-d24278049173",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -1270,8 +1118,7 @@
           "id": "rnJ1RDSva88nhBTX",
           "name": "WhatsApp account TEST"
         }
-      },
-      "disabled": true
+      }
     },
     {
       "parameters": {
@@ -1301,32 +1148,30 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -74496,
-        11088
+        -2256,
+        1664
       ],
-      "id": "59a6a368-87b7-4ccb-afe9-60be41721c5b",
+      "id": "a18c6a1d-b57e-4024-85d2-16782721f985",
       "name": "Si Es Cart Link?"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}/messages",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "whatsAppApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"cta_url\",\n    \"body\": { \"text\": {{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? JSON.stringify('👉 Tienes un pedido pendiente. Presiona el botón para revisarlo o modificarlo antes de confirmar.') : JSON.stringify($('Restaurar Output').first().json.output || 'Toca el botón para ir al catálogo y hacer tu pedido.') }} },\n    \"action\": {\n      \"name\": \"cta_url\",\n      \"parameters\": {\n        \"display_text\": \"{{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? 'Ver mi pedido' : 'Ver Catalogo' }}\",\n        \"url\": \"{{ $('Generar Link Fresco').first().json.url }}\"\n      }\n    }\n  }\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('WhatsApp Trigger').first().json.messages[0].from }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"cta_url\",\n    \"body\": { \"text\": {{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? JSON.stringify('👉 Tienes un pedido pendiente. Presiona el botón para revisarlo o modificarlo antes de confirmar.') : JSON.stringify($('Restaurar Output').first().json.output || 'Toca el botón para ir al catálogo y hacer tu pedido.') }} },\n    \"action\": {\n      \"name\": \"cta_url\",\n      \"parameters\": {\n        \"display_text\": \"{{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? 'Ver mi pedido' : 'Ver Catalogo' }}\",\n        \"url\": \"{{ $('Generar Link Fresco').first().json.url }}\"\n      }\n    }\n  }\n}",
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -73824,
-        10704
+        -1584,
+        1280
       ],
-      "id": "dfb49921-1f00-4d4e-b244-538db3066281",
+      "id": "56f423d4-224e-4089-9ea3-a17adc379b55",
       "name": "WhatsApp Send CTA Button",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1366,45 +1211,43 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -74272,
-        11280
+        -2032,
+        1856
       ],
-      "id": "d906bf94-40b5-4316-8fd8-11d5fe314786",
+      "id": "0abe6b88-f961-420e-bc17-c76ea7442e50",
       "name": "Si Es Botones?"
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\nconst list = Array.isArray(data.botones_list) ? data.botones_list : [];\n\nconst buttons = list.slice(0, 3).map(b => ({\n  type: 'reply',\n  reply: {\n    id: String(b.id || b.title || '').slice(0, 256),\n    title: String(b.title || '').slice(0, 20)\n  }\n}));\n\nconst to = $('Entrada').first().json.from;\nconst bodyText = (data.botones_body || data.output || '¿Qué quieres hacer?').slice(0, 1024);\n\nconst payload = {\n  messaging_product: 'whatsapp',\n  to: to,\n  type: 'interactive',\n  interactive: {\n    type: 'button',\n    body: { text: bodyText },\n    action: { buttons: buttons }\n  }\n};\n\nreturn [{ json: { ...data, wa_payload: payload } }];"
+        "jsCode": "const data = $input.first().json;\nconst list = Array.isArray(data.botones_list) ? data.botones_list : [];\n\nconst buttons = list.slice(0, 3).map(b => ({\n  type: 'reply',\n  reply: {\n    id: String(b.id || b.title || '').slice(0, 256),\n    title: String(b.title || '').slice(0, 20)\n  }\n}));\n\nconst to = $('WhatsApp Trigger').first().json.messages[0].from;\nconst bodyText = (data.botones_body || data.output || '¿Qué quieres hacer?').slice(0, 1024);\n\nconst payload = {\n  messaging_product: 'whatsapp',\n  to: to,\n  type: 'interactive',\n  interactive: {\n    type: 'button',\n    body: { text: bodyText },\n    action: { buttons: buttons }\n  }\n};\n\nreturn [{ json: { ...data, wa_payload: payload } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -74048,
-        11472
+        -1808,
+        2048
       ],
-      "id": "b4c057f7-3c2f-4e74-b641-f10ddab5f97d",
+      "id": "cb140c48-a8c4-4301-8749-2c4f457ac775",
       "name": "Preparar Botones"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}/messages",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "whatsAppApi",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.wa_payload) }}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -73824,
-        11472
+        -1584,
+        2048
       ],
-      "id": "168c1210-217f-4631-9da3-685c7d6007ce",
+      "id": "6b44b3ed-cec9-4aac-b2b3-4ea30c3b6a00",
       "name": "WhatsApp Send Buttons",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1444,32 +1287,30 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -74496,
-        10608
+        -2256,
+        1184
       ],
-      "id": "cf623505-445a-42e6-a7c7-4ffa64985bf8",
+      "id": "e398138b-d80c-4306-937c-2a66982cbecd",
       "name": "Si Es Imagen?"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $('Entrada').first().json.phone_number_id }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}/messages",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "whatsAppApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.imagen_send_url || 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg' }}\" }\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('WhatsApp Trigger').first().json.messages[0].from }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.imagen_send_url || 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg' }}\" }\n}",
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -74272,
-        10608
+        -2032,
+        1184
       ],
-      "id": "f660fe3f-a4df-430b-aa1a-fe3e4b389bbe",
+      "id": "00820e1a-a238-4026-8855-b5cfd15e5796",
       "name": "WhatsApp Send Imagen",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1485,9 +1326,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "PSs18hs5MlutOj6t",
+          "value": "BK3iTuvFjZPe6lyT",
           "mode": "list",
-          "cachedResultUrl": "/workflow/PSs18hs5MlutOj6t",
+          "cachedResultUrl": "/workflow/BK3iTuvFjZPe6lyT",
           "cachedResultName": "ISA Tool - Generar Link Carrito"
         },
         "workflowInputs": {
@@ -1495,8 +1336,9 @@
           "value": {
             "empresa": "={{ $json.cart_empresa || '00010' }}",
             "codcliente": "={{ $json.cart_codcliente }}",
-            "phone": "={{ $('Entrada').first().json.from }}",
-            "phone_number_id": "={{ $('Entrada').first().json.phone_number_id }}"
+            "phone": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
+            "phone_number_id": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+            "company_number": "={{ $('WhatsApp Trigger').first().json.metadata.display_phone_number }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1535,6 +1377,15 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
+            },
+            {
+              "id": "company_number",
+              "displayName": "company_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
@@ -1545,10 +1396,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -74272,
-        10800
+        -2032,
+        1376
       ],
-      "id": "4ed8ed0d-f260-4803-878e-fa1db91635ce",
+      "id": "d778b7ef-a25d-4ffc-b3e9-fadd10ec0505",
       "name": "Generar Link Fresco",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1583,29 +1434,29 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -74048,
-        10800
+        -1808,
+        1376
       ],
-      "id": "9f821325-739a-43ae-be05-e003a787d7f3",
+      "id": "4f5ec1ae-febf-44ba-ba06-505a2e0210aa",
       "name": "Link OK?"
     },
     {
       "parameters": {
         "operation": "send",
-        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
-        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
         "textBody": "Disculpa, ahorita no pude generar tu link del catálogo. Intenta de nuevo en un momento, por favor.",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1,
       "position": [
-        -73824,
-        10896
+        -1584,
+        1472
       ],
-      "id": "460145d0-70ea-47e6-871c-4115114caba8",
+      "id": "4c0976d2-b937-4908-b68d-0831b6c17b04",
       "name": "WhatsApp Send Link Error",
-      "webhookId": "6d8f830b-feed-4ec4-981f-226b31353837",
+      "webhookId": "6581c54e-58d6-48bc-8343-caec165c0acc",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -1644,10 +1495,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -74720,
-        11088
+        -2480,
+        1664
       ],
-      "id": "f61d12ff-20ab-413b-8ef7-be211fcb7752",
+      "id": "719cbad9-65ed-4940-bdf5-4d2aef7c4171",
       "name": "Si Es Order Action?"
     },
     {
@@ -1656,18 +1507,18 @@
         "url": "https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/process-action",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.order_boton_id }}\"\n}",
+        "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('WhatsApp Trigger').first().json.messages[0].from }}\",\n  \"phone_number_id\": \"{{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.order_boton_id }}\"\n}",
         "options": {
-          "timeout": 60000
+          "timeout": 10000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -74496,
-        11280
+        -2256,
+        1856
       ],
-      "id": "238ab8ef-b1e5-46ad-85fb-9e9dd1e61f96",
+      "id": "92b00ead-4d1b-4e61-8e7a-a6cb5e6ab561",
       "name": "Procesar Accion Pedido (texto)",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1701,29 +1552,29 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -77200,
-        11312
+        -4736,
+        1808
       ],
-      "id": "40d3997c-78a3-4df8-9eb3-2bccfc4a035e",
+      "id": "0154089a-7e87-4d6b-a492-608be43a3d7f",
       "name": "Acceso Permitido?"
     },
     {
       "parameters": {
         "operation": "send",
-        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
-        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
         "textBody": "={{ $json.mensaje_bloqueo }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -76192,
-        11248
+        -4512,
+        2000
       ],
-      "id": "942edade-67b6-4815-a66c-7237427ec2d3",
+      "id": "28610f38-f73c-4095-bec6-d229c55d81fc",
       "name": "WhatsApp Bloqueado",
-      "webhookId": "da4f4e7d-c75a-4785-bec7-9fbaf8bc2e8e",
+      "webhookId": "13c35db0-545b-4017-a831-2ab62fc8124d",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -1737,20 +1588,20 @@
     {
       "parameters": {
         "operation": "send",
-        "phoneNumberId": "={{ $('Entrada').first().json.phone_number_id }}",
-        "recipientPhoneNumber": "={{ $('Entrada').first().json.from }}",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
         "textBody": "Disculpa, en este momento tengo un problema tecnico y no puedo atenderte. Por favor intenta de nuevo en unos minutos. Gracias por tu paciencia.",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -75168,
-        11056
+        -3024,
+        2448
       ],
-      "id": "a1d70751-2e38-4ba9-ae40-1da272c14fe8",
+      "id": "d67042d1-f212-41a1-82cd-73c457f7e029",
       "name": "WhatsApp Error Tecnico",
-      "webhookId": "eeacc13f-2392-42a1-a8bb-dba7429ea86e",
+      "webhookId": "a1111111-2222-3333-4444-555555555555",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -1760,270 +1611,10 @@
           "name": "WhatsApp account TEST"
         }
       }
-    },
-    {
-      "parameters": {
-        "jsCode": "// Nodo canonico de entrada: normaliza WhatsApp y n8n Chat a una sola forma.\n// Detecta canal por la forma del input (no por refs cruzadas).\nconst all = $input.first().json;\n\nif (Array.isArray(all.messages) && all.messages.length) {\n  const msg = all.messages[0] || {};\n  const botonReply = (msg.interactive && (msg.interactive.button_reply || msg.interactive.list_reply)) || null;\n  const text = (botonReply && botonReply.title) || (msg.text && msg.text.body) || (msg.image && msg.image.caption) || '';\n  return [{ json: {\n    canal: 'whatsapp',\n    from: msg.from || '',\n    phone_number_id: (all.metadata && all.metadata.phone_number_id) || '',\n    message_id: msg.id || '',\n    text: text,\n    boton_id: (botonReply && botonReply.id) || '',\n    msg_type: msg.type || 'text',\n    image_url: (msg.image && msg.image.url) || '',\n    image_id: (msg.image && msg.image.id) || '',\n    audio_url: (msg.audio && msg.audio.url) || (msg.voice && msg.voice.url) || '',\n    audio_id: (msg.audio && msg.audio.id) || (msg.voice && msg.voice.id) || ''\n  }}];\n}\n\n// n8n Chat: el Chat Trigger expone chatInput y sessionId.\nconst text = all.chatInput || all.message || all.text || '';\nconst sid = all.sessionId || all.session_id || all.sessionKey || '';\nconst execId = (typeof $execution !== 'undefined' && $execution && $execution.id) ? String($execution.id) : '';\nreturn [{ json: {\n  canal: 'chat',\n  from: String(sid),\n  message_id: 'chat-' + (String(sid) || 'anon') + (execId ? '-' + execId : ''),\n  text: String(text),\n  boton_id: '',\n  msg_type: 'text',\n  image_url: '',\n  image_id: '',\n  audio_url: '',\n  audio_id: ''\n}}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80784,
-        11328
-      ],
-      "id": "0c6780ad-b69f-405b-ac53-99d13ac7dd62",
-      "name": "Entrada"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "canal-chat-cond-0001",
-              "leftValue": "={{ $('Entrada').first().json.canal }}",
-              "rightValue": "chat",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -74944,
-        10864
-      ],
-      "id": "5d423f63-e258-48ad-97d7-983959de8b91",
-      "name": "Canal Chat?"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Render para n8n Chat. Texto y flags vienen de Restaurar Output (siempre ejecutado);\n// la url del carrito viene de Generar Link Chat (rama true) o del fallback del Filtro.\nconst r = $('Restaurar Output').first().json;\nconst parts = [];\nconst out = (r.output || '').trim();\nif (out) parts.push(out);\n\nif (r.es_botones && Array.isArray(r.botones_list) && r.botones_list.length) {\n  if (r.botones_body) parts.push((r.botones_body || '').trim());\n  parts.push(r.botones_list.map((b, i) => (i + 1) + '. ' + (b.title || '')).join('\\n'));\n}\n\nconst cartUrl = ($json && $json.url) || r.cart_link_url || '';\nif (r.es_cart_link) {\n  if (cartUrl) parts.push('Abre tu catalogo aqui: ' + cartUrl);\n  else parts.push('Ahorita no pude generar tu link del catalogo. Intenta de nuevo en un momento, por favor.');\n}\n\nif (r.es_imagen && r.imagen_send_url) parts.push(r.imagen_send_url);\nif (r.es_plantilla && r.template_nombre) parts.push('[Plantilla: ' + r.template_nombre + ']');\n\nreturn [{ json: { output: parts.join('\\n\\n').trim() } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -74272,
-        10336
-      ],
-      "id": "474fa070-2cfa-4ac9-8f5e-d656a08f4957",
-      "name": "Responder Chat"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "chat-cartlink-0001",
-              "leftValue": "={{ $json.es_cart_link }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -74720,
-        10336
-      ],
-      "id": "167041de-b34f-4668-805c-9f8e6837b99d",
-      "name": "Chat Cart Link?"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "PSs18hs5MlutOj6t",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/PSs18hs5MlutOj6t",
-          "cachedResultName": "ISA Tool - Generar Link Carrito"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "empresa": "={{ $json.cart_empresa || '00010' }}",
-            "codcliente": "={{ $json.cart_codcliente }}",
-            "phone": "={{ $('Entrada').first().json.from }}",
-            "phone_number_id": "={{ $('Entrada').first().json.phone_number_id }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "empresa",
-              "displayName": "empresa",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "codcliente",
-              "displayName": "codcliente",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "phone",
-              "displayName": "phone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "phone_number_id",
-              "displayName": "phone_number_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.2,
-      "position": [
-        -74496,
-        10416
-      ],
-      "id": "a2456764-688a-448e-ae7b-dc2236058ca5",
-      "name": "Generar Link Chat",
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "canalerr01",
-              "leftValue": "={{ $('Entrada').first().json.canal }}",
-              "rightValue": "chat",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -75392,
-        11872
-      ],
-      "id": "d9e3b2d5-43f8-414e-a139-46b989128dbe",
-      "name": "Canal Error?"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "canalblo01",
-              "leftValue": "={{ $('Entrada').first().json.canal }}",
-              "rightValue": "chat",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -76976,
-        11440
-      ],
-      "id": "1575f40b-65e9-4f98-901b-c9d653e9fc8a",
-      "name": "Canal Bloqueo?"
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: { output: 'Disculpa, tuve un problema tecnico y no pude procesar tu mensaje. Intenta de nuevo en un momento, por favor.' } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -75168,
-        11904
-      ],
-      "id": "e91371de-2572-4b53-813c-2f694613dc36",
-      "name": "Responder Error Chat"
-    },
-    {
-      "parameters": {
-        "jsCode": "const r = $json || {};\nconst msg = r.mensaje_bloqueo || 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio.';\nreturn [{ json: { output: msg } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -76192,
-        11440
-      ],
-      "id": "cce291a8-9d0c-4ad6-983d-ef54c219d1c3",
-      "name": "Responder Bloqueo Chat"
     }
   ],
-  "pinData": {},
   "connections": {
-    "When Executed by Another Workflow": {
+    "WhatsApp Trigger": {
       "main": [
         [
           {
@@ -2038,7 +1629,7 @@
       "main": [
         [
           {
-            "node": "Entrada",
+            "node": "GET TOKEN",
             "type": "main",
             "index": 0
           }
@@ -2341,7 +1932,7 @@
         ],
         [
           {
-            "node": "Canal Error?",
+            "node": "WhatsApp Error Tecnico",
             "type": "main",
             "index": 0
           }
@@ -2363,7 +1954,7 @@
       "main": [
         [
           {
-            "node": "Canal Chat?",
+            "node": "Si Es Order Action?",
             "type": "main",
             "index": 0
           }
@@ -2461,54 +2052,14 @@
       "main": [
         [
           {
-            "node": "Inbox Estado",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Canal Error?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Inbox Estado": {
-      "main": [
-        [
-          {
-            "node": "Eval Agente",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Eval Agente": {
-      "main": [
-        [
-          {
-            "node": "En Agente?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "En Agente?": {
-      "main": [
-        [
-          {
-            "node": "Reenviar a Agente",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "CONFIGRUACION",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Error Tecnico",
             "type": "main",
             "index": 0
           }
@@ -2526,7 +2077,7 @@
         ],
         [
           {
-            "node": "Canal Error?",
+            "node": "WhatsApp Error Tecnico",
             "type": "main",
             "index": 0
           }
@@ -2544,7 +2095,7 @@
         ],
         [
           {
-            "node": "Canal Error?",
+            "node": "WhatsApp Error Tecnico",
             "type": "main",
             "index": 0
           }
@@ -2607,7 +2158,7 @@
       "main": [
         [
           {
-            "node": "Canal Bloqueo?",
+            "node": "WhatsApp Bloqueado",
             "type": "main",
             "index": 0
           }
@@ -2620,113 +2171,16 @@
           }
         ]
       ]
-    },
-    "Entrada": {
-      "main": [
-        [
-          {
-            "node": "GET TOKEN",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Canal Chat?": {
-      "main": [
-        [
-          {
-            "node": "Chat Cart Link?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Si Es Order Action?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Chat Cart Link?": {
-      "main": [
-        [
-          {
-            "node": "Generar Link Chat",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Responder Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Generar Link Chat": {
-      "main": [
-        [
-          {
-            "node": "Responder Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Canal Error?": {
-      "main": [
-        [
-          {
-            "node": "Responder Error Chat",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "WhatsApp Error Tecnico",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Canal Bloqueo?": {
-      "main": [
-        [
-          {
-            "node": "Responder Bloqueo Chat",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "WhatsApp Bloqueado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
-  "active": false,
+  "pinData": {},
+  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
+    "binaryMode": "separate"
   },
-  "versionId": "e675fd4f-9cdc-42af-bb06-3e9a55571b0a",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
-  },
-  "id": "iNtzP3Q7O446TySB",
+  "versionId": "695d228f-4776-4c6f-88ed-290af1e89fe2",
+  "meta": {},
+  "id": "UYQqmW4L0B2gwkc1",
   "tags": []
 }

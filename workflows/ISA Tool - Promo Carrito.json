@@ -20,10 +20,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        640,
-        -48
+        -416,
+        112
       ],
-      "id": "isatool-promocarrito-t",
+      "id": "0c1da908-ac9b-49c3-8b2b-5eb479b8faa7",
       "name": "When Called by Agent"
     },
     {
@@ -33,34 +33,29 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        864,
-        -48
+        -192,
+        112
       ],
-      "id": "isatool-promocarrito-g",
+      "id": "9af31098-18dc-4466-99ec-078f77489a78",
       "name": "Obtener Carrito"
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/promotions' }}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1088,
-        -48
+        32,
+        112
       ],
-      "id": "op-node-0001",
+      "id": "c6ea204b-4ac7-4272-9ddf-970986162784",
       "name": "Promos"
     },
     {
@@ -70,14 +65,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1312,
-        -48
+        256,
+        112
       ],
-      "id": "isatool-promocarrito-p",
+      "id": "1325df08-fb87-4f85-9495-d9f3acc5d68d",
       "name": "Parsear Respuesta"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -113,14 +107,14 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "versionId": "isatool-promocarrito-v",
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "id": "ISATOOL-PROMOCARRITO",
+  "versionId": "4037090d-f899-4636-9139-0d18e9d19185",
+  "meta": {},
+  "id": "1IRspzC9oe7LWwOZ",
   "tags": []
 }

@@ -5,19 +5,34 @@
       "parameters": {
         "workflowInputs": {
           "values": [
-            { "name": "empresa" },
-            { "name": "tienda" },
-            { "name": "codcliente" },
-            { "name": "sku" },
-            { "name": "qty" },
-            { "name": "unit_price" }
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "tienda"
+            },
+            {
+              "name": "codcliente"
+            },
+            {
+              "name": "sku"
+            },
+            {
+              "name": "qty"
+            },
+            {
+              "name": "unit_price"
+            }
           ]
         }
       },
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [640, -48],
-      "id": "isatool-agregarproducto-t",
+      "position": [
+        -240,
+        112
+      ],
+      "id": "25c07e1f-7f5c-422c-aec9-6aff2c3061f9",
       "name": "When Called by Agent"
     },
     {
@@ -27,71 +42,92 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
-        "options": { "timeout": 60000 }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [864, -48],
-      "id": "isatool-agregarproducto-g",
+      "position": [
+        -16,
+        112
+      ],
+      "id": "2218abb9-90fe-4cc0-b6b5-d7304276a4ec",
       "name": "Obtener Carrito"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/items' }}",
-        "options": { "timeout": 60000 },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"sku\": \"{{ $('When Called by Agent').first().json.sku }}\",\n  \"qty\": {{ $('When Called by Agent').first().json.qty }},\n  \"unit_price\": {{ $('When Called by Agent').first().json.unit_price }}\n}"
+        "jsonBody": "={\n  \"sku\": \"{{ $('When Called by Agent').first().json.sku }}\",\n  \"qty\": {{ $('When Called by Agent').first().json.qty }},\n  \"unit_price\": {{ $('When Called by Agent').first().json.unit_price }}\n}",
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1088, -48],
-      "id": "op-node-0001",
+      "position": [
+        208,
+        112
+      ],
+      "id": "e4bcd142-0bd9-4ee5-b82b-fa548c3285d9",
       "name": "Agregar Item"
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/summary' }}",
-        "options": { "timeout": 60000 }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [1312, -48],
-      "id": "isatool-agregarproducto-s",
-      "name": "Obtener Resumen"
-    },
-    {
-      "parameters": {
-        "jsCode": "const cart = $('Obtener Carrito').first().json;\nconst addResp = $('Agregar Item').first().json;\nconst sum = $input.first().json;\n\nif (!addResp || addResp.status >= 400) {\n  return [{ json: { ok: false, error: addResp?.message || 'Error al agregar' } }];\n}\n\nconst d = sum?.data || {};\nconst h = d.header || {};\n\n// Items REALES del carrito (ya ordenados: cada BONUS va tras su SALE de origen).\n// El agente debe mostrar EXACTAMENTE estos; no inventar lineas de bonus/descuento.\nconst items = (d.items || []).map(i => {\n  const qty = Number(i.quantity);\n  const up = Number(i.unitPrice);\n  const lt = Number(i.lineTotal);\n  const sub = Math.round(qty * up * 100) / 100;\n  const desc = (i.lineType === 'SALE') ? Math.round((sub - lt) * 100) / 100 : 0;\n  const pct = (i.lineType === 'SALE' && sub > 0 && desc > 0) ? Math.round(desc / sub * 100) : 0;\n  return { sku: i.productCode, nombre: i.productName, qty, unit_price: up, line_subtotal: sub, line_total: lt, descuento: desc, descuento_pct: pct, tipo: i.lineType };\n});\n\nreturn [{ json: {\n  ok: true,\n  cart_id: cart?.data?.cart_id || null,\n  line_id: addResp?.data?.line_id || null,\n  subtotal: Number(h.subtotal || 0),\n  descuento: Number(h.discount || 0),\n  total: Number(h.total || 0),\n  items\n} }];"
+        "jsCode": "const cart = $('Obtener Carrito').first().json;\nconst r = $input.first().json;\nif (!r || r.status >= 400) return [{ json: { ok: false, error: r?.message || 'Error al agregar' } }];\nreturn [{ json: { ok: true, cart_id: cart?.data?.cart_id || null, line_id: r?.data?.line_id || null } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1536, -48],
-      "id": "isatool-agregarproducto-p",
+      "position": [
+        432,
+        112
+      ],
+      "id": "a7ed0b90-4942-45ce-977d-e13b456e7d6e",
       "name": "Parsear Respuesta"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
-      "main": [[{ "node": "Obtener Carrito", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Obtener Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Obtener Carrito": {
-      "main": [[{ "node": "Agregar Item", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Agregar Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Agregar Item": {
-      "main": [[{ "node": "Obtener Resumen", "type": "main", "index": 0 }]]
-    },
-    "Obtener Resumen": {
-      "main": [[{ "node": "Parsear Respuesta", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parsear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
+  "pinData": {},
   "active": true,
-  "settings": { "executionOrder": "v1" },
-  "versionId": "isatool-agregarproducto-v",
-  "meta": { "templateCredsSetupCompleted": true },
-  "id": "ISATOOL-AGREGARPRODUCTO",
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e14b7c9f-c530-44d7-b9a6-33d9547549cb",
+  "meta": {},
+  "id": "RK9dwxguSfalaOws",
   "tags": []
 }

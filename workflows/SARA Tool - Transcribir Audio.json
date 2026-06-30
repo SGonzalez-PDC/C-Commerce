@@ -63,7 +63,6 @@
       "name": "Parsear Transcripción"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Workflow": {
       "main": [
@@ -88,6 +87,7 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
@@ -95,8 +95,7 @@
   },
   "versionId": "13a0f5a0-57d7-4d93-bef2-09220a134dbf",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+    "templateCredsSetupCompleted": true
   },
   "id": "vNKog2nwEWHghdam",
   "tags": []

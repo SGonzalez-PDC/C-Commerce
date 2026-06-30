@@ -1,0 +1,183 @@
+{
+  "name": "ISA Tool - Guardar Carrito",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "codcliente"
+            },
+            {
+              "name": "empresa"
+            },
+            {
+              "name": "tienda"
+            },
+            {
+              "name": "items_json"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "15675bb9-ae6e-4306-b3e5-36fb219ba2eb",
+      "name": "When Called by Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst items = JSON.parse(input.items_json || '[]');\n\nif (!Array.isArray(items) || items.length === 0) {\n  throw new Error('items_json vacío o inválido');\n}\n\nconst subtotal = items.reduce((sum, i) => sum + (parseFloat(i.line_total) || 0), 0);\n\nreturn [{\n  json: {\n    codcliente: input.codcliente,\n    empresa:    input.empresa,\n    tienda:     input.tienda,\n    subtotal:   subtotal.toFixed(4),\n    total:      subtotal.toFixed(4),\n    items\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "36062375-a062-4a5c-95d0-d96871f0b8d1",
+      "name": "Calcular Totales"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "EXEC DEV_FFA..c_commerce_cart_sp_crud_V1\n  @accion     = 'C',\n  @empresa    = '{{ $json.empresa }}',\n  @codcliente = '{{ $json.codcliente }}',\n  @tienda     = '{{ $json.tienda }}',\n  @subtotal   = {{ $json.subtotal }},\n  @total      = {{ $json.total }},\n  @status     = 'ACTIVE'"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "0525f255-22ee-4b6d-9162-49fe470f07c5",
+      "name": "Crear Header Carrito",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const headerRow = $input.first().json;\nconst cart_id = headerRow.cart_id;\nconst prev = $('Calcular Totales').first().json;\n\nif (!cart_id) {\n  throw new Error('No se obtuvo cart_id del SP de creación de carrito');\n}\n\nreturn prev.items.map(item => ({\n  json: {\n    cart_id,\n    sku:           item.sku || item.producto_id,\n    qty:           item.qty,\n    unit_price:    (parseFloat(item.unit_price) || 0).toFixed(4),\n    line_total:    (parseFloat(item.line_total) || 0).toFixed(4),\n    cart_id_ref:   cart_id\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "38b9257c-0bb1-4d08-a086-af9757f8766f",
+      "name": "Preparar Items"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "EXEC DEV_FFA..c_commerce_cart_det_sp_crud_V1\n  @accion        = 'C',\n  @cart_id       = '{{ $json.cart_id }}',\n  @sku           = '{{ $json.sku }}',\n  @qty           = {{ $json.qty }},\n  @unit_price    = {{ $json.unit_price }},\n  @line_subtotal = {{ $json.line_total }},\n  @line_total    = {{ $json.line_total }},\n  @line_type     = 'SALE'"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "7ec558c5-e1c0-4708-b1b9-bd24a66f62ba",
+      "name": "Insertar Item",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cart_id = $('Preparar Items').first().json.cart_id_ref;\nreturn [{ json: { cart_id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "f057d4b0-56e5-47ae-83fe-2bb49db1f995",
+      "name": "Retornar Cart ID"
+    }
+  ],
+  "connections": {
+    "When Called by Agent": {
+      "main": [
+        [
+          {
+            "node": "Calcular Totales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Totales": {
+      "main": [
+        [
+          {
+            "node": "Crear Header Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Header Carrito": {
+      "main": [
+        [
+          {
+            "node": "Preparar Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Items": {
+      "main": [
+        [
+          {
+            "node": "Insertar Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar Item": {
+      "main": [
+        [
+          {
+            "node": "Retornar Cart ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "16fd3e73-8162-49d8-b13b-7d00399e2bde",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "vOlTM0jEESF6q0jN",
+  "tags": []
+}

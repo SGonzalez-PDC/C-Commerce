@@ -1,0 +1,134 @@
+{
+  "name": "Remote Queries",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        -224
+      ],
+      "id": "4e05d78e-97b9-4a94-a82a-6269ef3f5e2d",
+      "name": "Telegram Trigger",
+      "webhookId": "014f0060-5927-45e5-a8ec-6d29afe6392b",
+      "credentials": {
+        "telegramApi": {
+          "id": "R1wRFEUccN70EjdM",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.message.text }}"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -224
+      ],
+      "id": "c65dd89a-2c2e-4809-8165-18fa71306606",
+      "name": "Microsoft SQL",
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_notification": true,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        -224
+      ],
+      "id": "09b7f507-e863-4668-9a4d-2ff9ff4e11eb",
+      "name": "Send a text message",
+      "webhookId": "b93950e2-9195-4ddd-80a7-46c6a981d957",
+      "credentials": {
+        "telegramApi": {
+          "id": "R1wRFEUccN70EjdM",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const LIMIT = 3900; // safe margin under Telegram's 4096\n\nconst items = $input.all().map(i => i.json);\n\nif (items.length === 0) {\n  return [{ json: { text: 'No results.' } }];\n}\n\n// collect every column across all rows, first-seen order\nconst cols = [];\nfor (const row of items) {\n  for (const k of Object.keys(row)) {\n    if (!cols.includes(k)) cols.push(k);\n  }\n}\n\nconst cell = v => {\n  if (v === null || v === undefined) return '';\n  if (typeof v === 'object') return JSON.stringify(v);\n  return String(v);\n};\n\nconst widths = {};\nfor (const c of cols) {\n  widths[c] = Math.max(c.length, ...items.map(i => cell(i[c]).length));\n}\n\nconst pad  = (v, w) => v.padEnd(w);\nconst line = vals => cols.map((c, idx) => pad(vals[idx], widths[c])).join('  ');\n\nconst header   = line(cols);\nconst rowLines = items.map(i => line(cols.map(c => cell(i[c]))));\n\n// group rows into chunks that stay under LIMIT, header included each time\nconst chunks = [];\nlet current = [header];\nlet len = header.length + 1;\n\nfor (const r of rowLines) {\n  const add = r.length + 1;\n  // if a single row + header already exceeds the limit, send it alone\n  if (header.length + 1 + add > LIMIT) {\n    if (current.length > 1) { chunks.push(current.join('\\n')); }\n    chunks.push([header, r].join('\\n'));\n    current = [header];\n    len = header.length + 1;\n    continue;\n  }\n  if (len + add > LIMIT) {\n    chunks.push(current.join('\\n'));\n    current = [header];\n    len = header.length + 1;\n  }\n  current.push(r);\n  len += add;\n}\nif (current.length > 1) chunks.push(current.join('\\n'));\n\n// optional page labels\nconst total = chunks.length;\nreturn chunks.map((text, idx) => ({\n  json: { text: total > 1 ? `(${idx + 1}/${total})\\n${text}` : text }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -224
+      ],
+      "id": "021c1b1e-8d09-4d56-989f-a5dd3043f3f8",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0de8dc2a-cce4-48db-b221-9c32e49627ab",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "tqJDKs3Xeb2YOVfx",
+  "tags": []
+}

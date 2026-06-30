@@ -65,7 +65,6 @@
       "name": "Parsear Análisis"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Workflow": {
       "main": [
@@ -90,6 +89,7 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
@@ -97,8 +97,7 @@
   },
   "versionId": "0c093cdb-2b15-4f27-90e4-23e751d6b8c6",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+    "templateCredsSetupCompleted": true
   },
   "id": "YWgEbPYooDFQSFEr",
   "tags": []

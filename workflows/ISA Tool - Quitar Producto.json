@@ -23,10 +23,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        640,
-        -48
+        0,
+        0
       ],
-      "id": "isatool-quitarproducto-t",
+      "id": "6ed3a52d-e5c3-416c-b893-226350e43674",
       "name": "When Called by Agent"
     },
     {
@@ -36,51 +36,46 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        864,
-        -48
+        224,
+        0
       ],
-      "id": "isatool-quitarproducto-g",
+      "id": "80a694f9-cb44-4c86-a20f-ee5a9c101341",
       "name": "Obtener Carrito"
     },
     {
       "parameters": {
         "method": "DELETE",
         "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/items/' + $('When Called by Agent').first().json.sku }}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1088,
-        -48
+        448,
+        0
       ],
-      "id": "op-node-0001",
+      "id": "4680fcc2-25a6-42a4-88dd-5a0855da2210",
       "name": "Quitar Item"
     },
     {
       "parameters": {
-        "jsCode": "const r = $('Quitar Item').first().json;\nif (!r || r.status >= 400) return [{ json: { ok: false, error: r?.message || 'Error al quitar' } }];\nreturn [{ json: { ok: true, rows_affected: r?.data?.rows_affected || 0 } }];"
+        "jsCode": "const r = $input.first().json;\nif (!r || r.status >= 400) return [{ json: { ok: false, error: r?.message || 'Error al quitar' } }];\nreturn [{ json: { ok: true, rows_affected: r?.data?.rows_affected || 0 } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1312,
-        -48
+        672,
+        0
       ],
-      "id": "isatool-quitarproducto-p",
+      "id": "1a8ad23f-f9a6-47d9-a253-d9546172104f",
       "name": "Parsear Respuesta"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -116,14 +111,14 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "versionId": "isatool-quitarproducto-v",
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "id": "ISATOOL-QUITARPRODUCTO",
+  "versionId": "de352570-beec-4d48-9c3d-df212a3c3eef",
+  "meta": {},
+  "id": "xMw8jyT38QWnT8YZ",
   "tags": []
 }

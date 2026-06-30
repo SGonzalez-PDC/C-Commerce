@@ -20,10 +20,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        848,
-        -48
+        -224,
+        128
       ],
-      "id": "f1a2b3c4-d5e6-7890-abcd-ef1111110001",
+      "id": "dd855fd9-d1ad-4b46-bab3-90db48d90b1c",
       "name": "When Called by Agent"
     },
     {
@@ -33,17 +33,15 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"phone_number_id\": \"{{ $json.phone_number_id }}\",\n  \"boton_id\": \"ORDER_CONFIRM\"\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1072,
-        -48
+        0,
+        128
       ],
-      "id": "f1a2b3c4-d5e6-7890-abcd-ef1111110002",
+      "id": "e2309523-168a-4a3b-b860-5237b3ada8a7",
       "name": "Llamar C Commerce"
     },
     {
@@ -53,14 +51,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1296,
-        -48
+        224,
+        128
       ],
-      "id": "f1a2b3c4-d5e6-7890-abcd-ef1111110003",
+      "id": "b80f8d82-6081-43d7-9137-d3c692c25b4b",
       "name": "Parsear Respuesta"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -85,15 +82,14 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "versionId": "f1a2b3c4-d5e6-7890-abcd-ef1111110010",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
-  },
-  "id": "ISATool-ConfirmarPedido",
+  "versionId": "747c59bf-3eb0-4aed-ac70-75d5b4112c22",
+  "meta": {},
+  "id": "8khK7EefujkJIaJc",
   "tags": []
 }

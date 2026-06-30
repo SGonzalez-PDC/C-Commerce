@@ -20,10 +20,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        640,
-        -48
+        0,
+        0
       ],
-      "id": "isatool-verresumencarrito-t",
+      "id": "38a71d49-4088-4273-8b1c-3fbd9dd52e1b",
       "name": "When Called by Agent"
     },
     {
@@ -33,34 +33,29 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"tienda\": \"{{ $json.tienda }}\",\n  \"codcliente\": \"{{ $json.codcliente }}\"\n}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        864,
-        -48
+        224,
+        0
       ],
-      "id": "isatool-verresumencarrito-g",
+      "id": "8f6432a5-e91d-4ff2-98e7-ec3b2935d3ac",
       "name": "Obtener Carrito"
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/summary' }}",
-        "options": {
-          "timeout": 60000
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1088,
-        -48
+        448,
+        0
       ],
-      "id": "op-node-0001",
+      "id": "2fb937f0-7861-4bbe-a273-3428615b314e",
       "name": "Resumen"
     },
     {
@@ -70,14 +65,13 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1312,
-        -48
+        672,
+        0
       ],
-      "id": "isatool-verresumencarrito-p",
+      "id": "c5a6b3b3-915f-4131-b8fa-f1008693f943",
       "name": "Parsear Respuesta"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -113,14 +107,14 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "versionId": "isatool-verresumencarrito-v",
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "id": "ISATOOL-VERRESUMENCARRITO",
+  "versionId": "df92c1e2-79a1-4cb2-b212-ad098994579b",
+  "meta": {},
+  "id": "SKSQ4GSPWbBKbnt9",
   "tags": []
 }

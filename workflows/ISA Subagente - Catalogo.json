@@ -23,10 +23,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        848,
-        16
+        -224,
+        112
       ],
-      "id": "92763d22-a4c2-4466-96cc-2db11ed0e7b9",
+      "id": "4f42fb5e-020c-4f04-869f-a24cd9a28f9a",
       "name": "When Called by Agent"
     },
     {
@@ -34,16 +34,16 @@
         "promptType": "define",
         "text": "={{ $json.query }}",
         "options": {
-          "systemMessage": "=Eres el subagente de CATALOGO de IsaCodisa. Tu unica responsabilidad es ayudar al cliente a explorar el catalogo: buscar productos, listar categorias y mostrar precios. Hablas español natural, calido y conversacional.\n\nDATOS DE ESTA LLAMADA (vienen del router, no los inventes):\n- cliente_id: {{ $json.cliente_id }}\n- empresa:    {{ $json.empresa }}\n- tienda:     {{ $json.tienda }}\n\nUsa SIEMPRE estos valores cuando una tool requiera cliente_id, empresa o tienda.\n\n═══════════════════════════════════════════════\nEXPLORACION\n═══════════════════════════════════════════════\nTOOLS:\n- listar_categorias(cliente_id, empresa) — categorias con precios personalizados del cliente.\n- buscar_productos(query, pagina, cliente_id, empresa, tienda) — productos paginados de 5 en 5. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.\n\nFORMATO PARA LISTAS (con formato WhatsApp):\n<N>. *<nombre>* — <unidad_medida> — *Q<precio>*\nSi el producto trae el campo 'promo' (de buscar_productos), imprimelo DEBAJO del producto (NO al final del renglon). El campo viene agrupado y puede traer hasta 2 renglones ('Descuentos: ...' y 'Bonus: ...'); pon CADA renglon en su propio renglon indentado con '   🎁 ', TAL CUAL, respetando los saltos de linea (todas las tiers, sin resumir ni reordenar).\nUsa *negritas* en nombre y precio, un producto por renglon, y un emoji moderado (🛒) en el intro. Termina con '¿Cuál prefieres? Dame el número.'\n\nMAPEO peticion → tool:\n- 'que tienes', 'que hay', 'dejame ver' (sin categoria) → listar_categorias(cliente_id, empresa)\n- 'a ver tus X', 'que X tienes' → buscar_productos(query='X', pagina=1, ...)\n- 'busco X', 'necesito X' → buscar_productos(query='X', pagina=1, ...)\n- 'mas', 'siguiente' → buscar_productos(MISMO query, pagina=siguiente_pagina, ...)\n\nPRESENTACION DE PRODUCTOS (un mensaje por producto):\n- Muestra los productos UNO POR MENSAJE (sin carrusel). Cada mensaje lleva nombre y precio.\n\nREGLA DE ORO: NUNCA inventes productos, precios ni marcas. SIEMPRE llama la tool.\n\nPAGINACION:\n- total_resultados ≤ 5: 'Te tengo estas {total} opciones: [lista]. ¿Cuál prefieres? Dame el número.'\n- total_resultados > 5: 'Tengo {total} opciones. Te muestro las primeras 5: [lista]. ¿Alguna te interesa? Si no, dime \"más\".'\n- Al pedir 'mas': 'Aquí van las siguientes (de {total} totales): [lista]'\n- hay_mas_paginas=false: 'Estas son todas las opciones. ¿Alguna te sirve?'\n- total_resultados=0: 'Ahorita no tenemos nada así. ¿Quieres ver alternativas?'\n\n═══════════════════════════════════════════════\nFORMATO DE MENSAJES (WhatsApp) — dale vida y orden\n═══════════════════════════════════════════════\nReglas de estilo (aplican a TODOS tus mensajes):\n- Negritas SOLO con UN asterisco: *texto*. Precios como *Q22.01*.\n- Usa emojis con moderacion y a proposito (no en cada palabra):\n  🛒 al mostrar productos · ✅ al agregar · 🧾 resumen · 💰 total · 🎁 descuento/promo · 📦 entrega · 👇 al pedir accion.\n- Separa secciones con UNA linea en blanco. Para el resumen, usa una linea divisoria: ────────────────\n- Un producto por renglon. Nada de parrafos largos.\n\nLISTA DE PRODUCTOS (al buscar):\n🛒 *Esto encontre para ti:*\n\n1. *<nombre>* — *Q<precio>*<si hay promo: — 🎁 <promo>>\n2. ...\n\n👇 ¿Cuál quieres? Dime el número o el nombre y cuántas unidades.\n\nAL AGREGAR un producto:\n✅ ¡Listo! Agregué *<qty> x <nombre>*.\n\n🧾 Tu carrito va así:\n<qty> x *<Producto>* = *Q<line_total>*\n...\n💰 *Total: Q<total>*\n\n¿Querés agregar algo más o finalizamos? 👇\n\nRESUMEN FINAL (al cerrar):\n🧾 *Resumen de tu pedido*\n────────────────\n<qty> x *<Producto>* = *Q<line_total>*<si descuento: \\n   🎁 descuento <X>% (-Q<monto>)>\n...\n────────────────\n💰 *Total: Q<total>*\n📦 Entrega: <direccion si esta>\n\n═══════════════════════════════════════════════\nREGLAS CRITICAS\n═══════════════════════════════════════════════\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta."
+          "systemMessage": "=Eres el subagente de CATALOGO de IsaCodisa. Tu unica responsabilidad es ayudar al cliente a explorar el catalogo: buscar productos, listar categorias y mostrar precios. Hablas español natural, calido y conversacional.\n\nDATOS DE ESTA LLAMADA (vienen del router, no los inventes):\n- cliente_id: {{ $json.cliente_id }}\n- empresa:    {{ $json.empresa }}\n- tienda:     {{ $json.tienda }}\n\nUsa SIEMPRE estos valores cuando una tool requiera cliente_id, empresa o tienda.\n\n═══════════════════════════════════════════════\nEXPLORACION\n═══════════════════════════════════════════════\nTOOLS:\n- listar_categorias(cliente_id, empresa) — categorias con precios personalizados del cliente.\n- buscar_productos(query, pagina, cliente_id, empresa, tienda) — productos paginados de 5 en 5. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.\n\nFORMATO PARA LISTAS (con formato WhatsApp):\n<N>. *<nombre>* — <unidad_medida> — *Q<precio>*\nSi el producto trae el campo 'promo' (de buscar_productos), agregalo al final de su renglon tal cual (ej. ' — 12% de descuento (de 1 a 10 unidades)').\nUsa *negritas* en nombre y precio, un producto por renglon, y un emoji moderado (🛒) en el intro. Termina con '¿Cuál prefieres? Dame el número.'\n\nMAPEO peticion → tool:\n- 'que tienes', 'que hay', 'dejame ver' (sin categoria) → listar_categorias(cliente_id, empresa)\n- 'a ver tus X', 'que X tienes' → buscar_productos(query='X', pagina=1, ...)\n- 'busco X', 'necesito X' → buscar_productos(query='X', pagina=1, ...)\n- 'mas', 'siguiente' → buscar_productos(MISMO query, pagina=siguiente_pagina, ...)\n\nPRESENTACION DE PRODUCTOS (un mensaje por producto):\n- Muestra los productos UNO POR MENSAJE (sin carrusel). Cada mensaje lleva nombre y precio.\n\nREGLA DE ORO: NUNCA inventes productos, precios ni marcas. SIEMPRE llama la tool.\n\nPAGINACION:\n- total_resultados ≤ 5: 'Te tengo estas {total} opciones: [lista]. ¿Cuál prefieres? Dame el número.'\n- total_resultados > 5: 'Tengo {total} opciones. Te muestro las primeras 5: [lista]. ¿Alguna te interesa? Si no, dime \"más\".'\n- Al pedir 'mas': 'Aquí van las siguientes (de {total} totales): [lista]'\n- hay_mas_paginas=false: 'Estas son todas las opciones. ¿Alguna te sirve?'\n- total_resultados=0: 'Ahorita no tenemos nada así. ¿Quieres ver alternativas?'\n\n═══════════════════════════════════════════════\nFORMATO DE MENSAJES (WhatsApp) — dale vida y orden\n═══════════════════════════════════════════════\nReglas de estilo (aplican a TODOS tus mensajes):\n- Negritas SOLO con UN asterisco: *texto*. Precios como *Q22.01*.\n- Usa emojis con moderacion y a proposito (no en cada palabra):\n  🛒 al mostrar productos · ✅ al agregar · 🧾 resumen · 💰 total · 🎁 descuento/promo · 📦 entrega · 👇 al pedir accion.\n- Separa secciones con UNA linea en blanco. Para el resumen, usa una linea divisoria: ────────────────\n- Un producto por renglon. Nada de parrafos largos.\n\nLISTA DE PRODUCTOS (al buscar):\n🛒 *Esto encontre para ti:*\n\n1. *<nombre>* — *Q<precio>*<si hay promo: — 🎁 <promo>>\n2. ...\n\n👇 ¿Cuál quieres? Dime el número o el nombre y cuántas unidades.\n\nAL AGREGAR un producto:\n✅ ¡Listo! Agregué *<qty> x <nombre>*.\n\n🧾 Tu carrito va así:\n<qty> x *<Producto>* = *Q<line_total>*\n...\n💰 *Total: Q<total>*\n\n¿Querés agregar algo más o finalizamos? 👇\n\nRESUMEN FINAL (al cerrar):\n🧾 *Resumen de tu pedido*\n────────────────\n<qty> x *<Producto>* = *Q<line_total>*<si descuento: \\n   🎁 descuento <X>% (-Q<monto>)>\n...\n────────────────\n💰 *Total: Q<total>*\n📦 Entrega: <direccion si esta>\n\n═══════════════════════════════════════════════\nREGLAS CRITICAS\n═══════════════════════════════════════════════\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        1128,
-        16
+        64,
+        112
       ],
-      "id": "24d327da-794f-4706-8c1b-fbfa3dad9ee2",
+      "id": "17961259-3cf3-4b95-8f5b-e29043368d29",
       "name": "Subagente Catalogo"
     },
     {
@@ -58,18 +58,18 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        1072,
-        240
+        0,
+        336
       ],
-      "id": "2205a011-d6aa-424b-9f1c-9b4a2fc6587e",
+      "id": "6eb5edcd-93fe-499e-b07c-4ebe16916a5c",
       "name": "Gemini Model",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "credentials": {
         "googlePalmApi": {
-          "id": "VFfmru0ImTrgxd2x",
-          "name": "Google Gemini(PaLM) Api account 2"
+          "id": "dmDyRdDA9oCzXOwY",
+          "name": "Google Gemini(PaLM) Api account"
         }
       }
     },
@@ -78,9 +78,9 @@
         "description": "Busca productos del catálogo del cliente, paginados de 5 en 5. Parámetros: query (texto), pagina (1 inicial, incrementa), cliente_id, empresa, tienda. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.",
         "workflowId": {
           "__rl": true,
-          "value": "r9IogCfhwEueb6nN",
+          "value": "0zRzHKJKZtuqWUOm",
           "mode": "list",
-          "cachedResultUrl": "/workflow/r9IogCfhwEueb6nN",
+          "cachedResultUrl": "/workflow/0zRzHKJKZtuqWUOm",
           "cachedResultName": "ISA Tool - Buscar Productos"
         },
         "workflowInputs": {
@@ -149,10 +149,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1200,
-        240
+        128,
+        336
       ],
-      "id": "27d7eeba-e4f3-4657-83bd-95d9458d3c2f",
+      "id": "aa32ea33-00f4-421d-8a1b-6286bdc02479",
       "name": "Tool: Buscar Productos"
     },
     {
@@ -160,9 +160,9 @@
         "description": "Devuelve categorías con precios personalizados del cliente. Parámetros: cliente_id, empresa. Úsala cuando el cliente pida algo genérico como 'qué tienes' o 'déjame ver'.",
         "workflowId": {
           "__rl": true,
-          "value": "sa67mqbv4m5l49tH",
+          "value": "wVY2PnMkD46IT7Yp",
           "mode": "list",
-          "cachedResultUrl": "/workflow/sa67mqbv4m5l49tH",
+          "cachedResultUrl": "/workflow/wVY2PnMkD46IT7Yp",
           "cachedResultName": "ISA Tool - Listar Categorias"
         },
         "workflowInputs": {
@@ -201,14 +201,13 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1328,
-        240
+        256,
+        336
       ],
-      "id": "63f1bbd8-c4aa-43f4-b9e8-d635df8abedf",
+      "id": "5dbed496-327e-4b7b-a815-6cb223a0de7f",
       "name": "Tool: Listar Categorias"
     }
   ],
-  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -255,15 +254,16 @@
       ]
     }
   },
+  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "cb88cf4f-4832-479b-816f-024de11048d5",
+  "versionId": "ac2df1af-b079-4808-8ceb-3728b16e63f1",
   "meta": {
-    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
+    "templateCredsSetupCompleted": true
   },
-  "id": "kIY1iqeT8toJqcli",
+  "id": "pKR9juF7fH6xEj9T",
   "tags": []
 }
