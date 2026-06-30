@@ -85,15 +85,24 @@ BEGIN
         BEGIN
             DECLARE @existing_cart_id UNIQUEIDENTIFIER;
 
+            -- Reusa el carrito PENDIENTE del cliente: ACTIVE o ENVIADO_WHATSAPP
+            -- (link enviado pero sin pagar/cancelar). Solo se crea uno nuevo si el
+            -- ultimo esta en estado terminal (COMPLETED/CANCELLED/DELIVERED) o no hay.
             SELECT TOP 1 @existing_cart_id = h.cart_id
             FROM DEV_FFA..ffa_tbl_txn_header_cart h
             WHERE h.empresa = @empresa
               AND h.codcliente = @codcliente
-              AND h.[status] = 'ACTIVE'
+              AND h.[status] IN ('ACTIVE', 'ENVIADO_WHATSAPP')
             ORDER BY h.created_at DESC;
 
             IF @existing_cart_id IS NOT NULL
             BEGIN
+                -- Si estaba ENVIADO_WHATSAPP (sin confirmar), se reabre como ACTIVE
+                -- para que el cliente lo siga viendo y editando.
+                UPDATE DEV_FFA..ffa_tbl_txn_header_cart
+                SET [status] = 'ACTIVE', updated_at = SYSDATETIME()
+                WHERE cart_id = @existing_cart_id AND [status] = 'ENVIADO_WHATSAPP';
+
                 SELECT @existing_cart_id AS cart_id, CAST(0 AS BIT) AS is_new;
             END
             ELSE
