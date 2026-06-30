@@ -57,16 +57,16 @@ BEGIN
         SELECT DISTINCT f.codigo
         INTO #promos_ok
         FROM DEV_FFA..ffa_promocion f
-        LEFT JOIN DEV_FFA..ffa_asignacion_promocion fa ON fa.id_referencia = f.codigo
-        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad ON fa.id_asignacion = fad.id_asignacion
-        LEFT JOIN JerarquiaSegmentacion js ON js.id_nivel = fad.id_referencia AND js.empresa = f.empresa
-        LEFT JOIN JerarquiaGeografia jg ON jg.id_nivel = fad.id_referencia AND jg.empresa = f.empresa
+        INNER JOIN DEV_FFA..ffa_asignacion_promocion fa ON fa.id_referencia = f.codigo AND fa.empresa = f.empresa
+        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad_geo ON fad_geo.id_asignacion = fa.id_asignacion AND fad_geo.empresa = fa.empresa
+        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad_seg ON fad_seg.id_asignacion = fa.id_asignacion AND fad_seg.empresa = fa.empresa AND fad_seg.tipo_estructura = 13
+        LEFT JOIN JerarquiaSegmentacion js ON js.id_nivel = fad_seg.id_referencia AND js.empresa = f.empresa
+        LEFT JOIN JerarquiaGeografia jg ON jg.id_nivel = fad_geo.id_referencia AND jg.empresa = f.empresa
         WHERE f.empresa = @empresa
             AND @fecha BETWEEN CAST(f.fecha_inicio AS DATE) AND CAST(f.fecha_fin AS DATE)
-            AND (f.cod_cliente IS NULL OR f.cod_cliente = @codcliente)
             AND f.estado = 1
             AND (f.territorio IS NULL OR f.territorio = @territorio_cliente)
-            AND (f.cod_cliente = @codcliente OR (f.cod_cliente IS NULL AND (js.id_nivel IS NOT NULL OR jg.id_nivel IS NOT NULL)));
+            AND (f.cod_cliente = @codcliente OR (f.cod_cliente IS NULL AND jg.id_nivel IS NOT NULL AND (fad_seg.id_referencia IS NULL OR js.id_nivel IS NOT NULL)));
 
         -- 0b) Promo ELEGIDA por el cliente por sku (excluyente). Solo si sigue elegible.
         SELECT cp.sku, cp.codigo
