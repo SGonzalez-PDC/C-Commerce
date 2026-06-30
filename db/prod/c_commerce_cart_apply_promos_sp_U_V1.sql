@@ -1,4 +1,4 @@
-USE [DEV_C_COMMERCE]
+USE [C_COMMERCE]
 GO
 /****** Objeto: StoredProcedure [dbo].[c_commerce_cart_apply_promos_sp_U_V1] Fecha de script: 24/06/2026 16:00:00 ******/
 SET ANSI_NULLS ON
@@ -30,37 +30,37 @@ BEGIN
 
         SELECT @empresa = COALESCE(@empresa, h.empresa),
                @codcliente = COALESCE(@codcliente, h.codcliente)
-        FROM DEV_FFA..ffa_tbl_txn_header_cart h
+        FROM FFA..ffa_tbl_txn_header_cart h
         WHERE h.cart_id = @cart_id;
 
         -- 0a) Promos ELEGIBLES para el cliente (misma regla que el portal sp_GetBestSellers_V2)
         DECLARE @territorio_cliente VARCHAR(100) =
-            (SELECT territorio FROM DEV_FFA..clientes WHERE empresa = @empresa AND codcliente = @codcliente);
+            (SELECT territorio FROM FFA..clientes WHERE empresa = @empresa AND codcliente = @codcliente);
 
         ;WITH JerarquiaSegmentacion AS (
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, 0 AS prof
-            FROM DEV_FFA..FFAniveles n INNER JOIN DEV_FFA..CLIENTES c ON c.segmentacion_cliente = n.id_nivel
+            FROM FFA..FFAniveles n INNER JOIN FFA..CLIENTES c ON c.segmentacion_cliente = n.id_nivel
             WHERE c.codcliente = @codcliente AND c.ACTIVO = 'S' AND c.empresa = @empresa AND n.status = 1
             UNION ALL
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, j.prof + 1
-            FROM DEV_FFA..FFAniveles n INNER JOIN JerarquiaSegmentacion j ON n.id_nivel = j.id_nivel_padre
+            FROM FFA..FFAniveles n INNER JOIN JerarquiaSegmentacion j ON n.id_nivel = j.id_nivel_padre
             WHERE n.status = 1 AND j.prof < 10
         ),
         JerarquiaGeografia AS (
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, 0 AS prof
-            FROM DEV_FFA..FFAniveles n INNER JOIN DEV_FFA..CLIENTES c ON c.geografia = n.id_nivel
+            FROM FFA..FFAniveles n INNER JOIN FFA..CLIENTES c ON c.geografia = n.id_nivel
             WHERE c.codcliente = @codcliente AND c.ACTIVO = 'S' AND c.empresa = @empresa AND n.status = 1
             UNION ALL
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, j.prof + 1
-            FROM DEV_FFA..FFAniveles n INNER JOIN JerarquiaGeografia j ON n.id_nivel = j.id_nivel_padre
+            FROM FFA..FFAniveles n INNER JOIN JerarquiaGeografia j ON n.id_nivel = j.id_nivel_padre
             WHERE n.status = 1 AND j.prof < 10
         )
         SELECT DISTINCT f.codigo
         INTO #promos_ok
-        FROM DEV_FFA..ffa_promocion f
-        INNER JOIN DEV_FFA..ffa_asignacion_promocion fa ON fa.id_referencia = f.codigo AND fa.empresa = f.empresa
-        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad_geo ON fad_geo.id_asignacion = fa.id_asignacion AND fad_geo.empresa = fa.empresa
-        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad_seg ON fad_seg.id_asignacion = fa.id_asignacion AND fad_seg.empresa = fa.empresa AND fad_seg.tipo_estructura = 13
+        FROM FFA..ffa_promocion f
+        INNER JOIN FFA..ffa_asignacion_promocion fa ON fa.id_referencia = f.codigo AND fa.empresa = f.empresa
+        LEFT JOIN FFA..ffa_asignacion_promocion_lista_detalle fad_geo ON fad_geo.id_asignacion = fa.id_asignacion AND fad_geo.empresa = fa.empresa
+        LEFT JOIN FFA..ffa_asignacion_promocion_lista_detalle fad_seg ON fad_seg.id_asignacion = fa.id_asignacion AND fad_seg.empresa = fa.empresa AND fad_seg.tipo_estructura = 13
         LEFT JOIN JerarquiaSegmentacion js ON js.id_nivel = fad_seg.id_referencia AND js.empresa = f.empresa
         LEFT JOIN JerarquiaGeografia jg ON jg.id_nivel = fad_geo.id_referencia AND jg.empresa = f.empresa
         WHERE f.empresa = @empresa
@@ -72,14 +72,14 @@ BEGIN
         -- 0b) Promo ELEGIDA por el cliente por sku (excluyente). Solo si sigue elegible.
         SELECT cp.sku, cp.codigo
         INTO #chosen
-        FROM DEV_FFA..c_commerce_cart_chosen_promo cp
+        FROM FFA..c_commerce_cart_chosen_promo cp
         WHERE cp.cart_id = @cart_id
           AND cp.codigo IN (SELECT codigo FROM #promos_ok);
 
         -- 1) RESET (idempotente): descuentos y lineas BONUS previas
-        DELETE FROM DEV_FFA..ffa_tbl_txn_discount_cart WHERE cart_id = @cart_id;
-        DELETE FROM DEV_FFA..ffa_tbl_txn_detail_cart WHERE cart_id = @cart_id AND line_type = 'BONUS';
-        UPDATE DEV_FFA..ffa_tbl_txn_detail_cart
+        DELETE FROM FFA..ffa_tbl_txn_discount_cart WHERE cart_id = @cart_id;
+        DELETE FROM FFA..ffa_tbl_txn_detail_cart WHERE cart_id = @cart_id AND line_type = 'BONUS';
+        UPDATE FFA..ffa_tbl_txn_detail_cart
         SET line_discounts = 0, line_total = line_subtotal, updated_at = SYSDATETIME()
         WHERE cart_id = @cart_id AND line_type = 'SALE';
 
@@ -87,14 +87,14 @@ BEGIN
         DECLARE @aplicar TABLE (line_id INT, codigo INT, nombre VARCHAR(250), pct NUMERIC(18,4), monto NUMERIC(18,4));
         INSERT INTO @aplicar (line_id, codigo, nombre, pct, monto)
         SELECT s.line_id, x.codigo, x.nombre, x.pct, CAST(s.line_subtotal * x.pct / 100.0 AS NUMERIC(18,4))
-        FROM (SELECT d.line_id, d.sku, d.qty, d.line_subtotal FROM DEV_FFA..ffa_tbl_txn_detail_cart d WHERE d.cart_id = @cart_id AND d.line_type = 'SALE') s
+        FROM (SELECT d.line_id, d.sku, d.qty, d.line_subtotal FROM FFA..ffa_tbl_txn_detail_cart d WHERE d.cart_id = @cart_id AND d.line_type = 'SALE') s
         LEFT JOIN #chosen ch ON ch.sku = s.sku
         CROSS APPLY (
             SELECT TOP 1 p.codigo, p.nombre, bp.porcentaje_descuento AS pct
-            FROM DEV_FFA..ffa_promocion_articulo pa
-            INNER JOIN DEV_FFA..ffa_promocion p ON p.empresa = pa.empresa AND p.codigo = pa.codigo_promocion
-            INNER JOIN DEV_FFA..ffa_beneficios_promocion bp ON bp.empresa = p.empresa AND bp.codigo_promocion = p.codigo AND bp.tipo_beneficio_id = 1 AND bp.porcentaje_descuento > 0
-            INNER JOIN DEV_FFA..ffa_condiciones_promocion c ON c.empresa = p.empresa AND c.codigo_promocion = p.codigo
+            FROM FFA..ffa_promocion_articulo pa
+            INNER JOIN FFA..ffa_promocion p ON p.empresa = pa.empresa AND p.codigo = pa.codigo_promocion
+            INNER JOIN FFA..ffa_beneficios_promocion bp ON bp.empresa = p.empresa AND bp.codigo_promocion = p.codigo AND bp.tipo_beneficio_id = 1 AND bp.porcentaje_descuento > 0
+            INNER JOIN FFA..ffa_condiciones_promocion c ON c.empresa = p.empresa AND c.codigo_promocion = p.codigo
                AND (bp.id_condicion_promocion IS NULL OR c.condiciones_promocion_id = bp.id_condicion_promocion)
                AND c.apartir_de <= (CASE WHEN c.isMonetario = 1 THEN s.line_subtotal ELSE s.qty END)
                AND (c.hasta IS NULL OR (CASE WHEN c.isMonetario = 1 THEN s.line_subtotal ELSE s.qty END) <= c.hasta)
@@ -106,24 +106,24 @@ BEGIN
         WHERE x.pct IS NOT NULL;
 
         UPDATE d SET d.line_discounts = a.monto, d.line_total = d.line_subtotal - a.monto, d.updated_at = SYSDATETIME()
-        FROM DEV_FFA..ffa_tbl_txn_detail_cart d INNER JOIN @aplicar a ON a.line_id = d.line_id WHERE d.cart_id = @cart_id;
+        FROM FFA..ffa_tbl_txn_detail_cart d INNER JOIN @aplicar a ON a.line_id = d.line_id WHERE d.cart_id = @cart_id;
 
-        INSERT INTO DEV_FFA..ffa_tbl_txn_discount_cart (cart_id, line_id, discount_seq, tipo_forma, cod_promocion, tipo_valor, valor, descuento_calc, id_descuento, observaciones, estado)
+        INSERT INTO FFA..ffa_tbl_txn_discount_cart (cart_id, line_id, discount_seq, tipo_forma, cod_promocion, tipo_valor, valor, descuento_calc, id_descuento, observaciones, estado)
         SELECT @cart_id, a.line_id, 1, '1', a.codigo, 1, a.pct, a.monto, CAST(a.codigo AS VARCHAR(100)), a.nombre, 'P' FROM @aplicar a;
 
         -- 3) BONIFICACION por linea SALE: la promo elegida si la hay; si no, la mejor bonus.
-        DECLARE @maxline INT = ISNULL((SELECT MAX(line_id) FROM DEV_FFA..ffa_tbl_txn_detail_cart WHERE cart_id = @cart_id), 0);
+        DECLARE @maxline INT = ISNULL((SELECT MAX(line_id) FROM FFA..ffa_tbl_txn_detail_cart WHERE cart_id = @cart_id), 0);
         ;WITH bonus_all AS (
             SELECT d.line_id AS origin_line, bp.articulo_sku AS bonus_sku,
                    FLOOR((CASE WHEN c.isMonetario = 1 THEN d.line_subtotal ELSE d.qty END) / NULLIF(c.por_cada,0)) * bp.cantidad_redimible AS qty_bonus
-            FROM DEV_FFA..ffa_tbl_txn_detail_cart d
+            FROM FFA..ffa_tbl_txn_detail_cart d
             LEFT JOIN #chosen ch ON ch.sku = d.sku
-            INNER JOIN DEV_FFA..ffa_promocion_articulo pa ON pa.empresa = @empresa AND pa.articulo_sku = d.sku
-            INNER JOIN DEV_FFA..ffa_promocion p ON p.empresa = pa.empresa AND p.codigo = pa.codigo_promocion
-            INNER JOIN DEV_FFA..ffa_beneficios_promocion bp ON bp.empresa = p.empresa AND bp.codigo_promocion = p.codigo AND bp.tipo_beneficio_id = 2 AND bp.cantidad_redimible > 0
+            INNER JOIN FFA..ffa_promocion_articulo pa ON pa.empresa = @empresa AND pa.articulo_sku = d.sku
+            INNER JOIN FFA..ffa_promocion p ON p.empresa = pa.empresa AND p.codigo = pa.codigo_promocion
+            INNER JOIN FFA..ffa_beneficios_promocion bp ON bp.empresa = p.empresa AND bp.codigo_promocion = p.codigo AND bp.tipo_beneficio_id = 2 AND bp.cantidad_redimible > 0
             OUTER APPLY (
                 SELECT TOP 1 c.por_cada, c.isMonetario
-                FROM DEV_FFA..ffa_condiciones_promocion c
+                FROM FFA..ffa_condiciones_promocion c
                 WHERE c.empresa = p.empresa AND c.codigo_promocion = p.codigo
                   AND (bp.id_condicion_promocion IS NULL OR c.condiciones_promocion_id = bp.id_condicion_promocion)
                   AND c.apartir_de <= (CASE WHEN c.isMonetario = 1 THEN d.line_subtotal ELSE d.qty END)
@@ -140,17 +140,17 @@ BEGIN
             FROM bonus_all
             WHERE qty_bonus >= 1
         )
-        INSERT INTO DEV_FFA..ffa_tbl_txn_detail_cart (cart_id, line_id, sku, line_type, qty, unit_price, line_subtotal, line_discounts, line_total, bonus_origin_line, created_at, updated_at)
+        INSERT INTO FFA..ffa_tbl_txn_detail_cart (cart_id, line_id, sku, line_type, qty, unit_price, line_subtotal, line_discounts, line_total, bonus_origin_line, created_at, updated_at)
         SELECT @cart_id, @maxline + ROW_NUMBER() OVER (ORDER BY origin_line), bonus_sku, 'BONUS', qty_bonus, 0, 0, 0, 0, origin_line, SYSDATETIME(), SYSDATETIME()
         FROM bonus_best WHERE rk = 1;
 
         -- 4) Recalcular cabecera
         UPDATE h
         SET subtotal = x.sub, discounts_total = x.disc, total = x.tot, updated_at = SYSDATETIME()
-        FROM DEV_FFA..ffa_tbl_txn_header_cart h
+        FROM FFA..ffa_tbl_txn_header_cart h
         CROSS APPLY (
             SELECT ISNULL(SUM(d.line_subtotal), 0) AS sub, ISNULL(SUM(d.line_discounts), 0) AS disc, ISNULL(SUM(d.line_total), 0) AS tot
-            FROM DEV_FFA..ffa_tbl_txn_detail_cart d WHERE d.cart_id = @cart_id
+            FROM FFA..ffa_tbl_txn_detail_cart d WHERE d.cart_id = @cart_id
         ) x
         WHERE h.cart_id = @cart_id;
 

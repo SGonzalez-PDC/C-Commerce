@@ -1,0 +1,29 @@
+name: Deploy n8n (prod)
+
+# PRODUCCION. Despliega a https://n8n.pdctechco.com con la config de envs/prod.json
+# (URLs .pdctechco.com y BD sin prefijo). Push a la rama 'prod' o ejecucion manual.
+# OJO: prod puede tener ajustes hechos a mano; revisa el dry-run antes.
+
+on:
+  push:
+    branches: [prod]
+    paths:
+      - "workflows/**"
+      - "envs/prod.json"
+      - "scripts/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Desplegar workflows a n8n prod
+        run: node scripts/n8n-sync.js --env prod
+        env:
+          N8N_URL: ${{ secrets.N8N_URL }}
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}

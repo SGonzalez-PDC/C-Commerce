@@ -1,4 +1,4 @@
-USE [DEV_C_COMMERCE]
+USE [PREP_C_COMMERCE]
 GO
 /****** Objeto: StoredProcedure [dbo].[c_commerce_sp_get_cart_summary_V1] Fecha de script: 24/06/2026 16:00:00 ******/
 SET ANSI_NULLS ON
@@ -43,7 +43,7 @@ BEGIN
                 h.expires_at        AS ExpiryDate,
                 h.direccion         AS Direction,
                 h.fecha_entrega_envia AS DeliveryDate
-            FROM DEV_FFA..ffa_tbl_txn_header_cart h
+            FROM PREP_FFA..ffa_tbl_txn_header_cart h
             WHERE h.cart_id = @cart_id
               AND (@empresa IS NULL OR h.empresa = @empresa);
 
@@ -58,10 +58,10 @@ BEGIN
                 d.line_total        AS LineTotal,
                 d.line_type         AS LineType,
                 d.bonus_origin_line AS BonusOriginLine
-            FROM DEV_FFA..ffa_tbl_txn_detail_cart d
-            INNER JOIN DEV_FFA..ffa_tbl_txn_header_cart h
+            FROM PREP_FFA..ffa_tbl_txn_detail_cart d
+            INNER JOIN PREP_FFA..ffa_tbl_txn_header_cart h
                 ON h.cart_id = d.cart_id
-            LEFT JOIN DEV_FFA..ARTICULO AS a
+            LEFT JOIN PREP_FFA..ARTICULO AS a
                 ON d.sku = a.SKU
                 AND a.EMPRESA = h.empresa
                 AND a.Activo = 'S'
@@ -77,8 +77,8 @@ BEGIN
                 dc.Direccion        AS address,
                 dc.zona        AS municipality,
                 dc.colonia     AS department
-            FROM DEV_FFA..CXC_DireccionCliente dc
-            INNER JOIN DEV_FFA..ffa_tbl_txn_header_cart h ON h.codcliente = dc.CodCliente AND h.empresa = dc.Empresa
+            FROM PREP_FFA..CXC_DireccionCliente dc
+            INNER JOIN PREP_FFA..ffa_tbl_txn_header_cart h ON h.codcliente = dc.CodCliente AND h.empresa = dc.Empresa
             WHERE h.cart_id = @cart_id
               AND (@empresa IS NULL OR h.empresa = @empresa)
               AND dc.status = 'S'

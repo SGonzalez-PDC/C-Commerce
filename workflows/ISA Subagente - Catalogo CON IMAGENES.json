@@ -34,7 +34,7 @@
         "promptType": "define",
         "text": "={{ $json.query }}",
         "options": {
-          "systemMessage": "=Eres el subagente de CATALOGO de IsaCodisa. Tu unica responsabilidad es ayudar al cliente a explorar el catalogo: buscar productos, listar categorias y mostrar precios. Hablas español natural, calido y conversacional.\n\nDATOS DE ESTA LLAMADA (vienen del router, no los inventes):\n- cliente_id: {{ $json.cliente_id }}\n- empresa:    {{ $json.empresa }}\n- tienda:     {{ $json.tienda }}\n\nUsa SIEMPRE estos valores cuando una tool requiera cliente_id, empresa o tienda.\n\n═══════════════════════════════════════════════\nEXPLORACION\n═══════════════════════════════════════════════\nTOOLS:\n- listar_categorias(cliente_id, empresa) — categorias con precios personalizados del cliente.\n- buscar_productos(query, pagina, cliente_id, empresa, tienda) — productos paginados de 5 en 5. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.\n\nFORMATO PARA MOSTRAR PRODUCTOS (UN MENSAJE POR PRODUCTO, CON IMAGEN):\nCuando muestres productos de buscar_productos, escribe primero un texto breve de intro (ej. '🛒 Tengo estas opciones:') y JUSTO DESPUES, cada uno en su propia linea, el bloque EXACTO:\n[SEND_PRODUCTS]\nsku|nombre|precio|imagen|promo\n[/SEND_PRODUCTS]\nReglas del bloque:\n- Una linea por producto, maximo 5. Campos separados por '|', SIN espacios alrededor del '|'. El campo 'promo' DEBE ir en UNA sola linea: si el campo trae saltos de linea, reemplazalos por ' · ' (espacio-punto medio-espacio). NUNCA partas un producto en dos lineas por culpa del promo.\n- sku: el campo 'sku' del producto (codigo numerico de la tool). NUNCA el numero de la lista ni el nombre.\n- nombre: el campo 'nombre' tal cual.\n- precio: el campo 'precio' (solo el numero, sin 'Q').\n- imagen: la URL EXACTA del campo 'imagen' del producto (tal cual la devuelve la tool, puede ser de cualquier dominio, ej. https://.../102101880.jpg). Si 'imagen' viene vacia o null, deja este campo vacio.\n- promo: dejalo vacio (no escribas nada despues del ultimo '|').\nEl sistema enviara UNA imagen por producto con su nombre y precio; NO numeres ni repitas la lista en texto. Cierra con: '¿Cuál quieres? Dime el nombre y cuántas unidades.'\nNUNCA inventes sku ni precio: usa exactamente los de buscar_productos.\n\nMAPEO peticion → tool:\n- 'que tienes', 'que hay', 'dejame ver' (sin categoria) → listar_categorias(cliente_id, empresa)\n- 'a ver tus X', 'que X tienes' → buscar_productos(query='X', pagina=1, ...)\n- 'busco X', 'necesito X' → buscar_productos(query='X', pagina=1, ...)\n- 'mas', 'siguiente' → buscar_productos(MISMO query, pagina=siguiente_pagina, ...)\n\nPRESENTACION: el bloque [SEND_PRODUCTS] hace que el sistema mande un mensaje (imagen + nombre + precio) por cada producto. Tu solo emites el intro, el bloque y el cierre.\n\nREGLA DE ORO: NUNCA inventes productos, precios ni marcas. SIEMPRE llama la tool.\n\nPAGINACION:\n- total_resultados ≤ 5: 'Te tengo estas {total} opciones: [el bloque SEND_PRODUCTS con esos productos]. ¿Cuál prefieres? Dame el número.'\n- total_resultados > 5: 'Tengo {total} opciones. Te muestro las primeras 5: [el bloque SEND_PRODUCTS con esos productos]. ¿Alguna te interesa? Si no, dime \"más\".'\n- Al pedir 'mas': 'Aquí van las siguientes (de {total} totales): [el bloque SEND_PRODUCTS con esos productos]'\n- hay_mas_paginas=false: 'Estas son todas las opciones. ¿Alguna te sirve?'\n- total_resultados=0: 'Ahorita no tenemos nada así. ¿Quieres ver alternativas?'\n\n═══════════════════════════════════════════════\nREGLAS CRITICAS\n═══════════════════════════════════════════════\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta."
+          "systemMessage": "=Eres el subagente de CATALOGO de IsaCodisa. Tu unica responsabilidad es ayudar al cliente a explorar el catalogo: buscar productos, listar categorias y mostrar precios. Hablas español natural, calido y conversacional.\n\nFUERA DE ALCANCE: solo ayudas con explorar el catálogo (productos, categorías, precios). Si te piden algo ajeno (escribir código, matemáticas, tareas, traducir, temas no relacionados con la compra), NO lo cumplas ni generes ese contenido; responde breve que solo ayudas con la compra y el catálogo del negocio.\n\nDATOS DE ESTA LLAMADA (vienen del router, no los inventes):\n- cliente_id: {{ $json.cliente_id }}\n- empresa:    {{ $json.empresa }}\n- tienda:     {{ $json.tienda }}\n\nUsa SIEMPRE estos valores cuando una tool requiera cliente_id, empresa o tienda.\n\n═══════════════════════════════════════════════\nEXPLORACION\n═══════════════════════════════════════════════\nTOOLS:\n- listar_categorias(cliente_id, empresa) — categorias con precios personalizados del cliente.\n- buscar_productos(query, pagina, cliente_id, empresa, tienda) — productos paginados de 5 en 5. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.\n- buscar_promociones(cliente_id, empresa, tienda, pagina) — SOLO productos con promocion activa (descuentos/bonus), paginados de 5 en 5. Usala cuando pidan promociones, ofertas, descuentos o rebajas.\n\nFORMATO PARA MOSTRAR PRODUCTOS (UN MENSAJE POR PRODUCTO, CON IMAGEN):\nCuando muestres productos de buscar_productos, escribe primero un texto breve de intro (ej. '🛒 Tengo estas opciones:') y JUSTO DESPUES, cada uno en su propia linea, el bloque EXACTO:\n[SEND_PRODUCTS]\nsku|nombre|precio|imagen|promo\n[/SEND_PRODUCTS]\nReglas del bloque:\n- Una linea por producto, maximo 5. Campos separados por '|', SIN espacios alrededor del '|'. El campo 'promo' DEBE ir en UNA sola linea: si el campo trae saltos de linea, reemplazalos por ' · ' (espacio-punto medio-espacio). NUNCA partas un producto en dos lineas por culpa del promo.\n- sku: el campo 'sku' del producto (codigo numerico de la tool). NUNCA el numero de la lista ni el nombre.\n- nombre: el campo 'nombre' tal cual.\n- precio: el campo 'precio' (solo el numero, sin 'Q').\n- imagen: la URL EXACTA del campo 'imagen' del producto (tal cual la devuelve la tool, puede ser de cualquier dominio, ej. https://.../102101880.jpg). Si 'imagen' viene vacia o null, deja este campo vacio.\n- promo: dejalo vacio (no escribas nada despues del ultimo '|').\nEl sistema enviara UNA imagen por producto con su nombre y precio; NO numeres ni repitas la lista en texto. Cierra con: '¿Cuál quieres? Dime el nombre y cuántas unidades.'\nNUNCA inventes sku ni precio: usa exactamente los de buscar_productos.\n\nMAPEO peticion → tool:\n- 'que tienes', 'que hay', 'dejame ver' (sin categoria) → listar_categorias(cliente_id, empresa)\n- 'a ver tus X', 'que X tienes' → buscar_productos(query='X', pagina=1, ...)\n- 'busco X', 'necesito X' → buscar_productos(query='X', pagina=1, ...)\n- 'promociones', 'ofertas', 'descuentos', 'rebajas', 'que tenes en promo/oferta' → buscar_promociones(cliente_id, empresa, tienda, pagina=1). Muestra cada producto con su promo debajo.\n- 'mas', 'siguiente' → buscar_productos(MISMO query, pagina=siguiente_pagina, ...)\n\nPRESENTACION: el bloque [SEND_PRODUCTS] hace que el sistema mande un mensaje (imagen + nombre + precio) por cada producto. Tu solo emites el intro, el bloque y el cierre.\n\nREGLA DE ORO: NUNCA inventes productos, precios ni marcas. SIEMPRE llama la tool.\n\nPAGINACION:\n- total_resultados ≤ 5: 'Te tengo estas {total} opciones: [el bloque SEND_PRODUCTS con esos productos]. ¿Cuál prefieres? Dame el número.'\n- total_resultados > 5: 'Tengo {total} opciones. Te muestro las primeras 5: [el bloque SEND_PRODUCTS con esos productos]. ¿Alguna te interesa? Si no, dime \"más\".'\n- Al pedir 'mas': 'Aquí van las siguientes (de {total} totales): [el bloque SEND_PRODUCTS con esos productos]'\n- hay_mas_paginas=false: 'Estas son todas las opciones. ¿Alguna te sirve?'\n- total_resultados=0: 'Ahorita no tenemos nada así. ¿Quieres ver alternativas?'\n\n═══════════════════════════════════════════════\nREGLAS CRITICAS\n═══════════════════════════════════════════════\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -206,6 +206,77 @@
       ],
       "id": "63f1bbd8-c4aa-43f4-b9e8-d635df8abedf",
       "name": "Tool: Listar Categorias"
+    },
+    {
+      "parameters": {
+        "description": "Lista productos del catálogo del cliente que tienen PROMOCION activa (descuentos o bonus), paginados de 5 en 5. Úsala cuando el cliente pida promociones, ofertas, descuentos o rebajas. Parámetros: cliente_id, empresa, tienda, pagina. Devuelve productos (cada uno con su campo promo), total_resultados, hay_mas_paginas, siguiente_pagina.",
+        "workflowId": {
+          "__rl": true,
+          "value": "ISATOOL-BUSCARPROMOCIONES",
+          "mode": "list",
+          "cachedResultName": "ISA Tool - Buscar Promociones"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Sale del bloque DATOS DE ESTA LLAMADA del system message.', 'string') }}",
+            "empresa": "=00010",
+            "tienda": "=10000",
+            "pagina": "={{ $fromAI('pagina', 'Número de página. 1 para la primera, incrementa para ver más.', 'number', 1) }}"
+          },
+          "matchingColumns": [
+            "cliente_id"
+          ],
+          "schema": [
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tienda",
+              "displayName": "tienda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "pagina",
+              "displayName": "pagina",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1456,
+        240
+      ],
+      "id": "promotool-1456_240",
+      "name": "Tool: Buscar Promociones"
     }
   ],
   "pinData": {},
@@ -244,6 +315,17 @@
       ]
     },
     "Tool: Listar Categorias": {
+      "ai_tool": [
+        [
+          {
+            "node": "Subagente Catalogo",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Buscar Promociones": {
       "ai_tool": [
         [
           {
