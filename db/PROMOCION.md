@@ -54,16 +54,21 @@ dev-canonica. Para llevar cambios de dev a prod: **PR de `develop` (o la rama qu
 hacia `prod`**, revisar/mergear, y push → `deploy-prod.yml`. El `envs/prod.json` convierte
 todo a prod (URLs, BD, phone_number_id, cred ids). empresa/companyId son iguales.
 
-## 3. Backend (ffa-c-commerce-service) — OJO
-Los SPs canonicos del backend (`Sps/V1/`) estan VIEJOS (sin el fix de elegibilidad de
-promos ni los cambios de hoy). Si se despliega el backend, **pisa** los SPs. Antes de
-promover prod: portar los SPs de `db/` al repo backend (o correr los `db/<env>/*.sql`
-DESPUES del deploy del backend).
+## 3. Backend (ffa-c-commerce-service) — normalmente NO se toca
+El backend al desplegar **solo compila/despliega C#**; **NO ejecuta** los `.sql` de
+`Sps/V1/` (son solo fuente/referencia). Por eso:
+- Los SPs reales viven en la BD y se aplican a mano (paso 1). Que los `.sql` del repo
+  backend esten desfasados NO afecta runtime (no se ejecutan); a lo sumo quedan como
+  referencia desactualizada.
+- El backend SOLO se promueve si cambio **logica C#** (endpoints, DTOs, servicios).
+  Nuestro trabajo de promos/carrito fue todo SQL + n8n -> el backend no requiere nada.
+- (Opcional/orden) si quieres mantener `Sps/V1/` como documentacion fiel, copia ahi los
+  SPs de `db/dev/`, pero no es necesario para que funcione.
 
 ## Checklist para promover TODO lo de dev a un ambiente
 1. [ ] Correr `db/<env>/*.sql` (los 8, en orden) en la BD del ambiente.
 2. [ ] (Si aplica) correr seeds equivalentes — normalmente NO en prod.
 3. [ ] Push/PR de la rama -> rama del ambiente (dispara CI n8n).
 4. [ ] Verificar run del CI (GitHub Actions).
-5. [ ] Backend: portar SPs si se va a redeplegar el servicio.
+5. [ ] Backend: SOLO si cambio logica C#. No ejecuta los .sql al desplegar.
 6. [ ] Configurar Environment del ambiente en GitHub (N8N_URL + N8N_API_KEY) si no existe.
