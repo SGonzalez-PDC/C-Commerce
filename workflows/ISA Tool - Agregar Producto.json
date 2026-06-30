@@ -37,6 +37,68 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/summary' }}",
+        "options": { "timeout": 60000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1040, -48],
+      "id": "isatool-agregarproducto-rp",
+      "name": "Resumen Previo"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DECLARE @empresa NVARCHAR(10) = '{{ $('When Called by Agent').first().json.empresa }}';\nDECLARE @tienda  NVARCHAR(10) = '{{ $('When Called by Agent').first().json.tienda }}';\nDECLARE @sku     NVARCHAR(50) = '{{ $('When Called by Agent').first().json.sku }}';\n\n-- Stock disponible: misma definicion que ISA Tool - Buscar Productos\n-- (SUM(EXISTENCIA) por empresa+tienda+sku). No se resta RESERVA para ser\n-- consistente con el stock que muestra el catalogo.\nSELECT ISNULL(SUM(EXISTENCIA), 0) AS disponible\nFROM dbo.INVENTARIO\nWHERE EMPRESA = @empresa AND TIENDA = @tienda AND SKU = @sku;"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [1216, -48],
+      "id": "isatool-agregarproducto-cs",
+      "name": "Consultar Stock",
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trig = $('When Called by Agent').first().json;\nconst cart = $('Obtener Carrito').first().json;\nconst prev = $('Resumen Previo').first().json;\nconst stockRow = $('Consultar Stock').first().json;\n\nconst sku = String(trig.sku);\nconst qty = Number(trig.qty) || 0;\nconst disponible = Number(stockRow && stockRow.disponible != null ? stockRow.disponible : 0);\n\n// Cantidad de ESTE sku que ya esta en el carrito (para que sumar no exceda el stock).\nconst items = (prev && prev.data && Array.isArray(prev.data.items)) ? prev.data.items : [];\nconst en_carrito = items\n  .filter(i => String(i.productCode) === sku)\n  .reduce((a, i) => a + (Number(i.quantity) || 0), 0);\n\nconst requerido = en_carrito + qty;\nconst suficiente = requerido <= disponible;\n\nreturn [{ json: {\n  suficiente,\n  disponible,\n  en_carrito,\n  solicitado: qty,\n  requerido,\n  sku,\n  cart_id: (cart && cart.data) ? cart.data.cart_id : null\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1392, -48],
+      "id": "isatool-agregarproducto-vs",
+      "name": "Validar Stock"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-suficiente",
+              "leftValue": "={{ $json.suficiente }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1568, -48],
+      "id": "isatool-agregarproducto-if",
+      "name": "Hay Stock?"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "={{ 'https://ffa-c-commerce-service.dev.pdctechco.com/api/v1/order/cart/' + $('Obtener Carrito').first().json.data.cart_id + '/items' }}",
         "options": { "timeout": 60000 },
@@ -46,7 +108,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1088, -48],
+      "position": [1792, -160],
       "id": "op-node-0001",
       "name": "Agregar Item"
     },
@@ -58,7 +120,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1312, -48],
+      "position": [2016, -160],
       "id": "isatool-agregarproducto-s",
       "name": "Obtener Resumen"
     },
@@ -68,9 +130,19 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1536, -48],
+      "position": [2240, -160],
       "id": "isatool-agregarproducto-p",
       "name": "Parsear Respuesta"
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Validar Stock').first().json;\nconst enCarrito = Number(v.en_carrito) || 0;\nconst disp = Number(v.disponible) || 0;\n\nlet mensaje = `Solo hay ${disp} unidad(es) disponibles de ${v.sku}`;\nif (enCarrito > 0) mensaje += ` y ya tienes ${enCarrito} en el carrito`;\nmensaje += '. Ajusta la cantidad o elige otro producto.';\n\n// NO se agrego nada al carrito: el flujo se detuvo antes de llamar al backend.\nreturn [{ json: {\n  ok: false,\n  motivo: 'stock_insuficiente',\n  sku: v.sku,\n  disponible: disp,\n  en_carrito: enCarrito,\n  solicitado: Number(v.solicitado) || 0,\n  mensaje\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1792, 96],
+      "id": "isatool-agregarproducto-ns",
+      "name": "Respuesta Sin Stock"
     }
   ],
   "pinData": {},
@@ -79,7 +151,22 @@
       "main": [[{ "node": "Obtener Carrito", "type": "main", "index": 0 }]]
     },
     "Obtener Carrito": {
-      "main": [[{ "node": "Agregar Item", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Resumen Previo", "type": "main", "index": 0 }]]
+    },
+    "Resumen Previo": {
+      "main": [[{ "node": "Consultar Stock", "type": "main", "index": 0 }]]
+    },
+    "Consultar Stock": {
+      "main": [[{ "node": "Validar Stock", "type": "main", "index": 0 }]]
+    },
+    "Validar Stock": {
+      "main": [[{ "node": "Hay Stock?", "type": "main", "index": 0 }]]
+    },
+    "Hay Stock?": {
+      "main": [
+        [{ "node": "Agregar Item", "type": "main", "index": 0 }],
+        [{ "node": "Respuesta Sin Stock", "type": "main", "index": 0 }]
+      ]
     },
     "Agregar Item": {
       "main": [[{ "node": "Obtener Resumen", "type": "main", "index": 0 }]]
