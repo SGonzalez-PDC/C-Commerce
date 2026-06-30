@@ -56,7 +56,8 @@ BEGIN
                 d.qty               AS Quantity,
                 d.unit_price        AS UnitPrice,
                 d.line_total        AS LineTotal,
-                d.line_type         AS LineType
+                d.line_type         AS LineType,
+                d.bonus_origin_line AS BonusOriginLine
             FROM DEV_FFA..ffa_tbl_txn_detail_cart d
             INNER JOIN DEV_FFA..ffa_tbl_txn_header_cart h
                 ON h.cart_id = d.cart_id
@@ -64,7 +65,12 @@ BEGIN
                 ON d.sku = a.SKU
                 AND a.EMPRESA = h.empresa
                 AND a.Activo = 'S'
-            WHERE d.cart_id = @cart_id;
+            WHERE d.cart_id = @cart_id
+            -- Agrupa cada linea BONUS junto a su producto de origen: ordena por la
+            -- linea de origen (la propia si es SALE) y dentro del grupo SALE antes que BONUS.
+            ORDER BY COALESCE(d.bonus_origin_line, d.line_id),
+                     CASE d.line_type WHEN 'SALE' THEN 0 ELSE 1 END,
+                     d.line_id;
 
             -- ResultSet 3: Address
             SELECT TOP 1
