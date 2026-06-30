@@ -15,6 +15,7 @@ GO
 *   - 24-06-2026 / Saul Gonzalez: Creacion (solo descuento % limpio).
 *   - 24-06-2026 / Saul Gonzalez: Mejor descuento % + mejor bonificacion por linea. Sin stacking.
 *   - 29-06-2026 / Saul Gonzalez: Filtro de elegibilidad (estado/territorio/asignacion, igual que el portal) y respeto a la promo elegida por el cliente (excluyente) via c_commerce_cart_chosen_promo.
+*   - 30-06-2026 / Saul Gonzalez: Atar cada beneficio a SU condicion (bp.id_condicion_promocion) al elegir el tier por cantidad, igual que c_commerce_cart_promo_sp_R_V1. Antes el bonus se aplicaba con el tier que matcheaba la cantidad aunque el beneficio perteneciera a otro tier (ej. 22727: bonus del tier 11-15 se aplicaba en qty 8).
 */
 CREATE OR ALTER PROCEDURE [dbo].[c_commerce_cart_apply_promos_sp_U_V1]
     @cart_id     UNIQUEIDENTIFIER,
@@ -94,6 +95,7 @@ BEGIN
             INNER JOIN PREP_FFA..ffa_promocion p ON p.empresa = pa.empresa AND p.codigo = pa.codigo_promocion
             INNER JOIN PREP_FFA..ffa_beneficios_promocion bp ON bp.empresa = p.empresa AND bp.codigo_promocion = p.codigo AND bp.tipo_beneficio_id = 1 AND bp.porcentaje_descuento > 0
             INNER JOIN PREP_FFA..ffa_condiciones_promocion c ON c.empresa = p.empresa AND c.codigo_promocion = p.codigo
+               AND (bp.id_condicion_promocion IS NULL OR c.condiciones_promocion_id = bp.id_condicion_promocion)
                AND c.apartir_de <= (CASE WHEN c.isMonetario = 1 THEN s.line_subtotal ELSE s.qty END)
                AND (c.hasta IS NULL OR (CASE WHEN c.isMonetario = 1 THEN s.line_subtotal ELSE s.qty END) <= c.hasta)
             WHERE pa.empresa = @empresa AND pa.articulo_sku = s.sku
@@ -123,6 +125,7 @@ BEGIN
                 SELECT TOP 1 c.por_cada, c.isMonetario
                 FROM PREP_FFA..ffa_condiciones_promocion c
                 WHERE c.empresa = p.empresa AND c.codigo_promocion = p.codigo
+                  AND (bp.id_condicion_promocion IS NULL OR c.condiciones_promocion_id = bp.id_condicion_promocion)
                   AND c.apartir_de <= (CASE WHEN c.isMonetario = 1 THEN d.line_subtotal ELSE d.qty END)
                   AND (c.hasta IS NULL OR (CASE WHEN c.isMonetario = 1 THEN d.line_subtotal ELSE d.qty END) <= c.hasta)
                 ORDER BY c.apartir_de DESC
