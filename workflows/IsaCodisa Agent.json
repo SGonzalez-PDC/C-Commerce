@@ -260,7 +260,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const multimedia = $('Detectar Multimedia').first().json;\nconst analisisImg = $input.first().json;\nreturn [{ json: {\n  ...multimedia,\n  contexto_imagen: analisisImg.contexto_imagen || 'Sin imagen.',\n  contexto_audio: 'Sin audio.'\n} }];"
+        "jsCode": "const multimedia = $('Detectar Multimedia').first().json;\nconst analisisImg = $input.first().json;\nconst ctx = analisisImg.contexto_imagen || 'Sin imagen.';\nconst desc = (analisisImg.descripcion_breve || '').trim();\nconst caption = (multimedia.chatInput || '').trim();\n// chatInput = caption del cliente + descripcion de la imagen (IA). Nunca vacio\n// (evita que el Agent pase varias keys a la memoria cuando la imagen no trae texto).\nlet chatInput = [caption, desc].filter(Boolean).join('. ');\nif (!chatInput) chatInput = ctx;\nreturn [{ json: {\n  ...multimedia,\n  chatInput,\n  contexto_imagen: ctx,\n  contexto_audio: 'Sin audio.'\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
