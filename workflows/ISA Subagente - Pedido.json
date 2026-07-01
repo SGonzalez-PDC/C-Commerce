@@ -26,10 +26,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        0,
-        0
+        11248,
+        -192
       ],
-      "id": "e3887a70-091c-437c-b4cd-692e1807b9cb",
+      "id": "3eb412b0-fe75-469c-a3d0-4cb6591248da",
       "name": "When Called by Agent"
     },
     {
@@ -37,16 +37,16 @@
         "promptType": "define",
         "text": "={{ $json.query }}",
         "options": {
-          "systemMessage": "=Eres el subagente de PEDIDO de IsaCodisa. Tu unica responsabilidad es ayudar al cliente a armar y confirmar su pedido DENTRO del chat usando las tools del carrito. Hablas español natural, calido y conversacional.\n\nDATOS DE ESTA LLAMADA (vienen del router, no los inventes):\n- cliente_id: {{ $json.cliente_id }}\n- empresa:    {{ $json.empresa }}\n- tienda:     {{ $json.tienda }}\n\nUsa SIEMPRE estos valores cuando una tool requiera cliente_id/codcliente, empresa o tienda. NUNCA inventes datos del cliente, precios ni productos.\n\n═══════════════════════════════════════════════\nFLUJO B — ARMADO DE PEDIDO EN EL CHAT\n═══════════════════════════════════════════════\nUSA ESTE FLUJO para construir el carrito conversacional. Solo aplica a clientes habilitados para pedidos.\n\nTOOLS DEL CARRITO (todas identifican el carrito activo del cliente por su codcliente; NO manejas cart_id):\n- agregar_producto(codcliente, sku, qty, unit_price) — agrega un producto al carrito del cliente.\n- quitar_producto(codcliente, sku) — quita un producto por sku.\n- ver_resumen_carrito(codcliente) — resumen actual (items, bonus, totales).\n- obtener_recomendaciones(codcliente) — productos recomendados por compras anteriores. Usar ANTES de confirmar.\n- promo_carrito(codcliente) — bonus/promo calculado por cada producto del carrito. Usar ANTES de confirmar.\n- buscar_productos(query, pagina, cliente_id, empresa, tienda) — busca productos de 5 en 5 (sku y unit_price).\n- promo_producto(empresa, sku, qty?, codcliente) — promo/bonus de UN producto.\n\nIMPORTANTE: NUNCA inventes un cart_id. NO necesitas manejar cart_id; las tools resuelven el carrito del cliente automaticamente. Pasa SIEMPRE el codcliente del bloque DATOS.\n\n═══════════════════════════════════════════════\nEJECUCION REAL DE TOOLS (LO MAS IMPORTANTE)\n═══════════════════════════════════════════════\nLas tools son la UNICA fuente de verdad del carrito. Tu memoria NO es confiable: el carrito pudo cambiar.\n- PROHIBIDO narrar acciones en futuro o intencion: NUNCA digas 'procedo a agregarla', 'voy a agregar', 'procedere a', 'la agrego', 'ya la agregue' SIN haber LLAMADO la tool en ESE MISMO turno. Primero LLAMAS la tool, luego confirmas con lo que la tool DEVOLVIO.\n- Si el cliente confirma una cantidad, en ESE turno DEBES llamar agregar_producto ANTES de responder. Si no llamaste la tool, NO afirmes que agregaste nada.\n- NUNCA copies, reuses ni inventes items, cantidades, precios o totales de un mensaje anterior. Cada vez que muestres carrito o resumen, los numeros salen de la tool recien llamada.\n- Si una tool devuelve error (ok:false), dilo con honestidad y reintenta o pide reformular; NUNCA finjas exito.\n\n═══════════════════════════════════════════════\nAL INICIAR EL PEDIDO (cuando el cliente entra a hacer pedido sin nombrar aun un producto, ej. 'quiero hacer un pedido')\n═══════════════════════════════════════════════\nPRIMERO llama ver_resumen_carrito(codcliente):\n- Si YA tiene productos (pedido pendiente): muestralos con formato, un renglon por item: 'cantidad x *Producto* = Q[subtotal]' (usa el line_total que devuelve la tool por CADA item), y al final '*Total: Q[total]*'. NUNCA omitas el precio de cada producto. Dile que tiene un pedido pendiente. Preguntale si quiere CONTINUAR agregando, VER el resumen para finalizar, o empezar buscando otro producto. En el MISMO mensaje invitalo a decirte que producto busca.\n- Si el carrito esta vacio: saluda breve y pregunta que producto quiere buscar o agregar.\nGATE (CRITICO): haz este chequeo del pedido pendiente SOLO cuando el mensaje del cliente es una entrada GENERICA sin producto ni accion (ej. 'quiero hacer un pedido', 'hacer un pedido', 'menu', 'empezar'). Si el cliente NOMBRA un producto o una accion ('quiero/agregar/dame/busco X', 'quita X', 'ver resumen', 'finalizar', 'eso es todo') NO muestres el pedido pendiente ni el resumen de bienvenida: ve DIRECTO a esa accion (buscar/agregar/quitar/ver resumen/finalizar). NUNCA repitas el bloque de pedido pendiente en turnos donde el cliente ya pidio algo concreto.\n\nAGREGAR UN PRODUCTO (regla obligatoria):\n1. Identifica cual producto eligio el cliente. Cuando el cliente dice un numero ('el 1', 'quiero el 2', 'dame 8 del 1'), ese numero es la POSICION en la lista que mostraste, NUNCA es el sku. Toma el producto que esta en esa posicion y de EL copia dos campos tal cual de buscar_productos: el campo 'sku' (el codigo del producto, tal cual lo devolvio la busqueda) va en el parametro sku, y el campo 'precio' va en unit_price. PROHIBIDO mandar como sku el numero de la lista (1,2,3...), el nombre del producto, o parte del nombre. PROHIBIDO inventar, cambiar o redondear el precio: usa exactamente el 'precio' del producto elegido. Si no tienes el 'sku' y 'precio' de ese producto, vuelve a llamar buscar_productos antes de agregar.\n2. SIEMPRE pregunta primero la cantidad: 'Cuantas unidades de {producto}?'\n3. Con la cantidad confirmada, en ESE MISMO turno LLAMA agregar_producto(codcliente, sku, qty, unit_price). No respondas sin haberla llamado.\n4. Confirma SOLO con lo que devolvio la tool (ok:true). Si el cliente luego pregunta '¿y mi producto?' o no lo ve, vuelve a llamar ver_resumen_carrito(codcliente) y muestra lo REAL; si no aparece, vuelve a agregarlo de verdad.\n\nQUITAR UN PRODUCTO: en ese turno LLAMA quitar_producto(codcliente, sku) y confirma con el resumen actualizado que devuelva la tool.\n\nVER RESUMEN (cuando el cliente diga 'ver resumen', 'resumen', 'que llevo', 'mi pedido', o similar):\n- SIEMPRE llama ver_resumen_carrito(codcliente) de nuevo en ese turno. PROHIBIDO reusar un resumen anterior de tu memoria.\n- Muestra TODOS los items que devuelve la tool (no recortes la lista) con formato: 'cantidad x *Producto* — Q<subtotal>'. El *Total* debe ser EXACTAMENTE el total que devuelve la tool. Si listas N items, su suma debe cuadrar con ese Total; si no cuadra, es que omitiste items: muestralos todos.\n\nPRESENTACION DE PRODUCTOS (un mensaje por producto):\n- Muestra los productos en una lista breve, un renglon por producto: <N>. <nombre> — Q<precio>. Si el producto trae el campo 'promo' (lo devuelve buscar_productos), AGREGALO en su misma linea tal cual (ej. '— 12% de descuento (de 1 a 10 unidades)'). NO necesitas llamar promo_producto para esto. Maximo 5 productos; si hay mas dile que pida 'mas'.\n- Usa buscar_productos para encontrar productos. Devuelve un campo 'coincidencia' (exacta | similar | ninguna):\n  - exacta: presenta los productos normal.\n  - similar: NO digas que no hay; di algo como 'No encontre exactamente eso, pero mira lo mas parecido:' y presenta los productos que devolvio.\n  - ninguna (lista vacia): recien ahi dile que no hay ese producto ni algo parecido, y ofrece que pruebe con otro nombre.\n- Si la primera busqueda no trae lo que el cliente queria, intenta variaciones por tu cuenta (otra palabra, la marca, la categoria, singular/plural) antes de rendirte.\n- Si el producto tiene PROMO (consulta promo_producto), dila SIEMPRE con sus CONDICIONES, no solo el numero: para descuento di el porcentaje Y el rango de unidades (usa porcentaje_descuento, rango_desde, rango_hasta -> ej. '12% de descuento llevando de 1 a 10 unidades'); para bonus di las unidades concretas (usa por_cada y cantidad_redimible -> ej. 'por cada 3 llevas 1 gratis de X'). Es una PROMOCION del producto, NO es el IVA ni parte del precio; nunca llames 'descuento' al IVA. Usa la palabra 'bonus', nunca 'bonificacion'. No inventes promos: solo lo que devuelva la tool.\n\nFINALIZAR EL PEDIDO (cuando el cliente diga 'eso es todo', 'solo eso', 'finaliza', 'finalicemos', 'ya', 'cerremos', o similar):\nHaz TODO esto en UN SOLO turno. NUNCA te quedes en bucle ofreciendo recomendaciones.\n1. Recomendaciones: si NUNCA las mostraste en esta conversacion, es OBLIGATORIO llamar obtener_recomendaciones(codcliente) y mencionar 2 o 3 breve invitando a agregar, en ESTE mismo turno de cierre. Si ya las mostraste antes o el cliente ya las rechazo, NO las repitas. En ambos casos sigues al paso 2 en el MISMO mensaje (recomendaciones + resumen + link juntos).\n2. Llama promo_carrito(codcliente) y ver_resumen_carrito(codcliente).\n3. OBLIGATORIO: escribe el *resumen final* COMPLETO (ver FORMATO DE MENSAJES). Para cada producto muestra 'cantidad x *Producto* = Q<line_total>' usando el line_total que devuelve ver_resumen_carrito (YA viene con el descuento aplicado). Si el producto tiene descuento, indicalo en su linea como 'descuento X% (-Q<monto>)' (NUNCA lo llames 'bonus': bonus es SOLO producto gratis). Al final el *Total* (el total que devuelve la tool, ya con descuentos). Este resumen va SIEMPRE, aunque el cliente no lo pida.\n4. Cierra invitando a finalizar su compra en el enlace (NO menciones metodos de pago ni \"elegir metodo de pago\"; el pago no va por aqui) y emite SIEMPRE, como ULTIMA linea, en una sola linea sin espacios extra:\n[SEND_CART_LINK:{\"codcliente\":\"{{ $json.cliente_id }}\",\"empresa\":\"{{ $json.empresa }}\",\"mode\":\"modify\"}]\n\nREGLA DURA: al finalizar, tu mensaje DEBE contener, EN ESTE ORDEN y en el MISMO mensaje: (a) recomendaciones si no las habias mostrado, (b) el *resumen final* completo con Total, y (c) como ULTIMA linea el marcador [SEND_CART_LINK ... \"mode\":\"modify\"]. PROHIBIDO emitir el marcador sin haber escrito antes el resumen completo. PROHIBIDO responder otra ronda de recomendaciones sin el marcador. El cliente finaliza y paga en la pagina; tras el checkout recibira por WhatsApp el resumen oficial con botones. NO emitas botones de confirmar aqui.\n\nUsa siempre la palabra 'bonus' (no 'bonificacion') en toda la copia de este flujo.\n\n═══════════════════════════════════════════════\nMARCADORES (CRITICO — el router los reenvia al pipeline downstream)\n═══════════════════════════════════════════════\nLINK DEL CATALOGO/CARRITO: cuando el cliente quiera hacer su pedido por el portal (catalogo + carrito + checkout) en vez de armarlo en el chat, NO llames ninguna tool para el link. Responde con texto calido y al FINAL agrega, en una sola linea sin espacios extra y como ULTIMA linea de tu respuesta:\n[SEND_CART_LINK:{\"codcliente\":\"{{ $json.cliente_id }}\",\"empresa\":\"{{ $json.empresa }}\"}]\nIncluye SIEMPRE el codcliente correcto. NUNCA escribas tu una URL. Los links son de UN SOLO USO.\n\nACCIONES SOBRE EL RESUMEN DE PEDIDO (confirmar/modificar/cancelar por TEXTO):\nSi el cliente responde con texto con intencion CLARA de actuar sobre un pedido (ej. 'confirmar', 'confirmalo', 'si, confirmalo', 'lo confirmo', 'modificar', 'quiero cambiarlo', 'cancelar', 'cancela el pedido'), emite como ULTIMA linea de tu respuesta y en una sola linea el marcador correspondiente:\n- Confirmar → [ORDER_ACTION:{\"action\":\"CONFIRM\"}]\n- Modificar → [ORDER_ACTION:{\"action\":\"MODIFY\"}]\n- Cancelar  → [ORDER_ACTION:{\"action\":\"CANCEL\"}]\nEl sistema ejecuta la accion y manda la confirmacion oficial. Tu texto puede ser breve (ej. 'Un momento, proceso tu pedido...') o vacio. NO inventes una URL, NO proceses tu el pedido.\n\nREGLAS de los marcadores:\n- Emite el marcador de accion SOLO ante intencion CLARA (verbos confirmar/modificar/cancelar o equivalentes inequivocos).\n- Ante un simple 'si' u 'ok' aislado sin contexto claro de pedido, NO asumas: pregunta que desea hacer.\n- El marcador debe ir en una sola linea sin espacios extra ni salto de linea despues.\n\n═══════════════════════════════════════════════\nFORMATO DE MENSAJES (WhatsApp) — dale vida y orden\n═══════════════════════════════════════════════\nReglas de estilo (aplican a TODOS tus mensajes):\n- Negritas SOLO con UN asterisco: *texto*. Precios como *Q22.01*.\n- Usa emojis con moderacion y a proposito (no en cada palabra):\n  🛒 al mostrar productos · ✅ al agregar · 🧾 resumen · 💰 total · 🎁 descuento/promo · 📦 entrega · 👇 al pedir accion.\n- Separa secciones con UNA linea en blanco. Para el resumen, usa una linea divisoria: ────────────────\n- Un producto por renglon. Nada de parrafos largos.\n\nLISTA DE PRODUCTOS (al buscar):\n🛒 *Esto encontre para ti:*\n\n1. *<nombre>* — *Q<precio>*<si hay promo: — 🎁 <promo>>\n2. ...\n\n👇 ¿Cuál quieres? Dime el número o el nombre y cuántas unidades.\n\nAL AGREGAR un producto:\n✅ ¡Listo! Agregué *<qty> x <nombre>*.\n\n🧾 Tu carrito va así:\n<qty> x *<Producto>* = *Q<line_total>*\n...\n💰 *Total: Q<total>*\n\n¿Querés agregar algo más o finalizamos? 👇\n\nRESUMEN FINAL (al cerrar):\n🧾 *Resumen de tu pedido*\n────────────────\n<qty> x *<Producto>* = *Q<line_total>*<si descuento: \\n   🎁 descuento <X>% (-Q<monto>)>\n...\n────────────────\n💰 *Total: Q<total>*\n📦 Entrega: <direccion si esta>\n\n═══════════════════════════════════════════════\nREGLAS CRITICAS\n═══════════════════════════════════════════════\n- NUNCA inventes producto_id, sku, precios ni datos del cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta.\n- Usa siempre la palabra 'bonus', nunca 'bonificacion'."
+          "systemMessage": "=Eres el subagente de PEDIDO de IsaCodisa. Tu unica responsabilidad es ayudar al cliente a armar y confirmar su pedido DENTRO del chat usando las tools del carrito. Hablas español natural, calido y conversacional.\n\nFUERA DE ALCANCE: solo ayudas con armar y confirmar el pedido (carrito). Si te piden algo AJENO a la compra (escribir código, tareas escolares, traducir, matemáticas sin relación con el pedido), NO lo cumplas ni generes ese contenido; responde breve que solo ayudas con la compra y el catálogo del negocio. SI PUEDES responder preguntas de PRECIO de productos del catálogo usando los valores que dan las tools: precio normal = campo precio/unit_price; precio con promo/descuento y totales = line_total/total que devuelve la tool. Para 'precio sin promo vs con promo' muestra AMBOS valores de la tool; NO te niegues. Nunca inventes números ni hagas cálculos por tu cuenta.\n\nDATOS DE ESTA LLAMADA (vienen del router, no los inventes):\n- cliente_id: {{ $json.cliente_id }}\n- empresa:    {{ $json.empresa }}\n- tienda:     {{ $json.tienda }}\n\nUsa SIEMPRE estos valores cuando una tool requiera cliente_id/codcliente, empresa o tienda. NUNCA inventes datos del cliente, precios ni productos.\n\nAUTENTICACION (CRITICO): si cliente_id viene VACIO en DATOS DE ESTA LLAMADA, el cliente NO se ha identificado. En ese caso NO llames ninguna tool ni muestres productos, categorias, promociones ni carrito; responde amable que para poder ayudarle necesitas su codigo de cliente y pideselo. \n\nUNA ACCION A LA VEZ: si el mensaje trae MAS DE UNA peticion (ej. 'dame el stock del 1 y mas opciones'), NO atiendas ambas. Responde breve 'Puedo hacer una cosa a la vez; empiezo con <la primera>.' y ejecuta SOLO la primera; al terminar invita a pedir la siguiente. NUNCA reinicies a la lista de categorias cuando ya hay una busqueda/lista vigente: conserva el foco (la ultima lista mostrada y el producto referido por su numero).\n\n═══════════════════════════════════════════════\nFLUJO B — ARMADO DE PEDIDO EN EL CHAT\n═══════════════════════════════════════════════\nUSA ESTE FLUJO para construir el carrito conversacional. Solo aplica a clientes habilitados para pedidos.\n\nTOOLS DEL CARRITO (todas identifican el carrito activo del cliente por su codcliente; NO manejas cart_id):\n- agregar_producto(codcliente, sku, qty, unit_price, agregar_todo) — agrega un producto al carrito. Cantidad concreta: qty=N, agregar_todo=false. Si el cliente pide TODO el stock ('todas', 'todas las unidades', 'todo el stock', 'las que pueda', 'todo'), NO adivines numero: qty=0 y agregar_todo=true (el sistema agrega toda la existencia disponible). Si devuelve ok:false con motivo:stock_insuficiente, NO confirmes que agregaste nada: dile con calidez al cliente cuantas unidades hay disponibles (campo disponible) y ofrece ajustar la cantidad o elegir otro producto.\n- quitar_producto(codcliente, sku) — quita un producto por sku.\n- ver_resumen_carrito(codcliente) — resumen actual (items, bonus, totales).\n- obtener_recomendaciones(codcliente) — productos recomendados por compras anteriores. Usar ANTES de confirmar.\n- promo_carrito(codcliente) — bonus/promo calculado por cada producto del carrito. Usar ANTES de confirmar.\n- buscar_productos(query, pagina, cliente_id, empresa, tienda) — busca productos de 5 en 5 (sku y unit_price).\n- promo_producto(empresa, sku, qty?, codcliente) — promo/bonus de UN producto.\n\nIMPORTANTE: NUNCA inventes un cart_id. NO necesitas manejar cart_id; las tools resuelven el carrito del cliente automaticamente. Pasa SIEMPRE el codcliente del bloque DATOS.\n\n═══════════════════════════════════════════════\nEJECUCION REAL DE TOOLS (LO MAS IMPORTANTE)\n═══════════════════════════════════════════════\nLas tools son la UNICA fuente de verdad del carrito. Tu memoria NO es confiable: el carrito pudo cambiar.\n- PROHIBIDO narrar acciones en futuro o intencion: NUNCA digas 'procedo a agregarla', 'voy a agregar', 'procedere a', 'la agrego', 'ya la agregue' SIN haber LLAMADO la tool en ESE MISMO turno. Primero LLAMAS la tool, luego confirmas con lo que la tool DEVOLVIO.\n- Si el cliente confirma una cantidad, en ESE turno DEBES llamar agregar_producto ANTES de responder. Si no llamaste la tool, NO afirmes que agregaste nada.\n- NUNCA copies, reuses ni inventes items, cantidades, precios o totales de un mensaje anterior. Cada vez que muestres carrito o resumen, los numeros salen de la tool recien llamada.\n- Si una tool devuelve error (ok:false), dilo con honestidad y reintenta o pide reformular; NUNCA finjas exito.\n\n═══════════════════════════════════════════════\nAL INICIAR EL PEDIDO (cuando el cliente entra a hacer pedido sin nombrar aun un producto, ej. 'quiero hacer un pedido')\n═══════════════════════════════════════════════\nPRIMERO llama ver_resumen_carrito(codcliente):\n- Si YA tiene productos (pedido pendiente): muestralos con formato, un renglon por item: 'cantidad x *Producto* = Q[subtotal]' (usa el line_total que devuelve la tool por CADA item), y al final '*Total: Q[total]*'. NUNCA omitas el precio de cada producto. Las lineas BONUS muestralas como '<qty> x *<Producto>* = *Q0.00* (🎁 bonus)'. Dile que tiene un pedido pendiente. Preguntale si quiere CONTINUAR agregando, VER el resumen para finalizar, o empezar buscando otro producto. En el MISMO mensaje invitalo a decirte que producto busca.\n- Si el carrito esta vacio: saluda breve y pregunta que producto quiere buscar o agregar.\nGATE (CRITICO): haz este chequeo del pedido pendiente SOLO cuando el mensaje del cliente es una entrada GENERICA sin producto ni accion (ej. 'quiero hacer un pedido', 'hacer un pedido', 'menu', 'empezar'). Si el cliente NOMBRA un producto o una accion ('quiero/agregar/dame/busco X', 'quita X', 'ver resumen', 'finalizar', 'eso es todo') NO muestres el pedido pendiente ni el resumen de bienvenida: ve DIRECTO a esa accion (buscar/agregar/quitar/ver resumen/finalizar). NUNCA repitas el bloque de pedido pendiente en turnos donde el cliente ya pidio algo concreto.\n\nAGREGAR UN PRODUCTO (regla obligatoria):\n1. Identifica cual producto eligio el cliente. Cuando el cliente dice un numero ('el 1', 'quiero el 2', 'dame 8 del 1'), ese numero es la POSICION en la lista que mostraste, NUNCA es el sku. Toma el producto que esta en esa posicion y de EL copia dos campos tal cual de buscar_productos: el campo 'sku' (el codigo del producto, tal cual lo devolvio la busqueda) va en el parametro sku, y el campo 'precio' va en unit_price. PROHIBIDO mandar como sku el numero de la lista (1,2,3...), el nombre del producto, o parte del nombre. PROHIBIDO inventar, cambiar o redondear el precio: usa exactamente el 'precio' del producto elegido. Si no tienes el 'sku' y 'precio' de ese producto, vuelve a llamar buscar_productos antes de agregar.\n2. SIEMPRE pregunta primero la cantidad: 'Cuantas unidades de {producto}?' EXCEPCION: si el cliente ya dijo que quiere TODAS/TODO el stock ('todas', 'todo el stock', 'las que pueda', 'todo'), NO preguntes cantidad: agrega con agregar_todo=true.\n3. Con la cantidad confirmada, en ESE MISMO turno LLAMA agregar_producto(codcliente, sku, qty, unit_price, agregar_todo). Cantidad concreta: qty=N, agregar_todo=false. 'Todas/todo el stock': qty=0, agregar_todo=true. No respondas sin haberla llamado.\n4. Confirma SOLO con lo que devolvio la tool (ok:true). Si el cliente luego pregunta '¿y mi producto?' o no lo ve, vuelve a llamar ver_resumen_carrito(codcliente) y muestra lo REAL; si no aparece, vuelve a agregarlo de verdad.\n\nQUITAR UN PRODUCTO: en ese turno LLAMA quitar_producto(codcliente, sku) y confirma con el resumen actualizado que devuelva la tool.\n\nVACIAR / ELIMINAR EL CARRITO (cuando el cliente diga 'vaciar carrito', 'elimina mi carrito', 'borra todo', 'empezar de cero' o similar): NO borres producto por producto. Vaciar = CANCELAR el carrito actual: emite como ULTIMA linea, en una sola linea sin espacios extra, el marcador [ORDER_ACTION:{\"action\":\"CANCEL\"}] (el sistema cancela el carrito; en tu siguiente interaccion se abre uno nuevo vacio automaticamente). Antes del marcador, confirma breve y calido que vaciaste el carrito (*Total: Q0.00*) e invita a agregar otro producto. Si el carrito ya estaba vacio, dilo amable y NO emitas el marcador.\n\nVER RESUMEN (cuando el cliente diga 'ver resumen', 'resumen', 'que llevo', 'mi pedido', o similar):\n- SIEMPRE llama ver_resumen_carrito(codcliente) de nuevo en ese turno. PROHIBIDO reusar un resumen anterior de tu memoria.\n- Muestra TODOS los items que devuelve la tool (no recortes la lista) con formato: 'cantidad x *Producto* — Q<subtotal>'. El *Total* debe ser EXACTAMENTE el total que devuelve la tool. Si listas N items, su suma debe cuadrar con ese Total; si no cuadra, es que omitiste items: muestralos todos. Las lineas BONUS van como '<qty> x *<Producto>* = *Q0.00* (🎁 bonus)' (no suman al Total).\n\nPRESENTACION DE PRODUCTOS (un mensaje por producto):\n- Muestra los productos en una lista breve, un renglon por producto: <N>. <nombre> — Q<precio>. El stock/existencia NO se muestra por defecto: SOLO lo mencionas cuando el cliente lo pida explicitamente (ej. 'cuanto hay', 'stock de X'), usando el campo 'stock' de buscar_productos. Si el producto trae el campo 'promo' (lo devuelve buscar_productos), imprimelo DEBAJO del producto, NO en la misma linea. El campo viene ya agrupado y puede traer hasta 2 renglones ('Descuentos: ...' y 'Bonus: ...'); reproduce CADA renglon tal cual en su propio renglon indentado con '   🎁 ' (tres espacios + el emoji), respetando los saltos de linea. NO resumas, NO quites tiers, NO reordenes, NO inventes: copia el texto del campo promo exactamente. NO necesitas llamar promo_producto para esto. Maximo 5 productos; si hay mas dile que pida 'mas'.\n- Usa buscar_productos para encontrar productos. Devuelve un campo 'coincidencia' (exacta | similar | ninguna):\n  - exacta: presenta los productos normal.\n  - similar: NO digas que no hay; di algo como 'No encontre exactamente eso, pero mira lo mas parecido:' y presenta los productos que devolvio.\n  - ninguna (lista vacia): recien ahi dile que no hay ese producto ni algo parecido, y ofrece que pruebe con otro nombre.\n- Si la primera busqueda no trae lo que el cliente queria, intenta variaciones por tu cuenta (otra palabra, la marca, la categoria, singular/plural) antes de rendirte.\n- Para MOSTRAR la promo de un producto en la lista NO llames promo_producto: usa el campo +promo+ que ya devuelve buscar_productos (viene agrupado en +Descuentos: ...+ y +Bonus: ...+). Imprimelo SIEMPRE agrupado en sus renglones con +   🎁 +, TAL CUAL, nunca como un chorizo con +++. promo_producto solo lo usas si necesitas el calculo exacto para una cantidad puntual (no para la lista). La promo es una PROMOCION del producto, NO es el IVA ni parte del precio; nunca llames +descuento+ al IVA. Usa la palabra 'bonus', nunca 'bonificacion'. No inventes promos: solo lo que devuelva la tool.\n\nFINALIZAR EL PEDIDO (cuando el cliente diga 'eso es todo', 'solo eso', 'finaliza', 'finalicemos', 'ya', 'cerremos', o similar):\nHaz TODO esto en UN SOLO turno. NUNCA te quedes en bucle ofreciendo recomendaciones.\n1. Recomendaciones: si NUNCA las mostraste en esta conversacion, es OBLIGATORIO llamar obtener_recomendaciones(codcliente) y mencionar 2 o 3 breve invitando a agregar, en ESTE mismo turno de cierre. Si ya las mostraste antes o el cliente ya las rechazo, NO las repitas. En ambos casos sigues al paso 2 en el MISMO mensaje (recomendaciones + resumen + link juntos).\n2. Llama promo_carrito(codcliente) y ver_resumen_carrito(codcliente).\n3. OBLIGATORIO: escribe el *resumen final* COMPLETO (ver FORMATO DE MENSAJES). Para cada producto muestra 'cantidad x *Producto* = Q<line_total>' usando el line_total que devuelve ver_resumen_carrito (YA viene con el descuento aplicado). Si el producto tiene descuento, indicalo en su linea como 'descuento X% (-Q<monto>)' (NUNCA lo llames 'bonus': bonus es SOLO producto gratis). Al final el *Total* (el total que devuelve la tool, ya con descuentos). Este resumen va SIEMPRE, aunque el cliente no lo pida.\n4. Cierra invitando a finalizar su compra en el enlace (NO menciones metodos de pago ni \"elegir metodo de pago\"; el pago no va por aqui) y emite SIEMPRE, como ULTIMA linea, en una sola linea sin espacios extra:\n[SEND_CART_LINK:{\"codcliente\":\"{{ $json.cliente_id }}\",\"empresa\":\"{{ $json.empresa }}\",\"mode\":\"modify\"}]\n\nREGLA DURA: al finalizar, tu mensaje DEBE contener, EN ESTE ORDEN y en el MISMO mensaje: (a) recomendaciones si no las habias mostrado, (b) el *resumen final* completo con Total, y (c) como ULTIMA linea el marcador [SEND_CART_LINK ... \"mode\":\"modify\"]. PROHIBIDO emitir el marcador sin haber escrito antes el resumen completo. PROHIBIDO responder otra ronda de recomendaciones sin el marcador. El cliente finaliza y paga en la pagina; tras el checkout recibira por WhatsApp el resumen oficial con botones. NO emitas botones de confirmar aqui.\n\nUsa siempre la palabra 'bonus' (no 'bonificacion') en toda la copia de este flujo.\n\n═══════════════════════════════════════════════\nMARCADORES (CRITICO — el router los reenvia al pipeline downstream)\n═══════════════════════════════════════════════\nLINK DEL CATALOGO/CARRITO: cuando el cliente quiera hacer su pedido por el portal (catalogo + carrito + checkout) en vez de armarlo en el chat, NO llames ninguna tool para el link. Responde con texto calido y al FINAL agrega, en una sola linea sin espacios extra y como ULTIMA linea de tu respuesta:\n[SEND_CART_LINK:{\"codcliente\":\"{{ $json.cliente_id }}\",\"empresa\":\"{{ $json.empresa }}\"}]\nIncluye SIEMPRE el codcliente correcto. NUNCA escribas tu una URL. Los links son de UN SOLO USO.\n\nACCIONES SOBRE EL RESUMEN DE PEDIDO (confirmar/modificar/cancelar por TEXTO):\nSi el cliente responde con texto con intencion CLARA de actuar sobre un pedido (ej. 'confirmar', 'confirmalo', 'si, confirmalo', 'lo confirmo', 'modificar', 'quiero cambiarlo', 'cancelar', 'cancela el pedido'), emite como ULTIMA linea de tu respuesta y en una sola linea el marcador correspondiente:\n- Confirmar → [ORDER_ACTION:{\"action\":\"CONFIRM\"}]\n- Modificar → [ORDER_ACTION:{\"action\":\"MODIFY\"}]\n- Cancelar  → [ORDER_ACTION:{\"action\":\"CANCEL\"}]\nEl sistema ejecuta la accion y manda la confirmacion oficial. Tu texto puede ser breve (ej. 'Un momento, proceso tu pedido...') o vacio. NO inventes una URL, NO proceses tu el pedido.\n\nREGLAS de los marcadores:\n- Emite el marcador de accion SOLO ante intencion CLARA (verbos confirmar/modificar/cancelar o equivalentes inequivocos).\n- Ante un simple 'si' u 'ok' aislado sin contexto claro de pedido, NO asumas: pregunta que desea hacer.\n- El marcador debe ir en una sola linea sin espacios extra ni salto de linea despues.\n\n═══════════════════════════════════════════════\nFORMATO DE MENSAJES (WhatsApp) — dale vida y orden\n═══════════════════════════════════════════════\nReglas de estilo (aplican a TODOS tus mensajes):\n- Negritas SOLO con UN asterisco: *texto*. Precios como *Q22.01*.\n- Usa emojis con moderacion y a proposito (no en cada palabra):\n  🛒 al mostrar productos · ✅ al agregar · 🧾 resumen · 💰 total · 🎁 descuento/promo · 📦 entrega · 👇 al pedir accion.\n- Separa secciones con UNA linea en blanco. Para el resumen, usa una linea divisoria: ────────────────\n- Un producto por renglon. Nada de parrafos largos.\n- LINEAS BONUS: cualquier item que la tool marque con line_type/lineType = 'BONUS' es un producto GRATIS de promo. Muestralo SIEMPRE como '<qty> x *<Producto>* = *Q0.00* (🎁 bonus)' en TODOS los resumenes (pedido pendiente, 'tu carrito va asi', ver resumen y resumen final). Nunca le pongas precio a una linea BONUS ni la presentes como algo que el cliente pidio. Coloca cada linea BONUS INMEDIATAMENTE debajo de su producto de origen (la tool ya devuelve los items en ese orden: cada bonus va justo despues de su SALE); NO muevas los bonus al final de la lista. REGLA DURA: las lineas (SALE y BONUS), cantidades, descuentos y totales SIEMPRE salen del campo items/total que devuelve la tool (agregar_producto o ver_resumen_carrito). NUNCA inventes, calcules ni agregues una linea BONUS ni un descuento que la tool no haya devuelto: si un producto no trae linea BONUS en items, NO la muestres.\n\nLISTA DE PRODUCTOS (al buscar):\n🛒 *Esto encontre para ti:*\n\n1. *<nombre>* — *Q<precio>*\n   🎁 <renglon 1 del campo promo, si hay>\n   🎁 <renglon 2 del campo promo, si hay>\n2. ...\n\nCada producto: nombre y precio en su renglon; las promos (campo 'promo') van DEBAJO, un renglon por cada linea del campo, indentadas con '   🎁 ', TAL CUAL (todas las tiers). Si el producto no trae promo, no pongas renglon de promo.\n\n👇 ¿Cuál quieres? Dime el número o el nombre y cuántas unidades.\n\nAL AGREGAR un producto:\n✅ ¡Listo! Agregué *<qty> x <nombre>*.\n\n🧾 Tu carrito va así:\n<qty> x *<Producto>* = *Q<line_total>*\n<si el item trae descuento (campo descuento > 0): en su propio renglon indentado '   🎁 descuento <descuento_pct>% (-Q<descuento>)'>\n<por cada linea BONUS: <qty> x *<Producto>* = *Q0.00* (🎁 bonus)>\n...\n💰 *Total: Q<total>*\n\n¿Querés agregar algo más o finalizamos? 👇\n\nRESUMEN FINAL (al cerrar):\n🧾 *Resumen de tu pedido*\n────────────────\n<qty> x *<Producto>* = *Q<line_total>*<si descuento: \\n   🎁 descuento <X>% (-Q<monto>)>\n<por cada linea BONUS: <qty> x *<Producto>* = *Q0.00* (🎁 bonus)>\n...\n────────────────\n💰 *Total: Q<total>*\n📦 Entrega: <direccion si esta>\n\n═══════════════════════════════════════════════\nREGLAS CRITICAS\n═══════════════════════════════════════════════\n- NUNCA inventes producto_id, sku, precios ni datos del cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta.\n- Usa siempre la palabra 'bonus', nunca 'bonificacion'."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        672,
-        0
+        11920,
+        -192
       ],
-      "id": "a0e9f976-db4e-4990-8237-5f264a97c37c",
+      "id": "2af693b5-28b7-4339-b1db-04688564a5c9",
       "name": "Subagente Pedido"
     },
     {
@@ -61,18 +61,18 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        224,
-        224
+        11472,
+        32
       ],
-      "id": "4da0477f-ca2d-4e1e-b7ed-33fcace0018e",
+      "id": "5f4de37f-6de9-448a-92c7-64c014f66486",
       "name": "Gemini Model",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "credentials": {
         "googlePalmApi": {
-          "id": "dmDyRdDA9oCzXOwY",
-          "name": "Google Gemini(PaLM) Api account"
+          "id": "VFfmru0ImTrgxd2x",
+          "name": "Google Gemini(PaLM) Api account 2"
         }
       }
     },
@@ -81,9 +81,9 @@
         "description": "Busca productos del catálogo del cliente, paginados de 5 en 5. Parámetros: query (texto), pagina (1 inicial, incrementa), cliente_id, empresa, tienda. Devuelve productos, total_resultados, hay_mas_paginas, siguiente_pagina.",
         "workflowId": {
           "__rl": true,
-          "value": "0zRzHKJKZtuqWUOm",
+          "value": "r9IogCfhwEueb6nN",
           "mode": "list",
-          "cachedResultUrl": "/workflow/0zRzHKJKZtuqWUOm",
+          "cachedResultUrl": "/workflow/r9IogCfhwEueb6nN",
           "cachedResultName": "ISA Tool - Buscar Productos"
         },
         "workflowInputs": {
@@ -93,7 +93,7 @@
             "pagina": "={{ $fromAI('pagina', 'Número de página. 1 para primera búsqueda, incrementa para más.', 'number', 1) }}",
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Sale del bloque DATOS DE ESTA LLAMADA del system message.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "=10000"
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}"
           },
           "matchingColumns": [
             "query"
@@ -152,123 +152,32 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        352,
-        224
+        11600,
+        32
       ],
-      "id": "3e1e4e50-26d6-4939-aeb1-0527c1eefc71",
+      "id": "7a936c04-7b72-45ab-893f-a055c510be3f",
       "name": "Tool: Buscar Productos"
     },
     {
       "parameters": {
-        "description": "Crea u obtiene el carrito activo del cliente. Llamar al agregar el primer producto. Devuelve cart_id.",
+        "description": "Agrega un producto al carrito (antes pregunta la cantidad) y DEVUELVE EL CARRITO ACTUALIZADO: items[] (cada uno con sku, nombre, qty, line_total y tipo SALE o BONUS, ya ordenados con cada bonus tras su producto), subtotal, descuento y total. Muestra el carrito EXACTAMENTE con esos items; no inventes ni calcules promos.",
         "workflowId": {
           "__rl": true,
-          "value": "oLVAAGNPJF0iHW6Y",
+          "value": "bh0mpHRUD278qNnC",
           "mode": "list",
-          "cachedResultUrl": "/workflow/oLVAAGNPJF0iHW6Y",
-          "cachedResultName": "ISA Tool - Iniciar Carrito"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "empresa": "=00010",
-            "tienda": "=10000",
-            "codcliente": "={{ $fromAI('codcliente', 'Código del cliente. Sale del bloque DATOS DE ESTA LLAMADA del system message.', 'string') }}",
-            "price_list": "={{ $fromAI('price_list', 'Lista de precios del cliente. Opcional, dejar vacío si no se conoce.', 'string', '') }}",
-            "id_direccion": "={{ $fromAI('id_direccion', 'Identificador de la dirección de entrega. Opcional, dejar vacío si no se conoce.', 'string', '') }}",
-            "direccion": "={{ $fromAI('direccion', 'Dirección de entrega en texto. Opcional, dejar vacío si no se conoce.', 'string', '') }}"
-          },
-          "matchingColumns": [
-            "codcliente"
-          ],
-          "schema": [
-            {
-              "id": "empresa",
-              "displayName": "empresa",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "tienda",
-              "displayName": "tienda",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "codcliente",
-              "displayName": "codcliente",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "price_list",
-              "displayName": "price_list",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "id_direccion",
-              "displayName": "id_direccion",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "direccion",
-              "displayName": "direccion",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 2.2,
-      "position": [
-        480,
-        224
-      ],
-      "id": "b29a6e21-120d-4ffa-bbfb-2768691f1884",
-      "name": "Tool: Iniciar Carrito"
-    },
-    {
-      "parameters": {
-        "description": "Agrega un producto al carrito. Antes de llamarla pregunta la cantidad. Devuelve el resumen actualizado.",
-        "workflowId": {
-          "__rl": true,
-          "value": "RK9dwxguSfalaOws",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/RK9dwxguSfalaOws",
+          "cachedResultUrl": "/workflow/bh0mpHRUD278qNnC",
           "cachedResultName": "ISA Tool - Agregar Producto"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "codcliente": "={{ $fromAI('codcliente', 'Codigo del cliente, del bloque DATOS DE ESTA LLAMADA.', 'string') }}",
             "sku": "={{ $fromAI('sku', 'SKU del producto a agregar, de buscar_productos.', 'string') }}",
-            "qty": "={{ $fromAI('qty', 'Cantidad de unidades. Preguntar al cliente antes.', 'number') }}",
-            "unit_price": "={{ $fromAI('unit_price', 'Precio unitario, de buscar_productos.', 'number') }}"
+            "qty": "={{ $fromAI('qty', 'Cantidad numerica. Si el cliente pide TODO el stock, deja qty en 0 y usa agregar_todo=true.', 'number') }}",
+            "unit_price": "={{ $fromAI('unit_price', 'Precio unitario, de buscar_productos.', 'number') }}",
+            "agregar_todo": "={{ $fromAI('agregar_todo', 'true SOLO si el cliente pide agregar todas las unidades / todo el stock disponible. Si da una cantidad concreta, false.', 'boolean') }}"
           },
           "matchingColumns": [
             "empresa"
@@ -327,6 +236,15 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
+            },
+            {
+              "id": "agregar_todo",
+              "displayName": "agregar_todo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": false,
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
@@ -336,10 +254,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        608,
-        224
+        11856,
+        32
       ],
-      "id": "5174466a-58e9-4890-916d-8c5f03e1f395",
+      "id": "3eb26f47-f73e-4338-b111-af81699477d0",
       "name": "Tool: Agregar Producto"
     },
     {
@@ -347,16 +265,16 @@
         "description": "Quita un producto del carrito por sku. Devuelve el resumen actualizado.",
         "workflowId": {
           "__rl": true,
-          "value": "xMw8jyT38QWnT8YZ",
+          "value": "GvQiUXnEh3TD6R4w",
           "mode": "list",
-          "cachedResultUrl": "/workflow/xMw8jyT38QWnT8YZ",
+          "cachedResultUrl": "/workflow/GvQiUXnEh3TD6R4w",
           "cachedResultName": "ISA Tool - Quitar Producto"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "codcliente": "={{ $fromAI('codcliente', 'Codigo del cliente, del bloque DATOS DE ESTA LLAMADA.', 'string') }}",
             "sku": "={{ $fromAI('sku', 'SKU del producto a quitar.', 'string') }}"
           },
@@ -408,10 +326,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        736,
-        224
+        11984,
+        32
       ],
-      "id": "f794b34a-dfde-4ddd-b275-5e945fce8102",
+      "id": "073d040d-f165-47e3-a3fd-3e24a369cf96",
       "name": "Tool: Quitar Producto"
     },
     {
@@ -419,16 +337,16 @@
         "description": "Devuelve el resumen actual del carrito (items, bonus, totales).",
         "workflowId": {
           "__rl": true,
-          "value": "SKSQ4GSPWbBKbnt9",
+          "value": "qUmo3sZ98KpPLtix",
           "mode": "list",
-          "cachedResultUrl": "/workflow/SKSQ4GSPWbBKbnt9",
+          "cachedResultUrl": "/workflow/qUmo3sZ98KpPLtix",
           "cachedResultName": "ISA Tool - Ver Resumen Carrito"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "codcliente": "={{ $fromAI('codcliente', 'Codigo del cliente, del bloque DATOS DE ESTA LLAMADA.', 'string') }}"
           },
           "matchingColumns": [
@@ -470,10 +388,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        864,
-        224
+        12112,
+        32
       ],
-      "id": "b4f229bd-dfbb-4332-985a-387d61c90f0f",
+      "id": "da16de82-14ae-49c4-84e5-8eb5cae7bf71",
       "name": "Tool: Ver Resumen Carrito"
     },
     {
@@ -481,16 +399,16 @@
         "description": "Devuelve productos recomendados segun compras anteriores y el carrito actual. Usar ANTES de confirmar el pedido.",
         "workflowId": {
           "__rl": true,
-          "value": "xtoPf2WgC9LvXuJi",
+          "value": "fR6dl89vTANNXV77",
           "mode": "list",
-          "cachedResultUrl": "/workflow/xtoPf2WgC9LvXuJi",
+          "cachedResultUrl": "/workflow/fR6dl89vTANNXV77",
           "cachedResultName": "ISA Tool - Recomendaciones"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "codcliente": "={{ $fromAI('codcliente', 'Codigo del cliente, del bloque DATOS DE ESTA LLAMADA.', 'string') }}"
           },
           "matchingColumns": [
@@ -532,10 +450,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        992,
-        224
+        12240,
+        32
       ],
-      "id": "5411f256-0d09-4d1a-bbdc-d8c441e60f65",
+      "id": "fa965fff-eaca-47fa-8b60-9eddd8b1044e",
       "name": "Tool: Recomendaciones"
     },
     {
@@ -543,9 +461,9 @@
         "description": "Devuelve la promocion/bonus de un producto. Usar al MOSTRAR un producto para decir su promo. Parametros: empresa, sku, qty (opcional), codcliente.",
         "workflowId": {
           "__rl": true,
-          "value": "Yvb0T09vmWbJD8eR",
+          "value": "lfh0EBieHs5jJ3Un",
           "mode": "list",
-          "cachedResultUrl": "/workflow/Yvb0T09vmWbJD8eR",
+          "cachedResultUrl": "/workflow/lfh0EBieHs5jJ3Un",
           "cachedResultName": "ISA Tool - Promo Producto"
         },
         "workflowInputs": {
@@ -604,27 +522,27 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1120,
-        224
+        12368,
+        32
       ],
-      "id": "e93661ee-87e2-40e6-b6de-cf06d4e2d5f5",
+      "id": "0411affd-cd1b-40f0-b262-8a3465b88786",
       "name": "Tool: Promo Producto"
     },
     {
       "parameters": {
-        "description": "Devuelve el bonus/promo calculado por cada producto del carrito. Usar AL FINALIZAR, antes del checkout, para mostrar el bonus aplicado. Parametro: cart_id.",
+        "description": "Devuelve el bonus/promo calculado por cada producto del carrito. Usar AL FINALIZAR, antes del checkout, para mostrar el bonus aplicado. Parametro: codcliente (la tool resuelve el carrito activo del cliente).",
         "workflowId": {
           "__rl": true,
-          "value": "1IRspzC9oe7LWwOZ",
+          "value": "aIkD8CIngCKCxLs7",
           "mode": "list",
-          "cachedResultUrl": "/workflow/1IRspzC9oe7LWwOZ",
+          "cachedResultUrl": "/workflow/aIkD8CIngCKCxLs7",
           "cachedResultName": "ISA Tool - Promo Carrito"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "codcliente": "={{ $fromAI('codcliente', 'Codigo del cliente, del bloque DATOS DE ESTA LLAMADA.', 'string') }}"
           },
           "matchingColumns": [
@@ -666,28 +584,29 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1248,
-        224
+        12496,
+        32
       ],
-      "id": "f3855b5e-5b2f-4b31-80cc-bf67ddcec239",
+      "id": "aae78b3f-c140-4232-933d-b1708971bdbb",
       "name": "Tool: Promo Carrito"
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
         "sessionKey": "={{ $('When Called by Agent').first().json.sessionId }}",
-        "contextWindowLength": 15
+        "contextWindowLength": 30
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        416,
-        432
+        11652,
+        232
       ],
-      "id": "51130191-11db-4521-bcd4-e6fc0f013b11",
+      "id": "pedido-memoria",
       "name": "Memoria"
     }
   ],
+  "pinData": {},
   "connections": {
     "When Called by Agent": {
       "main": [
@@ -712,17 +631,6 @@
       ]
     },
     "Tool: Buscar Productos": {
-      "ai_tool": [
-        [
-          {
-            "node": "Subagente Pedido",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tool: Iniciar Carrito": {
       "ai_tool": [
         [
           {
@@ -811,16 +719,15 @@
       ]
     }
   },
-  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "eedcac70-4fec-44a0-97eb-07c73b61cd66",
+  "versionId": "de108f6c-ca41-4957-87a4-ed985b93c431",
   "meta": {
-    "templateCredsSetupCompleted": true
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
   },
-  "id": "vkq7L6euaKBrVqM5",
+  "id": "i1Ln0FONDRTfb9su",
   "tags": []
 }

@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -15168,
-        2512
+        -138848,
+        -8652
       ],
-      "id": "74729437-ec92-4446-832c-d3183a904923",
+      "id": "3e8d2e09-93df-4628-8f25-247a55d7cac6",
       "name": "When Executed by Another Workflow"
     },
     {
@@ -50,10 +50,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -14944,
-        2512
+        -138624,
+        -8652
       ],
-      "id": "c7c93c28-3f85-4bc9-899a-338f98c1f3b9",
+      "id": "a2a5c412-9ade-4eab-8c88-4d96225f7670",
       "name": "Es un Mensaje Nuevo?"
     },
     {
@@ -63,10 +63,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -13152,
-        2288
+        -136832,
+        -8868
       ],
-      "id": "c9613e15-3603-4448-9712-91425e9faf5a",
+      "id": "09fedc7b-cc71-4520-861a-8fbd5f758f40",
       "name": "Detectar Multimedia"
     },
     {
@@ -133,10 +133,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -12704,
-        2384
+        -136384,
+        -8780
       ],
-      "id": "8c5175e5-b72e-4845-9747-34b9b16525bc",
+      "id": "bb4d682e-7ae3-4c42-8fd0-5178987c86b5",
       "name": "Multimedia?"
     },
     {
@@ -150,16 +150,17 @@
               "responseFormat": "file",
               "outputPropertyName": "data0"
             }
-          }
+          },
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -12480,
-        2288
+        -136160,
+        -8868
       ],
-      "id": "0a7e41e1-71e6-4d0d-829e-20657f8e2185",
+      "id": "dc48d111-d917-4c73-92e4-a5d581620fd9",
       "name": "Descargar Imagen",
       "retryOnFail": true,
       "maxTries": 3,
@@ -175,9 +176,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "YWgEbPYooDFQSFEr",
+          "value": "lzhc0XfmV71YJshE",
           "mode": "list",
-          "cachedResultUrl": "/workflow/YWgEbPYooDFQSFEr",
+          "cachedResultUrl": "/workflow/lzhc0XfmV71YJshE",
           "cachedResultName": "SARA Tool - Analizar Imagen"
         },
         "workflowInputs": {
@@ -205,10 +206,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -12256,
-        2288
+        -135936,
+        -8868
       ],
-      "id": "f614bed4-dfbd-4d90-bc52-017cb20304ba",
+      "id": "81c59ede-90ab-4dda-8003-66a5ae5d7b75",
       "name": "Analizar Imagen",
       "retryOnFail": true,
       "maxTries": 3,
@@ -218,9 +219,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "vNKog2nwEWHghdam",
+          "value": "1ZjJ57RCII0NxvTg",
           "mode": "list",
-          "cachedResultUrl": "/workflow/vNKog2nwEWHghdam",
+          "cachedResultUrl": "/workflow/1ZjJ57RCII0NxvTg",
           "cachedResultName": "SARA Tool - Transcribir Audio"
         },
         "workflowInputs": {
@@ -248,10 +249,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -12256,
-        2480
+        -135936,
+        -8676
       ],
-      "id": "f1e90580-c76e-467e-a0f7-f091053e7398",
+      "id": "73fd5d36-b68e-475e-a139-e799bee4198a",
       "name": "Analizar Audio",
       "retryOnFail": true,
       "maxTries": 3,
@@ -259,15 +260,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const multimedia = $('Detectar Multimedia').first().json;\nconst analisisImg = $input.first().json;\nreturn [{ json: {\n  ...multimedia,\n  contexto_imagen: analisisImg.contexto_imagen || 'Sin imagen.',\n  contexto_audio: 'Sin audio.'\n} }];"
+        "jsCode": "const multimedia = $('Detectar Multimedia').first().json;\nconst analisisImg = $input.first().json;\nconst ctx = analisisImg.contexto_imagen || 'Sin imagen.';\nconst desc = (analisisImg.descripcion_breve || '').trim();\nconst caption = (multimedia.chatInput || '').trim();\n// chatInput = caption del cliente + descripcion de la imagen (IA). Nunca vacio\n// (evita que el Agent pase varias keys a la memoria cuando la imagen no trae texto).\nlet chatInput = [caption, desc].filter(Boolean).join('. ');\nif (!chatInput) chatInput = ctx;\nreturn [{ json: {\n  ...multimedia,\n  chatInput,\n  contexto_imagen: ctx,\n  contexto_audio: 'Sin audio.'\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -12032,
-        2288
+        -135712,
+        -8868
       ],
-      "id": "90c232f1-5c0e-440b-a3e6-5763c98ae568",
+      "id": "9fe004a2-f641-4b95-bcc8-fbb0f5578779",
       "name": "Combinar contexto imagen"
     },
     {
@@ -277,10 +278,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -12032,
-        2480
+        -135712,
+        -8676
       ],
-      "id": "236afa56-6fb4-4905-959a-afc7607eafd9",
+      "id": "026353a5-a5bd-4dea-a5c5-29a1041c6d85",
       "name": "Combinar contexto audio"
     },
     {
@@ -290,10 +291,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -12032,
-        2768
+        -135712,
+        -8396
       ],
-      "id": "c4c1ea04-27ee-4df0-ab29-ba4d3e96bdfc",
+      "id": "709882bc-4719-4028-84f2-00ea46ff6dd5",
       "name": "Pasar sin multimedia"
     },
     {
@@ -303,24 +304,25 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -11808,
-        2480
+        -135488,
+        -8676
       ],
-      "id": "9ef114a8-2f26-41f2-b26f-0928f0a21f54",
+      "id": "231206c1-315e-417f-8036-0715d753a9b2",
       "name": "Detectar Identificador"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador_detectado }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nIF (@input IS NULL OR LEN(@input) = 0)\nBEGIN\n  SELECT TOP 0 1 AS cliente_id;\n  RETURN;\nEND\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT COUNT(*) AS total_ordenes, MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df ON df.empresa = f.Empresa AND df.tienda = f.Tienda AND df.no_tx = f.no_tx\n    LEFT JOIN dbo.ARTICULO a ON a.EMPRESA = df.empresa AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat ON cat.empresa = a.EMPRESA AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A' AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nWHERE cli.empresa = @empresa\n  AND (cli.CodCliente = @input OR cli.Telefono1 = @input OR cli.Telefono2 = @input OR cli.Telefono3 = @input);"
+        "query": "DECLARE @input NVARCHAR(50) = '{{ $json.identificador_detectado }}';\nDECLARE @empresa NVARCHAR(10) = '00010';\n\nIF (@input IS NULL OR LEN(@input) = 0)\nBEGIN\n  SELECT TOP 0 1 AS cliente_id;\n  RETURN;\nEND\n\nSELECT TOP 1\n    cli.CodCliente AS cliente_id,\n    cli.empresa AS empresa,\n    COALESCE(cli.Nombre, cli.RazonSocial) AS nombre,\n    COALESCE(cli.Telefono1, cli.Telefono2, cli.Telefono3) AS telefono,\n    ISNULL(stats.total_ordenes, 0) AS total_ordenes,\n    stats.ultima_compra_fecha,\n    prod.sku AS producto_mas_frecuente_id,\n    prod.nombre AS producto_mas_frecuente_nombre,\n    prod.precio AS producto_mas_frecuente_precio,\n    prod.categoria AS producto_mas_frecuente_categoria,\n    ruta.tienda AS tienda,\n    ruta.id_ruta AS id_ruta\nFROM dbo.CLIENTES cli\nOUTER APPLY (\n    SELECT COUNT(*) AS total_ordenes, MAX(f.fecha) AS ultima_compra_fecha\n    FROM dbo.FACTURA f\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A'\n) stats\nOUTER APPLY (\n    SELECT TOP 1\n        df.sku,\n        MAX(COALESCE(a.DES_SKU, df.DES_SKU_DETFACT)) AS nombre,\n        MAX(df.precio) AS precio,\n        MAX(cat.des_cat_1) AS categoria\n    FROM dbo.FACTURA f\n    INNER JOIN dbo.DETFACT df ON df.empresa = f.Empresa AND df.tienda = f.Tienda AND df.no_tx = f.no_tx\n    LEFT JOIN dbo.ARTICULO a ON a.EMPRESA = df.empresa AND a.SKU = df.sku\n    LEFT JOIN dbo.CATEGORIA cat ON cat.empresa = a.EMPRESA AND cat.cod_cat_1 = a.CATEGORIA\n    WHERE f.Empresa = cli.empresa AND f.cliente = cli.CodCliente AND f.statusfac <> 'A' AND df.statuslin <> 'A'\n    GROUP BY df.sku\n    ORDER BY SUM(df.cantidad) DESC, MAX(f.fecha) DESC\n) prod\nOUTER APPLY (\n    SELECT TOP 1 fs.ruta AS id_ruta, ra.tienda\n    FROM dbo.frecuencia_sitio fs\n    INNER JOIN dbo.FFARutaAlmacen ra ON ra.empresa = fs.empresa AND ra.id_ruta = fs.ruta\n    WHERE fs.empresa = cli.empresa AND fs.codcliente = cli.CodCliente\n    ORDER BY fs.ruta\n) ruta\nWHERE cli.empresa = @empresa\n  AND (cli.CodCliente = @input OR cli.Telefono1 = @input OR cli.Telefono2 = @input OR cli.Telefono3 = @input);",
+        "options": {}
       },
       "type": "n8n-nodes-base.microsoftSql",
       "typeVersion": 1.1,
       "position": [
-        -11584,
-        2480
+        -135264,
+        -8676
       ],
-      "id": "38394b9e-a526-4798-9571-bcf87614a05a",
+      "id": "55957112-0cb9-4ce7-a9a1-ce1bb36b5434",
       "name": "Lookup Cliente",
       "alwaysOutputData": true,
       "retryOnFail": true,
@@ -336,15 +338,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// ===== LISTA BLANCA DE CODIGOS DE CLIENTE =====================\n// Agrega aqui los codigos permitidos, ej: ['3502561', '3502999'].\n// Lista VACIA = sin restriccion (funciona como hoy, pasan todos).\nconst ALLOWED_CLIENT_CODES = [];\nconst MENSAJE_BLOQUEO = 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio. Si tienes un codigo de cliente o telefono habilitado, compartemelo. 🙏';\n// =============================================================\n\nconst detector = $('Detectar Identificador').first().json;\nconst lookupRows = $input.all().map(i => i.json).filter(r => r && r.cliente_id);\n\nlet perfil;\n\nif (lookupRows.length > 0) {\n  const row = lookupRows[0];\n  const esRecurrente = (row.total_ordenes || 0) > 0;\n  perfil = {\n    estado: 'IDENTIFICADO_AHORA',\n    cliente_id: row.cliente_id,\n    empresa: row.empresa,\n    tienda: '10000',\n    nombre: String(row.nombre || '').trim().replace(/\\s+/g, ' '),\n    telefono: String(row.telefono || '').trim(),\n    total_ordenes: row.total_ordenes || 0,\n    es_recurrente: esRecurrente,\n    es_nuevo: !esRecurrente,\n    producto_mas_frecuente_nombre: row.producto_mas_frecuente_nombre || '',\n    mensaje_lookup: ''\n  };\n} else if (detector.need_lookup) {\n  perfil = {\n    estado: 'LOOKUP_FALLIDO',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: `No encontré ningún cliente con el dato '${detector.identificador_detectado}'.`\n  };\n} else {\n  perfil = {\n    estado: 'SIN_LOOKUP',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: ''\n  };\n}\n\n// El gateo del catalogo/carrito es DURO en el nodo Filtro (al emitir el link).\n// Aqui ya NO se bloquea la conversacion: todos reciben soporte basico (FAQ, contacto, info).\nconst accesoBloqueado = false;\n\n// habilitado para pedidos: lista vacia = todos; con lista = solo codigos en ella.\n// Solo es fiable cuando hay cliente_id (estado IDENTIFICADO_AHORA); en SIN_LOOKUP el agente lo lee de la marca.\nperfil.habilitado = ALLOWED_CLIENT_CODES.length === 0\n  || (!!perfil.cliente_id && ALLOWED_CLIENT_CODES.map(String).includes(String(perfil.cliente_id)));\n\nreturn [{\n  json: {\n    ...detector,\n    perfil: perfil,\n    acceso_bloqueado: accesoBloqueado,\n    mensaje_bloqueo: MENSAJE_BLOQUEO,\n    allowed_client_codes: ALLOWED_CLIENT_CODES.map(String)\n  }\n}];"
+        "jsCode": "// ===== LISTA BLANCA DE CODIGOS DE CLIENTE =====================\n// Agrega aqui los codigos permitidos, ej: ['3502561', '3502999'].\n// Lista VACIA = sin restriccion (funciona como hoy, pasan todos).\nconst ALLOWED_CLIENT_CODES = [];\nconst MENSAJE_BLOQUEO = 'Por el momento tu codigo de cliente no esta habilitado para hacer pedidos por este medio. Si tienes un codigo de cliente o telefono habilitado, compartemelo. 🙏';\n// =============================================================\n\nconst detector = $('Detectar Identificador').first().json;\nconst lookupRows = $input.all().map(i => i.json).filter(r => r && r.cliente_id);\n\nlet perfil;\n\nif (lookupRows.length > 0) {\n  const row = lookupRows[0];\n  const esRecurrente = (row.total_ordenes || 0) > 0;\n  perfil = {\n    estado: 'IDENTIFICADO_AHORA',\n    cliente_id: row.cliente_id,\n    empresa: row.empresa,\n    tienda: String(row.tienda || '').trim(),\n    id_ruta: row.id_ruta || null,\n    nombre: String(row.nombre || '').trim().replace(/\\s+/g, ' '),\n    telefono: String(row.telefono || '').trim(),\n    total_ordenes: row.total_ordenes || 0,\n    es_recurrente: esRecurrente,\n    es_nuevo: !esRecurrente,\n    producto_mas_frecuente_nombre: row.producto_mas_frecuente_nombre || '',\n    mensaje_lookup: ''\n  };\n} else if (detector.need_lookup) {\n  perfil = {\n    estado: 'LOOKUP_FALLIDO',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: `No encontré ningún cliente con el dato '${detector.identificador_detectado}'.`\n  };\n} else {\n  perfil = {\n    estado: 'SIN_LOOKUP',\n    cliente_id: '', empresa: '', tienda: '', nombre: '', telefono: '',\n    total_ordenes: 0, es_recurrente: false, es_nuevo: false,\n    producto_mas_frecuente_nombre: '',\n    mensaje_lookup: ''\n  };\n}\n\nif (perfil.estado === 'IDENTIFICADO_AHORA' && !perfil.tienda) {\n  perfil.estado = 'SIN_TIENDA';\n  perfil.mensaje_lookup = 'Tu cuenta no tiene tienda/ruta asignada. Contacta a tu asesor.';\n}\n\n// El gateo del catalogo/carrito es DURO en el nodo Filtro (al emitir el link).\n// Aqui ya NO se bloquea la conversacion: todos reciben soporte basico (FAQ, contacto, info).\nconst accesoBloqueado = false;\n\n// habilitado para pedidos: lista vacia = todos; con lista = solo codigos en ella.\n// Solo es fiable cuando hay cliente_id (estado IDENTIFICADO_AHORA); en SIN_LOOKUP el agente lo lee de la marca.\nperfil.habilitado = ALLOWED_CLIENT_CODES.length === 0\n  || (!!perfil.cliente_id && ALLOWED_CLIENT_CODES.map(String).includes(String(perfil.cliente_id)));\n\nreturn [{\n  json: {\n    ...detector,\n    perfil: perfil,\n    acceso_bloqueado: accesoBloqueado,\n    mensaje_bloqueo: MENSAJE_BLOQUEO,\n    allowed_client_codes: ALLOWED_CLIENT_CODES.map(String)\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -11360,
-        2480
+        -135040,
+        -8676
       ],
-      "id": "7c831c6e-9560-496c-9f56-6d273bc1bef1",
+      "id": "2f77599d-904f-4bc4-866c-a542e60bd9e0",
       "name": "Construir Perfil"
     },
     {
@@ -352,22 +354,22 @@
         "promptType": "define",
         "text": "={{ $json.boton_id ? '[boton_id:' + $json.boton_id + '] ' + $json.chatInput : $json.chatInput }}",
         "options": {
-          "systemMessage": "=Eres IsaCodisa, asistente virtual de ventas. Personalidad cálida y conversacional. Hablas español natural.\n\nEres el ROUTER de un sistema multi-agente. Tu trabajo es: (1) manejar identificación, bienvenida y sesión; (2) clasificar la intención del cliente y delegar en EXACTAMENTE UN subagente; (3) reenviar VERBATIM lo que el subagente devuelve.\n\nIGNORA COMPLETAMENTE TODO LO RELACIONADO AL HACER UN BOTON DE HACER UN PEDIDO UNICAMENTE TOMA EN CUENTA EL VER CATALOGO Y LOS LINKS, ES LO UNICO QUE VA A FUNCIONAR; NO LO DEMAS DE HACE RUN PEDIDO CONVERSACIONALMENTE\n\n═══════════════════════════════════════════════\nMENSAJE DE BIENVENIDA CONFIGURADO\n═══════════════════════════════════════════════\n{{ $json.welcome_message }}\n\nÚsalo SOLO en el primerísimo mensaje cuando saludas. Después no lo repitas.\n\n═══════════════════════════════════════════════\nCÓMO RECUERDAS AL CLIENTE\n═══════════════════════════════════════════════\nCuando IDENTIFICAS a un cliente (estado=IDENTIFICADO_AHORA), incluye al final de tu mensaje esta marca técnica oculta:\n\n<!--SESSION:cliente_id=XXX;empresa=YYY;tienda=ZZZ;nombre=NNN;habilitado=SI|NO-->\n\nLa marca queda en tu memoria conversacional pero el sistema la oculta al usuario. En turnos posteriores con estado=SIN_LOOKUP, revisa tus mensajes anteriores en memoria, encuentra la marca, y úsala como fuente de cliente_id/empresa/tienda para las tools.\n\nESTADOS:\n- IDENTIFICADO_AHORA: cliente recién identificado este turno (nombre NO vacío) → confirma identidad, incluye marca.\n- LOOKUP_FALLIDO: dato no matcheó → NO inventes nombre; pide que reenvíe su código de cliente.\n- SIN_LOOKUP: usuario no envió identificador válido → si hay marca en memoria de un cliente YA confirmado, opera con esos datos; si no, pide identificación. NUNCA inventes un nombre ni confirmes identidad en este estado. El campo habilitado de la marca (habilitado=SI/NO) define si el cliente puede hacer pedidos; en SIN_LOOKUP usa SIEMPRE ese valor de la marca, no el de DATOS.\n\nREGLA DE IDENTIDAD (CRÍTICA): SOLO puedes mostrar o confirmar el nombre de un cliente cuando estado=IDENTIFICADO_AHORA Y el campo nombre NO está vacío. En cualquier otro caso está PROHIBIDO inventar, adivinar o suponer un nombre. Atribuir la sesión al cliente equivocado es el peor error posible. Si no tienes un nombre real del sistema, pide el código de cliente o teléfono.\n\n═══════════════════════════════════════════════\nDATOS DEL CLIENTE (turno actual)\n═══════════════════════════════════════════════\n- estado:                {{ $json.perfil.estado }}\n- cliente_id:            {{ $json.perfil.cliente_id }}\n- empresa:               {{ $json.perfil.empresa }}\n- tienda:                {{ $json.perfil.tienda }}\n- nombre:                {{ $json.perfil.nombre }}\n- es_recurrente:         {{ $json.perfil.es_recurrente }}\n- es_nuevo:              {{ $json.perfil.es_nuevo }}\n- producto_mas_frecuente: {{ $json.perfil.producto_mas_frecuente_nombre }}\n- mensaje_lookup:        {{ $json.perfil.mensaje_lookup }}\n- habilitado_pedidos:    {{ $json.perfil.habilitado ? 'SI' : 'NO' }}\n\n═══════════════════════════════════════════════\nESTADO DE HERRAMIENTAS (configurado por el cliente)\n═══════════════════════════════════════════════\n- listar_categorias:       {{ $json.tools_enabled.listar_categorias ? 'HABILITADA' : 'DESHABILITADA' }}\n- buscar_productos:        {{ $json.tools_enabled.buscar_productos ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_recomendaciones: {{ $json.tools_enabled.obtener_recomendaciones ? 'HABILITADA' : 'DESHABILITADA' }}\n- ver_historial_compras:   {{ $json.tools_enabled.ver_historial_compras ? 'HABILITADA' : 'DESHABILITADA' }}\n- generar_link_carrito:    {{ $json.tools_enabled.generar_link_carrito ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_plantillas:      {{ $json.tools_enabled.obtener_plantillas ? 'HABILITADA' : 'DESHABILITADA' }}\n\nNUNCA uses una capacidad DESHABILITADA. Si la pide el cliente, di que no está activada y ofrece alternativa.\n\n═══════════════════════════════════════════════\nCAPACIDADES ADICIONALES\n═══════════════════════════════════════════════\n- Escalación a humano: {{ $json.can_escalate_to_human ? 'PERMITIDA' : 'NO PERMITIDA' }}\n- Solicitar datos extra: {{ $json.can_request_additional ? 'PERMITIDA' : 'NO PERMITIDA' }}\n\nREGLA DE ESCALACIÓN (si escalación PERMITIDA) — OBLIGATORIA:\nSiempre que el cliente pida hablar con una persona, humano, agente, asesor, alguien más, un representante, soporte o ayuda — o cualquier variación ('quiero hablar con un humano', 'pásame con alguien', 'necesito un asesor', 'comunícame con una persona', 'quiero hablar con alguien más', 'me atiende una persona?', 'necesito soporte', 'ayúdenme', 'esto no me sirve', una queja, un reclamo, o un problema que no resuelves) — llama `escalar_a_humano` de INMEDIATO, en ESE MISMO turno, pasando toda la conversación en `historial`.\n\nPROHIBIDO al escalar: NO des teléfono, correo, web ni NINGÚN dato de contacto. NO sugieras que el cliente contacte por su cuenta. Tu ÚNICA respuesta visible debe ser breve, confirmando que lo comunicas con un agente. Ejemplo EXACTO: 'Con gusto te comunico con un agente. En un momento te atienden. 😊'\n\nANTE CUALQUIER duda entre escalar o dar contacto, ESCALA. Pedir 'hablar con alguien' NO es pedir un número: es escalamiento. NUNCA intentes resolver tú problemas de soporte.\n\n═══════════════════════════════════════════════\nMULTIMEDIA\n═══════════════════════════════════════════════\nImagen: {{ $json.contexto_imagen }}\nAudio:  {{ $json.contexto_audio }}\n\n═══════════════════════════════════════════════\nSUBAGENTES (tus herramientas principales de delegación)\n═══════════════════════════════════════════════\nClasifica la intención del cliente y llama EXACTAMENTE UN subagente por turno:\n\n1. subagente_pedido(query, cliente_id, empresa, tienda, sessionId) — para armar/confirmar/modificar el pedido y manejar el carrito (agregar/quitar productos), recomendaciones del carrito. Pásale en query el mensaje del cliente y el contexto necesario; cliente_id sale de DATOS DEL CLIENTE (estado=IDENTIFICADO_AHORA) o de la marca <!--SESSION...--> de tu memoria (estado=SIN_LOOKUP). OJO: el link del catálogo/carrito NO se lo pides a este subagente; lo emite el router directamente con [SEND_CART_LINK] (ver PASO 3 y CIERRE).\n2. subagente_catalogo(query, cliente_id, empresa, tienda) — para ver productos, explorar categorías, consultar precios o buscar artículos sin necesariamente armar pedido.\n3. subagente_faq(query, business_info, faq, contact) — para dudas del negocio, políticas, horarios, contacto o plantillas.\n\nCLASIFICACIÓN:\n- botón 'Ver Catalogo' / [boton_id:ver_catalogo], o pedir EXPLICITAMENTE el link del catálogo ('mándame el link', 'quiero verlo en la web') → NO uses subagente: el router emite TÚ MISMO el marcador [SEND_CART_LINK] (ver PASO 3 y CIERRE).\n- FINALIZAR un pedido que se está armando en el chat ('eso es todo', 'solo eso', 'finaliza', 'finalicemos', 'ya', 'cerremos', 'listo', 'es todo') → SIEMPRE delega en subagente_pedido. NUNCA emitas TÚ el [SEND_CART_LINK] en este caso: el subagente arma el cierre (recomendaciones + resumen + link). El router solo emite el link para el botón Ver Catalogo o cuando piden explícitamente el catálogo en la web.\n- armar/confirmar/modificar/cancelar pedido, carrito (agregar/quitar productos), recomendaciones → subagente_pedido.\n- botón 'Hacer un pedido' / [boton_id:hacer_pedido], o 'quiero hacer un pedido', armar pedido en el chat → subagente_pedido.\n- 'qué tienes', 'busco X', ver productos, categorías, precios, explorar escritos como TEXTO LIBRE (nunca el botón Ver Catalogo) → subagente_catalogo.\n- dudas, políticas, horarios, '¿cuál es su teléfono?', '¿cómo los contacto?', plantillas → subagente_faq.\n\nREGLA DE PASS-THROUGH (CRÍTICA): cuando un subagente devuelve texto, tu salida visible debe ser EXACTAMENTE y VERBATIM ese texto. NO lo reescribas, NO lo resumas, NO agregues ni quites nada, y PRESERVA cualquier marcador que contenga ([SEND_CART_LINK], [SEND_BUTTONS], [SEND_IMAGE], [SEND_TEMPLATE], [ORDER_ACTION:...], [SEND_PRODUCTS]...[/SEND_PRODUCTS]) tal cual, en su misma posición, para que el pipeline downstream (Filtro) los procese. NO inventes marcadores que el subagente no haya emitido.\n\nNo llames más de un subagente por turno. Si la intención no encaja con ninguno (ej. escalación, finalizar), maneja tú mismo con las reglas correspondientes (escalar_a_humano / finalizar_chat) sin delegar.\n\n═══════════════════════════════════════════════\nFLUJO DE CONVERSACIÓN (lo maneja el router)\n═══════════════════════════════════════════════\n\nPRIMER MENSAJE (estado=SIN_LOOKUP, sin marca en memoria):\nEmite al INICIO de tu respuesta, en su propia línea, el marcador [SEND_IMAGE] (el sistema manda la imagen de bienvenida ANTES del texto). Luego, en líneas siguientes, usa el welcome_message pero pide UNICAMENTE el código de cliente (en PRODUCCION NO se pide el número de teléfono para identificarse; si el welcome_message menciona el teléfono, omite esa parte). El marcador [SEND_IMAGE] va EXCLUSIVAMENTE en este primer saludo; nunca lo repitas en turnos posteriores. NO delegues en un subagente en este primer saludo.\n\nIDENTIFICADO_AHORA (PASO 1: CONFIRMAR IDENTIDAD CON BOTONES):\nCuando identificas al cliente este turno, tu ÚNICA acción es pedirle que confirme que es él mostrando dos botones (Sí / No). NO le preguntes qué busca todavía, NO delegues todavía. SIEMPRE incluye en tu respuesta la marca SESSION (queda en tu memoria, la necesitarás en los turnos siguientes) Y el marcador de botones. El texto visible va dentro del campo 'body' del marcador: cálido, con emojis y *negritas*. Rellena habilitado con SI/NO segun habilitado_pedidos de DATOS DEL CLIENTE:\n  '<!--SESSION:cliente_id={cliente_id};empresa={empresa};tienda={tienda};nombre={nombre};habilitado={habilitado}-->\\n[SEND_BUTTONS:{\"body\":\"¡Hola! 👋 Antes de empezar, confírmame una cosa:\\n\\n¿Eres *{nombre}*? 😊\",\"buttons\":[{\"id\":\"confirmar_si\",\"title\":\"Sí, soy yo\"},{\"id\":\"confirmar_no\",\"title\":\"No, no soy yo\"}]}]'\n\nPASO 2: RESPUESTA A LA CONFIRMACIÓN (turno siguiente, estado=SIN_LOOKUP con marca en memoria):\n- Si CONFIRMA (botón 'Sí, soy yo' / id confirmar_si, o texto 'sí', 'soy yo', 'correcto', 'así es'):\n  GATE DE PEDIDOS — revisa habilitado_pedidos (en IDENTIFICADO_AHORA tómalo de DATOS; en SIN_LOOKUP de la marca SESSION habilitado=...):\n  - Si habilitado_pedidos=NO: NO muestres el botón Ver Catalogo ni ofrezcas pedidos/catálogo. Dile cálido que su código aún no está habilitado para hacer pedidos por este medio y que con gusto le ayudas con dudas, horarios o datos de contacto (delega esas dudas en subagente_faq).\n  - Si habilitado_pedidos=SI: muéstrale el menú de acciones con botones, con copy cálido:\n  '[SEND_BUTTONS:{\"body\":\"¡Perfecto, *{nombre}*! 🙌\\n\\n¿Qué te gustaría hacer hoy? 👇\",\"buttons\":[{\"id\":\"ver_catalogo\",\"title\":\"Ver Catalogo\"},{\"id\":\"hacer_pedido\",\"title\":\"Hacer un pedido\"}]}]'\n- Si NIEGA (botón 'No, no soy yo' / id confirmar_no, o texto 'no'): discúlpate amablemente y pídele su código de cliente correcto. Ej: '¡Ups! Mil disculpas 🙏\\n\\n¿Me compartes tu *código de cliente* para ubicarte bien?'\n\nPASO 3: ACCIÓN ELEGIDA (usuario tocó un botón del menú o escribió la acción):\n- 'Ver Catalogo' (id ver_catalogo, o el mensaje trae [boton_id:ver_catalogo]): NO llames NINGUNA tool ni subagente. Responde TÚ MISMO con un texto cálido breve y agrega en la ÚLTIMA línea el marcador [SEND_CART_LINK:{\"codcliente\":\"<cliente_id>\",\"empresa\":\"00010\"}], tomando cliente_id de DATOS DEL CLIENTE o de la marca <!--SESSION...--> de tu memoria. ESTE ES EL ÚNICO comportamiento permitido al tocar Ver Catalogo. PROHIBIDO: preguntar qué producto busca, listar categorías, delegar en subagente_catalogo o en subagente_pedido, o responder sin el marcador. ÚNICA excepción: si habilitado_pedidos=NO, no emitas el marcador y explícale cálido que su código aún no está habilitado para pedidos por este medio.\n- 'Hacer un pedido' (o id hacer_pedido): el cliente quiere armar su pedido en el chat → delega en subagente_pedido (este revisa si ya tiene un pedido pendiente y lo muestra, o pregunta que producto busca).\n- 'Buscar productos' (o id buscar_productos): el cliente quiere explorar productos → delega en subagente_catalogo.\n\nLOOKUP_FALLIDO:\n'{mensaje_lookup}. ¿Me confirmas tu *código de cliente*?'\n\nSIN_LOOKUP con marca en memoria:\nProcede normal. Usa los valores de la marca para pasar cliente_id/empresa/tienda a los subagentes. NO repitas la marca.\n\n═══════════════════════════════════════════════\nBOTONES INTERACTIVOS (los emite el router)\n═══════════════════════════════════════════════\nPara ofrecer opciones como botones (WhatsApp reply buttons), emite al FINAL de tu respuesta, en una sola línea sin espacios extra:\n[SEND_BUTTONS:{\"body\":\"texto de la pregunta\",\"buttons\":[{\"id\":\"identificador_corto\",\"title\":\"Texto del Botón\"}]}]\n\nREGLAS del marcador:\n- body: el texto que verá el cliente arriba de los botones (máx 1024 caracteres).\n- buttons: array de 1 a 3 botones. Cada botón tiene id (snake_case, ej. ver_catalogo) y title (texto visible, MÁX 20 caracteres).\n- El marcador debe ir en una sola línea (los saltos de línea DENTRO del body van como \\n).\n- El body admite emojis y *negritas* (un asterisco a cada lado). Hazlo cálido y breve.\n- Úsalo en: (1) confirmación de identidad — botones 'Sí, soy yo' (confirmar_si) y 'No, no soy yo' (confirmar_no); (2) menú de acciones — botón 'Ver Catalogo' (ver_catalogo).\n\nNUNCA confundas 'Sí, soy yo' (confirmación de IDENTIDAD) con confirmar un PEDIDO. Son cosas distintas. La confirmación de pedido por texto la maneja subagente_pedido (emite [ORDER_ACTION:...]).\n\n═══════════════════════════════════════════════\nCIERRE / LINK DEL CARRITO\n═══════════════════════════════════════════════\ngenerar_link_carrito HABILITADA: cuando el cliente quiera el link del catálogo/carrito o toque 'Ver Catalogo', NO uses ninguna tool ni subagente. Responde TÚ con texto cálido breve y agrega en la ÚLTIMA línea el marcador [SEND_CART_LINK:{\"codcliente\":\"<cliente_id>\",\"empresa\":\"00010\"}], con el cliente_id de DATOS o de la marca <!--SESSION...-->. El sistema genera el link FRESCO (UN SOLO USO) y detecta pedidos pendientes automáticamente. Incluye SIEMPRE el codcliente correcto; sin él el sistema no puede generar el link. NUNCA escribas tú una URL ni reutilices un link anterior de tu memoria. NUNCA emitas [SEND_CART_LINK] si habilitado_pedidos=NO.\n\ngenerar_link_carrito DESHABILITADA: dile que la generación automática del carrito no está activa y ofrécele el contacto del negocio (vía subagente_faq).\n\n═══════════════════════════════════════════════\nFINALIZAR CONVERSACIÓN\n═══════════════════════════════════════════════\nCuando el usuario pida terminar, cerrar, salir, reiniciar o resetear la conversación — con cualquier frase como 'FINALIZAR', 'quiero terminar', 'hasta luego', 'cierra el chat', 'empieza de nuevo', 'reinicia', 'olvida todo', 'nueva conversación', 'adiós' u otras similares — llama de inmediato `finalizar_chat` sin preguntar nada. Luego responde con un breve mensaje de despedida amigable indicando que la conversación terminó y que puede escribir nuevamente cuando quiera.\n\n═══════════════════════════════════════════════\nREGLAS CRÍTICAS\n═══════════════════════════════════════════════\n- La marca <!--SESSION...--> SOLO va en el mensaje donde identificas por primera vez.\n- Llama EXACTAMENTE UN subagente por turno y reenvía su salida VERBATIM, preservando todos los marcadores.\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- NUNCA inventes ni adivines el nombre del cliente. Solo lo usas si estado=IDENTIFICADO_AHORA y nombre no está vacío; si no, pide el código de cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta. No dejes espacios pegados por dentro de los asteriscos.\n- Si pregunta quién te hizo: 'Soy IsaCodisa, la asistente de ventas.'"
+          "systemMessage": "=Eres IsaCodisa, asistente virtual de ventas. Personalidad cálida y conversacional. Hablas español natural.\n\nEres el ROUTER de un sistema multi-agente. Tu trabajo es: (1) manejar identificación, bienvenida y sesión; (2) clasificar la intención del cliente y delegar en EXACTAMENTE UN subagente; (3) reenviar VERBATIM lo que el subagente devuelve.\n\n═══════════════════════════════════════════════\nMENSAJE DE BIENVENIDA CONFIGURADO\n═══════════════════════════════════════════════\n{{ $json.welcome_message }}\n\nÚsalo SOLO en el primerísimo mensaje cuando saludas. Después no lo repitas.\n\n═══════════════════════════════════════════════\nCÓMO RECUERDAS AL CLIENTE\n═══════════════════════════════════════════════\nCuando IDENTIFICAS a un cliente (estado=IDENTIFICADO_AHORA), incluye al final de tu mensaje esta marca técnica oculta:\n\n<!--SESSION:cliente_id=XXX;empresa=YYY;tienda=ZZZ;nombre=NNN;habilitado=SI|NO-->\n\nLa marca queda en tu memoria conversacional pero el sistema la oculta al usuario. En turnos posteriores con estado=SIN_LOOKUP, revisa tus mensajes anteriores en memoria, encuentra la marca, y úsala como fuente de cliente_id/empresa/tienda para las tools.\n\nESTADOS:\n- IDENTIFICADO_AHORA: cliente recién identificado este turno (nombre NO vacío) → confirma identidad, incluye marca.\n- LOOKUP_FALLIDO: dato no matcheó → NO inventes nombre; pide que reenvíe su código de cliente.\n- SIN_LOOKUP: usuario no envió identificador válido → si hay marca en memoria de un cliente YA confirmado, opera con esos datos; si no, pide identificación. NUNCA inventes un nombre ni confirmes identidad en este estado. El campo habilitado de la marca (habilitado=SI/NO) define si el cliente puede hacer pedidos; en SIN_LOOKUP usa SIEMPRE ese valor de la marca, no el de DATOS.\n\nREGLA DE IDENTIDAD (CRÍTICA): SOLO puedes mostrar o confirmar el nombre de un cliente cuando estado=IDENTIFICADO_AHORA Y el campo nombre NO está vacío. En cualquier otro caso está PROHIBIDO inventar, adivinar o suponer un nombre. Atribuir la sesión al cliente equivocado es el peor error posible. Si no tienes un nombre real del sistema, pide el código de cliente o teléfono.\n\n═══════════════════════════════════════════════\nDATOS DEL CLIENTE (turno actual)\n═══════════════════════════════════════════════\n- estado:                {{ $json.perfil.estado }}\n- cliente_id:            {{ $json.perfil.cliente_id }}\n- empresa:               {{ $json.perfil.empresa }}\n- tienda:                {{ $json.perfil.tienda }}\n- nombre:                {{ $json.perfil.nombre }}\n- es_recurrente:         {{ $json.perfil.es_recurrente }}\n- es_nuevo:              {{ $json.perfil.es_nuevo }}\n- producto_mas_frecuente: {{ $json.perfil.producto_mas_frecuente_nombre }}\n- mensaje_lookup:        {{ $json.perfil.mensaje_lookup }}\n- habilitado_pedidos:    {{ $json.perfil.habilitado ? 'SI' : 'NO' }}\n\n═══════════════════════════════════════════════\nESTADO DE HERRAMIENTAS (configurado por el cliente)\n═══════════════════════════════════════════════\n- listar_categorias:       {{ $json.tools_enabled.listar_categorias ? 'HABILITADA' : 'DESHABILITADA' }}\n- buscar_productos:        {{ $json.tools_enabled.buscar_productos ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_recomendaciones: {{ $json.tools_enabled.obtener_recomendaciones ? 'HABILITADA' : 'DESHABILITADA' }}\n- ver_historial_compras:   {{ $json.tools_enabled.ver_historial_compras ? 'HABILITADA' : 'DESHABILITADA' }}\n- generar_link_carrito:    {{ $json.tools_enabled.generar_link_carrito ? 'HABILITADA' : 'DESHABILITADA' }}\n- obtener_plantillas:      {{ $json.tools_enabled.obtener_plantillas ? 'HABILITADA' : 'DESHABILITADA' }}\n\nNUNCA uses una capacidad DESHABILITADA. Si la pide el cliente, di que no está activada y ofrece alternativa.\n\n═══════════════════════════════════════════════\nCAPACIDADES ADICIONALES\n═══════════════════════════════════════════════\n- Escalación a humano: {{ $json.can_escalate_to_human ? 'PERMITIDA' : 'NO PERMITIDA' }}\n- Solicitar datos extra: {{ $json.can_request_additional ? 'PERMITIDA' : 'NO PERMITIDA' }}\n\nREGLA DE ESCALACIÓN (si escalación PERMITIDA) — OBLIGATORIA:\nSiempre que el cliente pida hablar con una persona, humano, agente, asesor, alguien más, un representante, soporte o ayuda — o cualquier variación ('quiero hablar con un humano', 'pásame con alguien', 'necesito un asesor', 'comunícame con una persona', 'quiero hablar con alguien más', 'me atiende una persona?', 'necesito soporte', 'ayúdenme', 'esto no me sirve', una queja, un reclamo, o un problema que no resuelves) — llama `escalar_a_humano` de INMEDIATO, en ESE MISMO turno, pasando toda la conversación en `historial`.\n\nPROHIBIDO al escalar: NO des teléfono, correo, web ni NINGÚN dato de contacto. NO sugieras que el cliente contacte por su cuenta. Tu ÚNICA respuesta visible debe ser breve, confirmando que lo comunicas con un agente. Ejemplo EXACTO: 'Con gusto te comunico con un agente. En un momento te atienden. 😊'\n\nANTE CUALQUIER duda entre escalar o dar contacto, ESCALA. Pedir 'hablar con alguien' NO es pedir un número: es escalamiento. NUNCA intentes resolver tú problemas de soporte.\n\n═══════════════════════════════════════════════\nMULTIMEDIA\n═══════════════════════════════════════════════\nImagen: {{ $json.contexto_imagen }}\nAudio:  {{ $json.contexto_audio }}\n\n═══════════════════════════════════════════════\nSUBAGENTES (tus herramientas principales de delegación)\n═══════════════════════════════════════════════\nClasifica la intención del cliente y llama EXACTAMENTE UN subagente por turno:\n\n1. subagente_pedido(query, cliente_id, empresa, tienda, sessionId) — para armar/confirmar/modificar el pedido y manejar el carrito (agregar/quitar productos), recomendaciones del carrito. Pásale en query el mensaje del cliente y el contexto necesario; cliente_id sale de DATOS DEL CLIENTE (estado=IDENTIFICADO_AHORA) o de la marca <!--SESSION...--> de tu memoria (estado=SIN_LOOKUP). OJO: el link del catálogo/carrito NO se lo pides a este subagente; lo emite el router directamente con [SEND_CART_LINK] (ver PASO 3 y CIERRE).\n2. subagente_catalogo(query, cliente_id, empresa, tienda) — para ver productos, explorar categorías, consultar precios o buscar artículos sin necesariamente armar pedido.\n3. subagente_faq(query, business_info, faq, contact) — para dudas del negocio, políticas, horarios, contacto o plantillas.\n\nCLASIFICACIÓN:\n- botón 'Ver Catalogo' / [boton_id:ver_catalogo], o pedir EXPLICITAMENTE el link del catálogo ('mándame el link', 'quiero verlo en la web') → NO uses subagente: el router emite TÚ MISMO el marcador [SEND_CART_LINK] (ver PASO 3 y CIERRE).\n- FINALIZAR un pedido que se está armando en el chat ('eso es todo', 'solo eso', 'finaliza', 'finalicemos', 'ya', 'cerremos', 'listo', 'es todo') → SIEMPRE delega en subagente_pedido. NUNCA emitas TÚ el [SEND_CART_LINK] en este caso: el subagente arma el cierre (recomendaciones + resumen + link). El router solo emite el link para el botón Ver Catalogo o cuando piden explícitamente el catálogo en la web.\n- armar/confirmar/modificar/cancelar pedido, carrito (agregar/quitar productos, VACIAR/ELIMINAR/BORRAR el carrito o empezar de cero), recomendaciones → subagente_pedido.\n- botón 'Hacer un pedido' / [boton_id:hacer_pedido], o 'quiero hacer un pedido', armar pedido en el chat → subagente_pedido.\n- 'qué tienes', 'busco X', ver productos, categorías, precios, explorar escritos como TEXTO LIBRE (nunca el botón Ver Catalogo) → subagente_catalogo.\n- dudas, políticas, horarios, '¿cuál es su teléfono?', '¿cómo los contacto?', plantillas → subagente_faq.\n- 'promociones', 'ofertas', 'descuentos', 'rebajas', 'qué tienes en promo/oferta' → subagente_catalogo (usa buscar_promociones para listar SOLO lo que está en promoción).\n\nREGLA DE PASS-THROUGH (CRÍTICA): cuando un subagente devuelve texto, tu salida visible debe ser EXACTAMENTE y VERBATIM ese texto. NO lo reescribas, NO lo resumas, NO agregues ni quites nada, y PRESERVA cualquier marcador que contenga ([SEND_CART_LINK], [SEND_BUTTONS], [SEND_IMAGE], [SEND_TEMPLATE], [ORDER_ACTION:...], [SEND_PRODUCTS]...[/SEND_PRODUCTS]) tal cual, en su misma posición, para que el pipeline downstream (Filtro) los procese. NO inventes marcadores que el subagente no haya emitido.\n\nNo llames más de un subagente por turno. Si la intención no encaja con ninguno (ej. escalación, finalizar), maneja tú mismo con las reglas correspondientes (escalar_a_humano / finalizar_chat) sin delegar. Si la petición es AJENA al negocio (no es catálogo, pedidos ni dudas del negocio), NO improvises ni delegues: aplica la regla DOMINIO / FUERA DE ALCANCE.\n\n═══════════════════════════════════════════════\nFLUJO DE CONVERSACIÓN (lo maneja el router)\n═══════════════════════════════════════════════\n\nPRIMER MENSAJE (estado=SIN_LOOKUP, sin marca en memoria):\nEmite al INICIO de tu respuesta, en su propia línea, el marcador [SEND_IMAGE] (el sistema manda la imagen de bienvenida ANTES del texto). Luego, en líneas siguientes, usa el welcome_message pero pide UNICAMENTE el código de cliente (NO se pide el número de teléfono para identificarse; si el welcome_message menciona el teléfono, omite esa parte). El marcador [SEND_IMAGE] va EXCLUSIVAMENTE en este primer saludo; nunca lo repitas en turnos posteriores. NO delegues en un subagente en este primer saludo.\n\nIDENTIFICADO_AHORA (PASO 1: CONFIRMAR IDENTIDAD CON BOTONES):\nCuando identificas al cliente este turno, tu ÚNICA acción es pedirle que confirme que es él mostrando dos botones (Sí / No). NO le preguntes qué busca todavía, NO delegues todavía. SIEMPRE incluye en tu respuesta la marca SESSION (queda en tu memoria, la necesitarás en los turnos siguientes) Y el marcador de botones. El texto visible va dentro del campo 'body' del marcador: cálido, con emojis y *negritas*. Rellena habilitado con SI/NO segun habilitado_pedidos de DATOS DEL CLIENTE:\n  '<!--SESSION:cliente_id={cliente_id};empresa={empresa};tienda={tienda};nombre={nombre};habilitado={habilitado}-->\\n[SEND_BUTTONS:{\"body\":\"¡Hola! 👋 Antes de empezar, confírmame una cosa:\\n\\n¿Eres *{nombre}*? 😊\",\"buttons\":[{\"id\":\"confirmar_si\",\"title\":\"Sí, soy yo\"},{\"id\":\"confirmar_no\",\"title\":\"No, no soy yo\"}]}]'\n\nPASO 2: RESPUESTA A LA CONFIRMACIÓN (turno siguiente, estado=SIN_LOOKUP con marca en memoria):\n- Si CONFIRMA (botón 'Sí, soy yo' / id confirmar_si, o texto 'sí', 'soy yo', 'correcto', 'así es'):\n  GATE DE PEDIDOS — revisa habilitado_pedidos (en IDENTIFICADO_AHORA tómalo de DATOS; en SIN_LOOKUP de la marca SESSION habilitado=...):\n  - Si habilitado_pedidos=NO: NO muestres el botón Ver Catalogo ni ofrezcas pedidos/catálogo. Dile cálido que su código aún no está habilitado para hacer pedidos por este medio y que con gusto le ayudas con dudas, horarios o datos de contacto (delega esas dudas en subagente_faq).\n  - Si habilitado_pedidos=SI: muéstrale el menú de acciones con botones, con copy cálido:\n  '[SEND_BUTTONS:{\"body\":\"¡Perfecto, *{nombre}*! 🙌\\n\\n¿Qué te gustaría hacer hoy? 👇\",\"buttons\":[{\"id\":\"ver_catalogo\",\"title\":\"Ver Catalogo\"},{\"id\":\"hacer_pedido\",\"title\":\"Hacer un pedido\"}]}]'\n- Si NIEGA (botón 'No, no soy yo' / id confirmar_no, o texto 'no'): discúlpate amablemente y pídele su código de cliente correcto. Ej: '¡Ups! Mil disculpas 🙏\\n\\n¿Me compartes tu *código de cliente* para ubicarte bien?'\n\nPASO 3: ACCIÓN ELEGIDA (usuario tocó un botón del menú o escribió la acción):\n- 'Ver Catalogo' (id ver_catalogo, o el mensaje trae [boton_id:ver_catalogo]): NO llames NINGUNA tool ni subagente. Responde TÚ MISMO con un texto cálido breve y agrega en la ÚLTIMA línea el marcador [SEND_CART_LINK:{\"codcliente\":\"<cliente_id>\",\"empresa\":\"00010\"}], tomando cliente_id de DATOS DEL CLIENTE o de la marca <!--SESSION...--> de tu memoria. ESTE ES EL ÚNICO comportamiento permitido al tocar Ver Catalogo. PROHIBIDO: preguntar qué producto busca, listar categorías, delegar en subagente_catalogo o en subagente_pedido, o responder sin el marcador. ÚNICA excepción: si habilitado_pedidos=NO, no emitas el marcador y explícale cálido que su código aún no está habilitado para pedidos por este medio.\n- 'Hacer un pedido' (o id hacer_pedido): el cliente quiere armar su pedido en el chat → delega en subagente_pedido (este revisa si ya tiene un pedido pendiente y lo muestra, o pregunta que producto busca).\n- 'Buscar productos' (o id buscar_productos): el cliente quiere explorar productos → delega en subagente_catalogo.\n\nLOOKUP_FALLIDO:\n'{mensaje_lookup}. ¿Me confirmas tu *código de cliente*?'\n\nSIN_LOOKUP con marca en memoria:\nProcede normal. Usa los valores de la marca para pasar cliente_id/empresa/tienda a los subagentes. NO repitas la marca.\n\n═══════════════════════════════════════════════\nBOTONES INTERACTIVOS (los emite el router)\n═══════════════════════════════════════════════\nPara ofrecer opciones como botones (WhatsApp reply buttons), emite al FINAL de tu respuesta, en una sola línea sin espacios extra:\n[SEND_BUTTONS:{\"body\":\"texto de la pregunta\",\"buttons\":[{\"id\":\"identificador_corto\",\"title\":\"Texto del Botón\"}]}]\n\nREGLAS del marcador:\n- body: el texto que verá el cliente arriba de los botones (máx 1024 caracteres).\n- buttons: array de 1 a 3 botones. Cada botón tiene id (snake_case, ej. ver_catalogo) y title (texto visible, MÁX 20 caracteres).\n- El marcador debe ir en una sola línea (los saltos de línea DENTRO del body van como \\n).\n- El body admite emojis y *negritas* (un asterisco a cada lado). Hazlo cálido y breve.\n- Úsalo en: (1) confirmación de identidad — botones 'Sí, soy yo' (confirmar_si) y 'No, no soy yo' (confirmar_no); (2) menú de acciones — botón 'Ver Catalogo' (ver_catalogo).\n\nNUNCA confundas 'Sí, soy yo' (confirmación de IDENTIDAD) con confirmar un PEDIDO. Son cosas distintas. La confirmación de pedido por texto la maneja subagente_pedido (emite [ORDER_ACTION:...]).\n\n═══════════════════════════════════════════════\nCIERRE / LINK DEL CARRITO\n═══════════════════════════════════════════════\ngenerar_link_carrito HABILITADA: cuando el cliente quiera el link del catálogo/carrito o toque 'Ver Catalogo', NO uses ninguna tool ni subagente. Responde TÚ con texto cálido breve y agrega en la ÚLTIMA línea el marcador [SEND_CART_LINK:{\"codcliente\":\"<cliente_id>\",\"empresa\":\"00010\"}], con el cliente_id de DATOS o de la marca <!--SESSION...-->. El sistema genera el link FRESCO (UN SOLO USO) y detecta pedidos pendientes automáticamente. Incluye SIEMPRE el codcliente correcto; sin él el sistema no puede generar el link. NUNCA escribas tú una URL ni reutilices un link anterior de tu memoria. NUNCA emitas [SEND_CART_LINK] si habilitado_pedidos=NO.\n\ngenerar_link_carrito DESHABILITADA: dile que la generación automática del carrito no está activa y ofrécele el contacto del negocio (vía subagente_faq).\n\n═══════════════════════════════════════════════\nFINALIZAR CONVERSACIÓN\n═══════════════════════════════════════════════\nCuando el usuario pida terminar, cerrar, salir, reiniciar o resetear la conversación — con cualquier frase como 'FINALIZAR', 'quiero terminar', 'hasta luego', 'cierra el chat', 'empieza de nuevo', 'reinicia', 'olvida todo', 'nueva conversación', 'adiós' u otras similares — llama de inmediato `finalizar_chat` sin preguntar nada. Luego responde con un breve mensaje de despedida amigable indicando que la conversación terminó y que puede escribir nuevamente cuando quiera.\n\n═══════════════════════════════════════════════\nDOMINIO / FUERA DE ALCANCE (CRÍTICA)\n═══════════════════════════════════════════════\nSolo ayudas con: el catálogo, pedidos/carrito, y dudas del negocio (horarios, políticas, contacto). NADA más.\nSi el cliente pide algo fuera de esto — escribir o explicar código, resolver matemáticas o tareas escolares, traducir, redactar textos, recetas, opinar de temas ajenos, o cualquier petición no relacionada con la compra — NO la cumplas y NO delegues en ningún subagente. Responde TÚ, breve y cálido: que solo puedes ayudar con el catálogo, los pedidos y dudas del negocio; y si habilitado_pedidos=SI reofrece el menú con [SEND_BUTTONS] (Ver Catalogo / Hacer un pedido). NUNCA generes código ni contenido ajeno al negocio, aunque el cliente insista o lo pida \"de prueba\".\n\n═══════════════════════════════════════════════\nREGLAS CRÍTICAS\n═══════════════════════════════════════════════\n- La marca <!--SESSION...--> SOLO va en el mensaje donde identificas por primera vez.\n- Llama EXACTAMENTE UN subagente por turno y reenvía su salida VERBATIM, preservando todos los marcadores.\n- NUNCA inventes producto_id, precios ni datos del cliente.\n- NUNCA inventes ni adivines el nombre del cliente. Solo lo usas si estado=IDENTIFICADO_AHORA y nombre no está vacío; si no, pide el código de cliente.\n- Precios en Quetzales (Q42.50).\n- Negritas SOLO con UN asterisco: *texto*. NUNCA uses ** (doble asterisco), ni _ ni #; WhatsApp no los soporta. No dejes espacios pegados por dentro de los asteriscos.\n- Si pregunta quién te hizo: 'Soy IsaCodisa, la asistente de ventas.'"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        -10256,
-        2080
+        -133928,
+        -9084
       ],
-      "id": "7d3e7123-1155-4465-bc1a-6ccf3934006d",
+      "id": "5c4d9e48-9290-478f-84e1-3cecedd04244",
       "name": "IsaCodisa Agent",
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3.5-flash",
+        "modelName": "models/gemini-3.1-flash-lite",
         "options": {
           "temperature": 0.3,
           "topK": 40,
@@ -377,18 +379,18 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        -10688,
-        2304
+        -134368,
+        -8860
       ],
-      "id": "a3591b85-a588-4d8b-b2c0-39b5c780b984",
+      "id": "e7fd6148-0eb2-4319-8deb-f4a30f3f2b2c",
       "name": "Gemini Model",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
       "credentials": {
         "googlePalmApi": {
-          "id": "dmDyRdDA9oCzXOwY",
-          "name": "Google Gemini(PaLM) Api account"
+          "id": "VFfmru0ImTrgxd2x",
+          "name": "Google Gemini(PaLM) Api account 2"
         }
       }
     },
@@ -401,10 +403,10 @@
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        -10560,
-        2304
+        -134240,
+        -8860
       ],
-      "id": "3f78616d-b37a-4c7d-95c0-b541dd74ee61",
+      "id": "ce986363-b4e8-4c46-ac38-97298713f939",
       "name": "Memoria Compartida"
     },
     {
@@ -441,10 +443,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -10432,
-        2304
+        -134112,
+        -8860
       ],
-      "id": "5f989622-cd72-4581-ab09-ffc16e7bd922",
+      "id": "6e89ce4c-1fca-4372-92f7-380af5c474f4",
       "name": "Tool: Historial"
     },
     {
@@ -452,9 +454,9 @@
         "description": "Genera un link de sesión para que el cliente acceda al portal de pedidos (catálogo + carrito + checkout). Úsala cuando el cliente quiera hacer un pedido y esté identificado. Parámetros: empresa (del SESSION), codcliente (cliente_id del SESSION), phone (número WhatsApp del cliente).",
         "workflowId": {
           "__rl": true,
-          "value": "BK3iTuvFjZPe6lyT",
+          "value": "KgddeoiMeC7Rgill",
           "mode": "list",
-          "cachedResultUrl": "/workflow/BK3iTuvFjZPe6lyT",
+          "cachedResultUrl": "/workflow/KgddeoiMeC7Rgill",
           "cachedResultName": "ISA Tool - Generar Link Carrito"
         },
         "workflowInputs": {
@@ -511,10 +513,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -10304,
-        2304
+        -133984,
+        -8860
       ],
-      "id": "e9540091-e25f-4a69-809a-2206b31aad51",
+      "id": "d561ba03-4ff1-47a6-9073-dde7a91ce614",
       "name": "Tool: Generar link carrito"
     },
     {
@@ -544,10 +546,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -12928,
-        2288
+        -136608,
+        -8868
       ],
-      "id": "075f63ae-9a3e-44f9-8ea1-4565af91518d",
+      "id": "c9d03fd8-2029-4f36-8888-5b9072d67769",
       "name": "Es Accion Pedido?"
     },
     {
@@ -558,16 +560,16 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.boton_id }}\"\n}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -12704,
-        2192
+        -136384,
+        -8972
       ],
-      "id": "e2cba37a-19f0-4c8d-8502-05a420c57a91",
+      "id": "0cb1838c-6bc9-48a1-8fd5-50ffbde07d15",
       "name": "Procesar Accion Pedido",
       "retryOnFail": true,
       "maxTries": 3,
@@ -580,10 +582,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -9456,
-        2080
+        -133136,
+        -9076
       ],
-      "id": "b69e8183-07d0-400e-a2c4-3929f7a563d0",
+      "id": "bcc3dc01-6c8c-42e5-9ec0-ed25d0923c22",
       "name": "Filtro"
     },
     {
@@ -593,10 +595,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -9232,
-        2080
+        -132912,
+        -9076
       ],
-      "id": "d4df60d1-f531-4c9f-b7a5-1ce9540f02c7",
+      "id": "bbcec93e-bf08-44be-9a86-7af064e5ccc7",
       "name": "Restaurar Output"
     },
     {
@@ -610,10 +612,10 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -7664,
-        3008
+        -131344,
+        -8148
       ],
-      "id": "2dfd3815-2cd1-4fd7-b268-8f29da1250f3",
+      "id": "a3bef3b8-a504-4c24-a17e-a82abd172024",
       "name": "WhatsApp Send",
       "webhookId": "6b2a6b13-f8e4-4250-8958-1fcf86aaef2e",
       "retryOnFail": true,
@@ -634,16 +636,16 @@
         "specifyBody": "json",
         "jsonBody": "{\n    \"email\": \"cc.auth\",\n    \"password\": \"@cc350CC\"\n}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -14496,
-        2512
+        -138176,
+        -8652
       ],
-      "id": "3189c341-710b-4b43-a447-ceb28492b2ec",
+      "id": "f1d09d96-cd03-4766-91ee-d6380d8c770f",
       "name": "GET TOKEN",
       "retryOnFail": true,
       "maxTries": 3,
@@ -671,16 +673,16 @@
           ]
         },
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -14272,
-        2432
+        -137952,
+        -8724
       ],
-      "id": "18b1dd04-799f-4e43-bd0e-d940ce525b57",
+      "id": "4bb5cb72-954c-47d9-a17a-36ca6ea000a5",
       "name": "Inbox Estado",
       "onError": "continueRegularOutput"
     },
@@ -691,10 +693,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -14048,
-        2432
+        -137728,
+        -8724
       ],
-      "id": "354fc2c5-c12e-47ca-a27e-6254035f70a9",
+      "id": "343d630a-e4ec-41c7-8088-905e8374407f",
       "name": "Eval Agente"
     },
     {
@@ -725,10 +727,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -13824,
-        2432
+        -137504,
+        -8724
       ],
-      "id": "aa1eaef1-8596-421f-8224-92e63771fe4f",
+      "id": "54ba337b-4b19-4957-b831-eced1add1300",
       "name": "En Agente?"
     },
     {
@@ -752,18 +754,17 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ phone_number: $json.gate_phone, message_text: $json.gate_text, message_type: 'TEXT', provider_message_id: $json.gate_message_id }) }}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -13600,
-        2336
+        -137280,
+        -8820
       ],
-      "id": "5f6d18fc-20af-4e73-8a72-a50cd4e9d328",
+      "id": "3d122070-3deb-4e45-8e5a-2f78bef83ef7",
       "name": "Reenviar a Agente",
-      "disabled": true,
       "onError": "continueRegularOutput"
     },
     {
@@ -779,16 +780,16 @@
           ]
         },
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -13600,
-        2528
+        -137280,
+        -8628
       ],
-      "id": "3f06874f-6bb7-4507-ad30-7d91e96ccee0",
+      "id": "adb94969-03e3-40f9-9707-a1eac253e64b",
       "name": "CONFIGRUACION",
       "retryOnFail": true,
       "maxTries": 3,
@@ -802,10 +803,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -13376,
-        2464
+        -137056,
+        -8700
       ],
-      "id": "2434555a-d4d6-46b0-9f48-b7534fd674d2",
+      "id": "ee860df4-dbc5-46b2-b27c-468b271eb934",
       "name": "Procesar Configuracion",
       "onError": "continueErrorOutput"
     },
@@ -820,16 +821,17 @@
               "responseFormat": "file",
               "outputPropertyName": "data0"
             }
-          }
+          },
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -12480,
-        2480
+        -136160,
+        -8676
       ],
-      "id": "3b7e364d-37b6-4898-a1e2-deadc8f528d8",
+      "id": "363a0018-f1d4-4ecc-a8c9-a04e25923ab7",
       "name": "Descargar Audio",
       "retryOnFail": true,
       "maxTries": 3,
@@ -848,10 +850,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -10912,
-        2176
+        -134592,
+        -8980
       ],
-      "id": "248811a7-4b52-4900-b0ba-2ae51e3700e9",
+      "id": "70993ccb-d928-4d0f-83a5-08f6f3934426",
       "name": "Agregar Version Sesion"
     },
     {
@@ -940,12 +942,11 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -10048,
-        2304
+        -133728,
+        -8860
       ],
-      "id": "d47daa4d-f44f-4965-ae1f-096669408e31",
-      "name": "Tool: Escalar a Humano",
-      "disabled": true
+      "id": "4296edd5-1af9-4be2-9fea-38305568ebf8",
+      "name": "Tool: Escalar a Humano"
     },
     {
       "parameters": {
@@ -956,10 +957,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1,
       "position": [
-        -10176,
-        2304
+        -133856,
+        -8860
       ],
-      "id": "b6466c5f-a582-430d-aa61-140341681560",
+      "id": "bc895ae5-fd65-49f3-b02e-ea11535df603",
       "name": "Tool: Finalizar Chat"
     },
     {
@@ -1001,10 +1002,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -7888,
-        2912
+        -131568,
+        -8244
       ],
-      "id": "d1a7ada0-ccf0-4f24-a11a-c3645cdc0883",
+      "id": "27357913-9a3a-44e1-95f8-4978cf6e1355",
       "name": "Router Mensaje"
     },
     {
@@ -1014,10 +1015,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -7664,
-        2816
+        -131344,
+        -8340
       ],
-      "id": "a3c9bdc9-e3e5-4882-bf42-e96b03df0c3c",
+      "id": "788e54df-d098-4f24-8efa-4c9b14ed7cb7",
       "name": "Preparar Componentes"
     },
     {
@@ -1028,10 +1029,10 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -7440,
-        2816
+        -131120,
+        -8340
       ],
-      "id": "5bb109de-ae28-4ace-b27f-b9d8ec0c84be",
+      "id": "d1c3f293-a4a9-4c6f-b22a-23980a07a849",
       "name": "WhatsApp Send Template",
       "webhookId": "764acd07-642b-4634-aa01-d24278049173",
       "retryOnFail": true,
@@ -1073,10 +1074,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -8336,
-        2752
+        -132016,
+        -8404
       ],
-      "id": "f6dc9d81-021d-47c2-a0c3-a53c5c26901e",
+      "id": "3905cdc4-5023-444c-8b9b-72f3912c946e",
       "name": "Si Es Cart Link?"
     },
     {
@@ -1088,15 +1089,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"interactive\",\n  \"interactive\": {\n    \"type\": \"cta_url\",\n    \"body\": { \"text\": {{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? JSON.stringify('✅ ¡Listo! Aquí puedes revisar tu pedido y finalizar la compra. 🛒') : JSON.stringify('👉 Presiona el botón *Ver Catalogo* para ingresar a nuestro catálogo 🛒.\\n\\n¡Aquí estaré para ayudarte con tu pedido! 😉' || 'Toca el botón para ir al catálogo y hacer tu pedido.') }} },\n    \"action\": {\n      \"name\": \"cta_url\",\n      \"parameters\": {\n        \"display_text\": \"{{ $('Generar Link Fresco').first().json.tiene_carrito_activo ? 'Ver mi pedido' : 'Ver Catalogo' }}\",\n        \"url\": \"{{ $('Generar Link Fresco').first().json.url }}\"\n      }\n    }\n  }\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -7664,
-        2432
+        -131344,
+        -8724
       ],
-      "id": "9bac20b2-3efc-4ffa-b86a-e699cbda82ee",
+      "id": "c1447f86-bbe4-49d2-847a-b76da565bee7",
       "name": "WhatsApp Send CTA Button",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1136,10 +1139,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -8112,
-        3008
+        -131792,
+        -8148
       ],
-      "id": "673f2a51-fa1c-4f14-a2c1-a7ff07bae61f",
+      "id": "f1ff9bab-7776-4812-ad78-e2239146d61e",
       "name": "Si Es Botones?"
     },
     {
@@ -1149,10 +1152,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -7888,
-        3200
+        -131568,
+        -7956
       ],
-      "id": "dd6b8ed0-3088-4cfc-8133-f60cc5d9e10a",
+      "id": "e72be43f-7968-4cab-8540-dd2460eacd49",
       "name": "Preparar Botones"
     },
     {
@@ -1164,15 +1167,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.wa_payload) }}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -7664,
-        3200
+        -131344,
+        -7956
       ],
-      "id": "83faa938-35fa-4b9c-9035-4260aefa107b",
+      "id": "44c81b90-4d14-4344-b6f7-b522dd09d6f7",
       "name": "WhatsApp Send Buttons",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1212,10 +1217,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -8336,
-        2112
+        -132016,
+        -9040
       ],
-      "id": "e6eb2133-1a0f-4cb7-8950-840cc22a96c1",
+      "id": "16f4677a-ed7b-412b-96b2-7a583abb3475",
       "name": "Si Es Imagen?"
     },
     {
@@ -1227,15 +1232,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.imagen_send_url || 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg' }}\" }\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -8112,
-        2112
+        -131792,
+        -9040
       ],
-      "id": "0f67e742-9d93-4308-8ad6-610a6da55551",
+      "id": "ae4e2053-723b-4a0e-a535-bacd9de11b0d",
       "name": "WhatsApp Send Imagen",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1251,9 +1258,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "BK3iTuvFjZPe6lyT",
+          "value": "KgddeoiMeC7Rgill",
           "mode": "list",
-          "cachedResultUrl": "/workflow/BK3iTuvFjZPe6lyT",
+          "cachedResultUrl": "/workflow/KgddeoiMeC7Rgill",
           "cachedResultName": "ISA Tool - Generar Link Carrito"
         },
         "workflowInputs": {
@@ -1331,10 +1338,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -8112,
-        2528
+        -131792,
+        -8628
       ],
-      "id": "5bf3ffa9-af7f-459c-b5bd-ed5d452a4db1",
+      "id": "2fa202da-ad15-4389-b6a7-b44a290a40fc",
       "name": "Generar Link Fresco",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1369,10 +1376,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -7888,
-        2528
+        -131568,
+        -8628
       ],
-      "id": "ae3d3666-fb5e-479b-b123-8277ad556f9e",
+      "id": "d49cb273-6306-48b5-ae73-1b7acf364c3f",
       "name": "Link OK?"
     },
     {
@@ -1386,10 +1393,10 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1,
       "position": [
-        -7664,
-        2624
+        -131344,
+        -8532
       ],
-      "id": "81cc23bf-3c5e-4ce7-90d7-26313b1d3e84",
+      "id": "c0029181-5f12-41c0-8150-9fc7dcbee675",
       "name": "WhatsApp Send Link Error",
       "webhookId": "6581c54e-58d6-48bc-8343-caec165c0acc",
       "retryOnFail": true,
@@ -1430,10 +1437,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -8784,
-        2208
+        -132464,
+        -8944
       ],
-      "id": "d90dab3d-bbb7-4044-9430-a304256218f2",
+      "id": "3c900812-b7ab-4ef9-941d-46b8f0d2c107",
       "name": "Si Es Order Action?"
     },
     {
@@ -1444,16 +1451,16 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"empresa\": \"00010\",\n  \"phone\": \"{{ $('Entrada').first().json.from }}\",\n  \"phone_number_id\": \"{{ $('Entrada').first().json.phone_number_id }}\",\n  \"boton_id\": \"{{ $json.order_boton_id }}\"\n}",
         "options": {
-          "timeout": 10000
+          "timeout": 60000
         }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -8560,
-        2304
+        -132240,
+        -8848
       ],
-      "id": "e85383fc-9cbf-4034-a899-c9e7f70004ee",
+      "id": "e8201b91-d8be-42d8-88f5-5e6c55aa704c",
       "name": "Procesar Accion Pedido (texto)",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1487,10 +1494,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -11136,
-        2480
+        -134816,
+        -8676
       ],
-      "id": "c71edc30-66f2-4b26-8b95-f2586d0a8700",
+      "id": "657cb9a1-17a3-4b9c-8110-251dba753c21",
       "name": "Acceso Permitido?"
     },
     {
@@ -1504,10 +1511,10 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -10192,
-        2672
+        -133864,
+        -8492
       ],
-      "id": "d4bb6ba1-5ba2-4332-89a5-aca2be9d3ef2",
+      "id": "bb302a21-90f8-491b-8292-7cc690c98019",
       "name": "WhatsApp Bloqueado",
       "webhookId": "13c35db0-545b-4017-a831-2ab62fc8124d",
       "retryOnFail": true,
@@ -1531,10 +1538,10 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -9232,
-        2272
+        -132912,
+        -8884
       ],
-      "id": "71a68503-dca7-448b-a247-2ad762c0fbf7",
+      "id": "757aa742-da81-470a-bc50-154ddc81677e",
       "name": "WhatsApp Error Tecnico",
       "webhookId": "a1111111-2222-3333-4444-555555555555",
       "retryOnFail": true,
@@ -1554,10 +1561,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -14720,
-        2512
+        -138400,
+        -8652
       ],
-      "id": "8c25d1a0-35b2-41ee-8a7e-6711ad2f754a",
+      "id": "defdce1f-8971-4f41-b619-bdf6f73a7367",
       "name": "Entrada"
     },
     {
@@ -1587,10 +1594,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -9008,
-        2080
+        -132688,
+        -9076
       ],
-      "id": "10ba8f28-86bb-49ad-9b31-c9834311731a",
+      "id": "562f1ff3-29ec-4f1d-83f5-497c040ad7fc",
       "name": "Canal Chat?"
     },
     {
@@ -1600,10 +1607,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -8336,
-        1712
+        -132016,
+        -9448
       ],
-      "id": "e5c7b4eb-4407-4309-8a61-fa1fbce5e53b",
+      "id": "31eaa4c0-761a-4ab0-ae74-e765e59b110e",
       "name": "Responder Chat"
     },
     {
@@ -1634,19 +1641,19 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -8784,
-        1712
+        -132464,
+        -9448
       ],
-      "id": "7bdb26aa-349f-401f-9c88-c4485401d9d8",
+      "id": "bc4d9f87-1dda-450c-b17d-e7da7d1d00d2",
       "name": "Chat Cart Link?"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "BK3iTuvFjZPe6lyT",
+          "value": "KgddeoiMeC7Rgill",
           "mode": "list",
-          "cachedResultUrl": "/workflow/BK3iTuvFjZPe6lyT",
+          "cachedResultUrl": "/workflow/KgddeoiMeC7Rgill",
           "cachedResultName": "ISA Tool - Generar Link Carrito"
         },
         "workflowInputs": {
@@ -1724,10 +1731,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -8560,
-        1632
+        -132240,
+        -9520
       ],
-      "id": "58c107f7-e464-4a41-8465-3c1eed47f65d",
+      "id": "c11dd3fc-32f5-4fc8-aebf-8bde8274736e",
       "name": "Generar Link Chat",
       "retryOnFail": true,
       "maxTries": 3,
@@ -1761,10 +1768,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -9456,
-        3040
+        -133136,
+        -8112
       ],
-      "id": "43e98b32-a00b-47b8-84ad-ecac4a803c7b",
+      "id": "35ecde5a-a330-432f-98ee-312e8030743f",
       "name": "Canal Error?"
     },
     {
@@ -1794,10 +1801,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -10912,
-        2624
+        -134592,
+        -8528
       ],
-      "id": "5b2d7a96-13ac-4d74-a978-fd2806340102",
+      "id": "fc9167af-d358-4558-a0e3-3b1e1d3878d9",
       "name": "Canal Bloqueo?"
     },
     {
@@ -1807,10 +1814,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -9232,
-        3136
+        -132912,
+        -8028
       ],
-      "id": "cbdf6dfe-f0b9-42e4-b043-2a3501dbe8b9",
+      "id": "71c5bd19-8a6f-4835-9fff-4324b5555f25",
       "name": "Responder Error Chat"
     },
     {
@@ -1820,10 +1827,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -10192,
-        2480
+        -133864,
+        -8684
       ],
-      "id": "fa101f5c-553c-4186-8ab4-71e1c80f89d2",
+      "id": "37a3b279-e1b8-4350-bc12-7e8fa87ed470",
       "name": "Responder Bloqueo Chat"
     },
     {
@@ -1831,9 +1838,9 @@
         "description": "Subagente de PEDIDO. Llámalo cuando el cliente quiera armar/confirmar su pedido, manejar el carrito (agregar/quitar productos), pedir recomendaciones del carrito o terminar el pedido. Devuelve el texto que debes reenviar VERBATIM al cliente. Parámetros: query (mensaje del cliente y contexto), cliente_id, empresa, tienda, sessionId.",
         "workflowId": {
           "__rl": true,
-          "value": "vkq7L6euaKBrVqM5",
+          "value": "i1Ln0FONDRTfb9su",
           "mode": "list",
-          "cachedResultUrl": "/workflow/vkq7L6euaKBrVqM5",
+          "cachedResultUrl": "/workflow/i1Ln0FONDRTfb9su",
           "cachedResultName": "ISA Subagente - Pedido"
         },
         "workflowInputs": {
@@ -1842,7 +1849,7 @@
             "query": "={{ $fromAI('query', 'Mensaje del cliente y contexto relevante para armar o confirmar el pedido.', 'string') }}",
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Si recién se identificó, sale del bloque DATOS DEL CLIENTE. Si no, sale de la marca <!--SESSION...--> de tu memoria.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "sessionId": "={{ $('Entrada').first().json.from }}"
           },
           "matchingColumns": [
@@ -1902,10 +1909,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -9920,
-        2304
+        -133600,
+        -8860
       ],
-      "id": "32a09320-56c4-4d15-95ed-6fbdb56c81af",
+      "id": "8a3044eb-b8bf-4168-92a7-938daccd04cb",
       "name": "Tool: Subagente Pedido"
     },
     {
@@ -1913,9 +1920,9 @@
         "description": "Subagente de CATALOGO. Llámalo cuando el cliente quiera ver productos, explorar categorías, consultar precios o buscar artículos. Devuelve el texto que debes reenviar VERBATIM al cliente. Parámetros: query (mensaje del cliente y contexto), cliente_id, empresa, tienda.",
         "workflowId": {
           "__rl": true,
-          "value": "pKR9juF7fH6xEj9T",
+          "value": "kIY1iqeT8toJqcli",
           "mode": "list",
-          "cachedResultUrl": "/workflow/pKR9juF7fH6xEj9T",
+          "cachedResultUrl": "/workflow/kIY1iqeT8toJqcli",
           "cachedResultName": "ISA Subagente - Catalogo"
         },
         "workflowInputs": {
@@ -1924,7 +1931,8 @@
             "query": "={{ $fromAI('query', 'Mensaje del cliente y contexto relevante para explorar el catálogo.', 'string') }}",
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Si recién se identificó, sale del bloque DATOS DEL CLIENTE. Si no, sale de la marca <!--SESSION...--> de tu memoria.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "=10000"
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
+            "sessionId": "={{ $('Entrada').first().json.from }}"
           },
           "matchingColumns": [
             "query"
@@ -1965,6 +1973,15 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
@@ -1974,10 +1991,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -9792,
-        2304
+        -133472,
+        -8860
       ],
-      "id": "6bbdedad-ebce-4b38-809b-01fb599bb9df",
+      "id": "f85e99bf-4123-4b67-bce6-b777f3a5f3df",
       "name": "Tool: Subagente Catalogo"
     },
     {
@@ -1985,9 +2002,9 @@
         "description": "Subagente de PREGUNTAS FRECUENTES / NEGOCIO. Llámalo cuando el cliente pregunte por dudas del negocio, políticas, horarios, contacto o plantillas. Devuelve el texto que debes reenviar VERBATIM al cliente. Parámetros: query (mensaje del cliente), business_info, faq, contact.",
         "workflowId": {
           "__rl": true,
-          "value": "Fhxa4J1bijyAoSSt",
+          "value": "r6QMXxbGCWQeh8Nn",
           "mode": "list",
-          "cachedResultUrl": "/workflow/Fhxa4J1bijyAoSSt",
+          "cachedResultUrl": "/workflow/r6QMXxbGCWQeh8Nn",
           "cachedResultName": "ISA Subagente - FAQ"
         },
         "workflowInputs": {
@@ -2046,10 +2063,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -9664,
-        2304
+        -133344,
+        -8860
       ],
-      "id": "ef68dfb9-d0f2-48c0-856a-89913ce53079",
+      "id": "c5cd9c4a-0d9d-4552-a42a-610d51ce1b9e",
       "name": "Tool: Subagente FAQ"
     },
     {
@@ -2080,23 +2097,23 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -8560,
-        2112
+        -132240,
+        -9040
       ],
-      "id": "6b67525e-7124-41e4-a83b-3fd2c3398139",
+      "id": "8ae1e6bc-f7dc-4af1-b771-7556696d9d74",
       "name": "Si Es Productos?"
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Restaurar Output').first().json;\nconst entrada = $('Entrada').first().json;\nconst lista = Array.isArray(base.productos_list) ? base.productos_list : [];\nconst placeholder = 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg';\nconst items = lista.map(p => {\n  const url = p.img ? ('https://data.dev.pdctechco.com/Fotos/FFA/' + p.sku + '.jpg') : placeholder;\n  let caption = '*' + (p.nombre || '') + '*';\n  if (p.precio) caption += '\\nQ' + p.precio;\n  if (p.promo) caption += '\\n' + p.promo;\n  caption += '\\n\\nDime cuantas quieres para agregarlo.';\n  return { json: { to: entrada.from, phone_number_id: entrada.phone_number_id, image_url: url, caption } };\n});\nreturn items.length ? items : [{ json: { skip: true } }];"
+        "jsCode": "const base = $('Restaurar Output').first().json;\nconst entrada = $('Entrada').first().json;\nconst lista = Array.isArray(base.productos_list) ? base.productos_list : [];\nconst placeholder = 'https://i.ibb.co/BKwvb5b5/Whats-App-Image-2026-06-05-at-16-31-52.jpg';\nconst items = lista.map(p => {\n  const url = p.img ? ('https://data.pdctechco.com/Fotos/FFA/' + p.sku + '.jpg') : placeholder;\n  let caption = '*' + (p.nombre || '') + '*';\n  if (p.precio) caption += '\\nQ' + p.precio;\n  if (p.promo) caption += '\\n' + p.promo;\n  caption += '\\n\\nDime cuantas quieres para agregarlo.';\n  return { json: { to: entrada.from, phone_number_id: entrada.phone_number_id, image_url: url, caption } };\n});\nreturn items.length ? items : [{ json: { skip: true } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -8336,
-        1920
+        -132016,
+        -9232
       ],
-      "id": "cd21d22f-935d-4719-b101-3dcb60bdcf71",
+      "id": "1f2a77db-4316-4809-8424-acac97ab1e9b",
       "name": "Preparar Productos"
     },
     {
@@ -2108,15 +2125,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.to }}\",\n  \"type\": \"image\",\n  \"image\": { \"link\": \"{{ $json.image_url }}\", \"caption\": {{ JSON.stringify($json.caption) }} }\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -8112,
-        1920
+        -131792,
+        -9232
       ],
-      "id": "6605ca6f-bd15-48c4-90cd-141184b87e2b",
+      "id": "82b498a4-d479-4cc8-8c69-94b36711e791",
       "name": "WhatsApp Send Productos",
       "credentials": {
         "whatsAppApi": {
@@ -2152,10 +2171,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -8336,
-        2384
+        -132012,
+        -8768
       ],
-      "id": "28ed5cfd-5fcd-4607-9889-3114948300a8",
+      "id": "tiene-resumen-cartlink",
       "name": "Tiene Resumen Cart Link?"
     },
     {
@@ -2167,15 +2186,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Entrada').first().json.from }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": {{ JSON.stringify(($('Restaurar Output').first().json.output || '').trim().slice(0, 4000)) }} }\n}",
-        "options": {}
+        "options": {
+          "timeout": 60000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -8336,
-        2576
+        -132012,
+        -8588
       ],
-      "id": "c73c9432-fd90-4bad-b495-ab7353eae17e",
+      "id": "wa-send-resumen-texto",
       "name": "WhatsApp Send Resumen Texto",
       "credentials": {
         "whatsAppApi": {
@@ -2185,6 +2206,7 @@
       }
     }
   ],
+  "pinData": {},
   "connections": {
     "When Executed by Another Workflow": {
       "main": [
@@ -2926,16 +2948,16 @@
       ]
     }
   },
-  "pinData": {},
   "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "fbd90623-b090-421e-b150-3d5c087d090f",
+  "versionId": "b67af7a3-d508-41a3-9643-0f25890ec8fe",
   "meta": {
-    "templateCredsSetupCompleted": true
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b269919fbc5f6585d4b98bc2e85c084039cf80938cec8fa447a6d373249e4c2"
   },
-  "id": "S7maou8Do0nM2tRI",
+  "id": "2UYWahSbZl5OP4D0",
   "tags": []
 }
