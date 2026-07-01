@@ -16,6 +16,9 @@
             },
             {
               "name": "tienda"
+            },
+            {
+              "name": "sessionId"
             }
           ]
         }
@@ -277,6 +280,21 @@
       ],
       "id": "promotool-1456_240",
       "name": "Tool: Buscar Promociones"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When Called by Agent').first().json.sessionId }}",
+        "contextWindowLength": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1100,
+        200
+      ],
+      "id": "catalogo-memoria",
+      "name": "Memoria"
     }
   ],
   "pinData": {},
@@ -331,6 +349,17 @@
           {
             "node": "Subagente Catalogo",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria": {
+      "ai_memory": [
+        [
+          {
+            "node": "Subagente Catalogo",
+            "type": "ai_memory",
             "index": 0
           }
         ]

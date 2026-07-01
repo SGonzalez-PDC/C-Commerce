@@ -1931,7 +1931,8 @@
             "query": "={{ $fromAI('query', 'Mensaje del cliente y contexto relevante para explorar el catálogo.', 'string') }}",
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Si recién se identificó, sale del bloque DATOS DEL CLIENTE. Si no, sale de la marca <!--SESSION...--> de tu memoria.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}"
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
+            "sessionId": "={{ $('Entrada').first().json.from }}"
           },
           "matchingColumns": [
             "query"
@@ -1967,6 +1968,15 @@
             {
               "id": "tienda",
               "displayName": "tienda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
               "required": false,
               "defaultMatch": false,
               "display": true,
