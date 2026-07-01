@@ -478,7 +478,7 @@
             "pagina": "={{ $fromAI('pagina', 'Número de página. 1 para primera búsqueda, incrementa para más.', 'number', 1) }}",
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Si recién se identificó, sale del bloque DATOS DEL CLIENTE. Si no, sale de la marca <!--SESSION...--> de tu memoria.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "=10000"
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}"
           },
           "matchingColumns": [
             "query"
