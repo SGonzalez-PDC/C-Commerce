@@ -11,10 +11,10 @@
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        48,
-        32
+        -800,
+        0
       ],
-      "id": "f221c31f-b415-4c6f-90b7-63d900f7aba4",
+      "id": "f1a2b3c4-0001-4000-8000-000000000001",
       "name": "WhatsApp Trigger",
       "webhookId": "e3b6db9d-d515-40b3-86af-f80cd62addf1",
       "credentials": {
@@ -34,11 +34,11 @@
                   "caseSensitive": true,
                   "leftValue": "",
                   "typeValidation": "strict",
-                  "version": 3
+                  "version": 2
                 },
                 "conditions": [
                   {
-                    "id": "r-ISACODISA",
+                    "id": "router-num-a-0001",
                     "leftValue": "={{ $json.metadata.phone_number_id }}",
                     "rightValue": "1115471541658480",
                     "operator": {
@@ -50,7 +50,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "ISACODISA"
+              "outputKey": "Numero A"
             },
             {
               "conditions": {
@@ -58,11 +58,11 @@
                   "caseSensitive": true,
                   "leftValue": "",
                   "typeValidation": "strict",
-                  "version": 3
+                  "version": 2
                 },
                 "conditions": [
                   {
-                    "id": "r-AVON",
+                    "id": "router-num-b-0001",
                     "leftValue": "={{ $json.metadata.phone_number_id }}",
                     "rightValue": "1160149123849159",
                     "operator": {
@@ -74,120 +74,169 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "AVON"
+              "outputKey": "Numero B"
             }
           ]
         },
-        "options": {
-          "fallbackOutput": "extra",
-          "renameFallbackOutput": "NO_MATCH"
-        }
+        "options": {}
       },
       "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.4,
+      "typeVersion": 3.2,
       "position": [
-        272,
-        16
+        -320,
+        0
       ],
-      "id": "a43a00d2-ef92-43ba-8fa6-b59987e39c84",
-      "name": "Router por Numero"
+      "id": "f1a2b3c4-0002-4000-8000-000000000002",
+      "name": "Router Numero"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "S7maou8Do0nM2tRI",
+          "value": "REEMPLAZAR_ID_AGENTE_A",
           "mode": "list",
-          "cachedResultUrl": "/workflow/S7maou8Do0nM2tRI",
           "cachedResultName": "IsaCodisa Agent"
         },
         "workflowInputs": {
-          "mappingMode": "defineBelow",
+          "mappingMode": "passthrough",
           "value": {},
           "matchingColumns": [],
           "schema": [],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
-        "options": {}
+        "options": {
+          "waitForSubWorkflow": false
+        }
       },
       "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
+      "typeVersion": 1.2,
       "position": [
-        544,
-        -112
+        -80,
+        -120
       ],
-      "id": "cbbce49b-8baa-4a45-8a32-7a496c91ae3e",
-      "name": "Llamar IsaCodisa"
+      "id": "f1a2b3c4-0003-4000-8000-000000000003",
+      "name": "Agente A"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "UYQqmW4L0B2gwkc1",
+          "value": "REEMPLAZAR_ID_AGENTE_B",
           "mode": "list",
-          "cachedResultUrl": "/workflow/UYQqmW4L0B2gwkc1",
           "cachedResultName": "IsaCodisa Agent AVON"
         },
         "workflowInputs": {
-          "mappingMode": "defineBelow",
+          "mappingMode": "passthrough",
           "value": {},
           "matchingColumns": [],
           "schema": [],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
-        "options": {}
+        "options": {
+          "waitForSubWorkflow": false
+        }
       },
       "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
+      "typeVersion": 1.2,
       "position": [
-        544,
-        128
+        -80,
+        120
       ],
-      "id": "00b05a85-256a-437b-9058-16687ae43753",
-      "name": "Llamar AVON"
+      "id": "f1a2b3c4-0004-4000-8000-000000000004",
+      "name": "Agente B"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "router-real-from-0001",
+              "leftValue": "={{ $json.messages[0].from }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "router-real-nostatus-0002",
+              "leftValue": "={{ $json.statuses }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        0
+      ],
+      "id": "f1a2b3c4-0005-4000-8000-000000000005",
+      "name": "Es Mensaje Real?"
     }
   ],
+  "pinData": {},
   "connections": {
     "WhatsApp Trigger": {
       "main": [
         [
           {
-            "node": "Router por Numero",
+            "node": "Es Mensaje Real?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Router por Numero": {
+    "Router Numero": {
       "main": [
         [
           {
-            "node": "Llamar IsaCodisa",
+            "node": "Agente A",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Llamar AVON",
+            "node": "Agente B",
             "type": "main",
             "index": 0
           }
         ]
       ]
+    },
+    "Es Mensaje Real?": {
+      "main": [
+        [
+          {
+            "node": "Router Numero",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
     }
   },
-  "pinData": {},
-  "active": true,
   "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
-  },
-  "versionId": "9fd8e1d0-62c7-44ec-a023-fb5b7a62f17c",
-  "meta": {},
-  "id": "lJ9XvNjvZwFo92WI",
-  "tags": []
+    "executionOrder": "v1"
+  }
 }
