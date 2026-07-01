@@ -90,7 +90,7 @@
             "pagina": "={{ $fromAI('pagina', 'Número de página. 1 para primera búsqueda, incrementa para más.', 'number', 1) }}",
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Sale del bloque DATOS DE ESTA LLAMADA del system message.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "=10000"
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}"
           },
           "matchingColumns": [
             "query"
@@ -221,7 +221,7 @@
           "value": {
             "cliente_id": "={{ $fromAI('cliente_id', 'Código del cliente. Sale del bloque DATOS DE ESTA LLAMADA del system message.', 'string') }}",
             "empresa": "=00010",
-            "tienda": "=10000",
+            "tienda": "={{ $fromAI('tienda', 'Tienda/almacen del cliente. Viene del bloque DATOS del system message; nunca la inventes.', 'string') }}",
             "pagina": "={{ $fromAI('pagina', 'Número de página. 1 para la primera, incrementa para ver más.', 'number', 1) }}"
           },
           "matchingColumns": [
