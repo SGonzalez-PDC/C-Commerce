@@ -10,7 +10,8 @@
             { "name": "codcliente" },
             { "name": "sku" },
             { "name": "qty" },
-            { "name": "unit_price" }
+            { "name": "unit_price" },
+            { "name": "agregar_todo" }
           ]
         }
       },
@@ -67,7 +68,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const trig = $('When Called by Agent').first().json;\nconst cart = $('Obtener Carrito').first().json;\nconst prev = $('Resumen Previo').first().json;\nconst stockRow = $('Consultar Stock').first().json;\n\nconst sku = String(trig.sku);\nconst qty = Number(trig.qty) || 0;\nconst disponible = Number(stockRow && stockRow.disponible != null ? stockRow.disponible : 0);\n\n// Cantidad de ESTE sku que ya esta en el carrito (para que sumar no exceda el stock).\nconst items = (prev && prev.data && Array.isArray(prev.data.items)) ? prev.data.items : [];\nconst en_carrito = items\n  .filter(i => String(i.productCode) === sku)\n  .reduce((a, i) => a + (Number(i.quantity) || 0), 0);\n\nconst requerido = en_carrito + qty;\nconst suficiente = requerido <= disponible;\n\nreturn [{ json: {\n  suficiente,\n  disponible,\n  en_carrito,\n  solicitado: qty,\n  requerido,\n  sku,\n  cart_id: (cart && cart.data) ? cart.data.cart_id : null\n} }];"
+        "jsCode": "const trig = $('When Called by Agent').first().json;\nconst cart = $('Obtener Carrito').first().json;\nconst prev = $('Resumen Previo').first().json;\nconst stockRow = $('Consultar Stock').first().json;\n\nconst sku = String(trig.sku);\nconst agregarTodo = trig.agregar_todo === true || trig.agregar_todo === 'true';\nconst disponible = Number(stockRow && stockRow.disponible != null ? stockRow.disponible : 0);\n\n// Cantidad de ESTE sku que ya esta en el carrito (para que sumar no exceda el stock).\nconst items = (prev && prev.data && Array.isArray(prev.data.items)) ? prev.data.items : [];\nconst en_carrito = items\n  .filter(i => String(i.productCode) === sku)\n  .reduce((a, i) => a + (Number(i.quantity) || 0), 0);\n\n// agregar_todo: agrega TODO lo disponible que aun no esta en el carrito (sin tope artificial).\nconst qty = agregarTodo ? Math.max(0, disponible - en_carrito) : (Number(trig.qty) || 0);\nconst requerido = en_carrito + qty;\nconst suficiente = qty > 0 && requerido <= disponible;\n\nreturn [{ json: {\n  suficiente,\n  disponible,\n  en_carrito,\n  agregar_todo: agregarTodo,\n  solicitado: agregarTodo ? qty : (Number(trig.qty) || 0),\n  qty_final: qty,\n  requerido,\n  sku,\n  cart_id: (cart && cart.data) ? cart.data.cart_id : null\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -104,7 +105,7 @@
         "options": { "timeout": 60000 },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"sku\": \"{{ $('When Called by Agent').first().json.sku }}\",\n  \"qty\": {{ $('When Called by Agent').first().json.qty }},\n  \"unit_price\": {{ $('When Called by Agent').first().json.unit_price }}\n}"
+        "jsonBody": "={\n  \"sku\": \"{{ $('When Called by Agent').first().json.sku }}\",\n  \"qty\": {{ $('Validar Stock').first().json.qty_final }},\n  \"unit_price\": {{ $('When Called by Agent').first().json.unit_price }}\n}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -136,7 +137,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const v = $('Validar Stock').first().json;\nconst enCarrito = Number(v.en_carrito) || 0;\nconst disp = Number(v.disponible) || 0;\n\nlet mensaje = `Solo hay ${disp} unidad(es) disponibles de ${v.sku}`;\nif (enCarrito > 0) mensaje += ` y ya tienes ${enCarrito} en el carrito`;\nmensaje += '. Ajusta la cantidad o elige otro producto.';\n\n// NO se agrego nada al carrito: el flujo se detuvo antes de llamar al backend.\nreturn [{ json: {\n  ok: false,\n  motivo: 'stock_insuficiente',\n  sku: v.sku,\n  disponible: disp,\n  en_carrito: enCarrito,\n  solicitado: Number(v.solicitado) || 0,\n  mensaje\n} }];"
+        "jsCode": "const v = $('Validar Stock').first().json;\nconst enCarrito = Number(v.en_carrito) || 0;\nconst disp = Number(v.disponible) || 0;\n\nlet mensaje;\nif (v.agregar_todo) {\n  if (disp <= 0) mensaje = `No hay unidades disponibles de ${v.sku}.`;\n  else mensaje = `Ya tienes todo el stock disponible (${disp}) de ${v.sku} en tu carrito.`;\n} else {\n  mensaje = `Solo hay ${disp} unidad(es) disponibles de ${v.sku}`;\n  if (enCarrito > 0) mensaje += ` y ya tienes ${enCarrito} en el carrito`;\n  mensaje += '. Ajusta la cantidad o elige otro producto.';\n}\n\n// NO se agrego nada al carrito: el flujo se detuvo antes de llamar al backend.\nreturn [{ json: {\n  ok: false,\n  motivo: 'stock_insuficiente',\n  sku: v.sku,\n  disponible: disp,\n  en_carrito: enCarrito,\n  solicitado: Number(v.solicitado) || 0,\n  mensaje\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
