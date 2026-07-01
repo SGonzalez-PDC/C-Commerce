@@ -1,15 +1,21 @@
 {
   "folder": "workflows",
-  "comment": "Produccion: sin prefijo de entorno en URL ni BD. OJO: prod tiene links cableados a mano; revisa antes de desplegar. El orden de reemplazos importa (primero la URL .dev).",
+  "comment": "PRODUCCION (n8n.pdctechco.com). Los workflows del repo estan en forma dev-canonica; estos replacements los convierten a prod. El orden importa: primero la URL .dev. empresa/companyId son iguales en dev y prod (00010 / 79D26EDA...).",
   "replacements": {
     ".dev.pdctechco.com": ".pdctechco.com",
     "DEV_C_COMMERCE": "C_COMMERCE",
     "DEV_SEGURIDAD": "SEGURIDAD",
-    "DEV_FFA": "FFA"
+    "DEV_FFA": "FFA",
+    "1115471541658480": "1002003619670224",
+    "1160149123849159": "1094817040390611"
   },
   "credentials": {
-    "Microsoft SQL account": "REEMPLAZA_CON_ID_CRED_PROD"
+    "Microsoft SQL account": { "id": "wwcq6MS87shlA3Zw" },
+    "Google Gemini(PaLM) Api account": { "id": "dmDyRdDA9oCzXOwY" },
+    "Google Gemini(PaLM) Api account 2": { "id": "dmDyRdDA9oCzXOwY", "name": "Google Gemini(PaLM) Api account" },
+    "WhatsApp account TEST": { "id": "xE7SVa8zq8aLqIri", "name": "WhatsApp account" },
+    "WhatsApp OAuth account TEST": { "id": "XvRy5lTJquUbiRyG", "name": "WhatsApp OAuth account" }
   },
-  "exclude": [],
+  "exclude": ["ISA Subagente - Catalogo CON IMAGENES", "IsaCodisa Agent CON IMAGENES"],
   "activate": []
 }

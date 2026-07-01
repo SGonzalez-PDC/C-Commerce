@@ -1,4 +1,4 @@
-USE [DEV_C_COMMERCE]
+USE [STAGE_C_COMMERCE]
 GO
 /****** Objeto: StoredProcedure [dbo].[c_commerce_cart_promo_sp_R_V1] Fecha de script: 24/06/2026 16:00:00 ******/
 SET ANSI_NULLS ON
@@ -35,49 +35,49 @@ BEGIN
         BEGIN
             SELECT @empresa = COALESCE(@empresa, h.empresa),
                    @codcliente = COALESCE(@codcliente, h.codcliente)
-            FROM DEV_FFA..ffa_tbl_txn_header_cart h
+            FROM STAGE_FFA..ffa_tbl_txn_header_cart h
             WHERE h.cart_id = @cart_id;
         END
 
         -- ============================================================
         -- Promos ELEGIBLES para este cliente: misma regla que el portal
-        -- web (DEV_FFA..sp_GetBestSellers_V2, bandera promocion='S').
+        -- web (STAGE_FFA..sp_GetBestSellers_V2, bandera promocion='S').
         -- Solo estos codigos de promocion pueden aplicar/mostrarse.
         -- ============================================================
         DECLARE @territorio_cliente VARCHAR(100) =
-            (SELECT territorio FROM DEV_FFA..clientes
+            (SELECT territorio FROM STAGE_FFA..clientes
              WHERE empresa = @empresa AND codcliente = @codcliente);
 
         ;WITH JerarquiaSegmentacion AS (
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, 0 AS prof
-            FROM DEV_FFA..FFAniveles n
-            INNER JOIN DEV_FFA..CLIENTES c ON c.segmentacion_cliente = n.id_nivel
+            FROM STAGE_FFA..FFAniveles n
+            INNER JOIN STAGE_FFA..CLIENTES c ON c.segmentacion_cliente = n.id_nivel
             WHERE c.codcliente = @codcliente AND c.ACTIVO = 'S' AND c.empresa = @empresa AND n.status = 1
             UNION ALL
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, j.prof + 1
-            FROM DEV_FFA..FFAniveles n
+            FROM STAGE_FFA..FFAniveles n
             INNER JOIN JerarquiaSegmentacion j ON n.id_nivel = j.id_nivel_padre
             WHERE n.status = 1 AND j.prof < 10
         ),
         JerarquiaGeografia AS (
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, 0 AS prof
-            FROM DEV_FFA..FFAniveles n
-            INNER JOIN DEV_FFA..CLIENTES c ON c.geografia = n.id_nivel
+            FROM STAGE_FFA..FFAniveles n
+            INNER JOIN STAGE_FFA..CLIENTES c ON c.geografia = n.id_nivel
             WHERE c.codcliente = @codcliente AND c.ACTIVO = 'S' AND c.empresa = @empresa AND n.status = 1
             UNION ALL
             SELECT n.id_nivel, n.empresa, n.id_nivel_padre, j.prof + 1
-            FROM DEV_FFA..FFAniveles n
+            FROM STAGE_FFA..FFAniveles n
             INNER JOIN JerarquiaGeografia j ON n.id_nivel = j.id_nivel_padre
             WHERE n.status = 1 AND j.prof < 10
         )
         SELECT DISTINCT f.codigo
         INTO #promos_ok
-        FROM DEV_FFA..ffa_promocion f
-        INNER JOIN DEV_FFA..ffa_asignacion_promocion fa
+        FROM STAGE_FFA..ffa_promocion f
+        INNER JOIN STAGE_FFA..ffa_asignacion_promocion fa
             ON fa.id_referencia = f.codigo AND fa.empresa = f.empresa
-        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad_geo
+        LEFT JOIN STAGE_FFA..ffa_asignacion_promocion_lista_detalle fad_geo
             ON fad_geo.id_asignacion = fa.id_asignacion AND fad_geo.empresa = fa.empresa
-        LEFT JOIN DEV_FFA..ffa_asignacion_promocion_lista_detalle fad_seg
+        LEFT JOIN STAGE_FFA..ffa_asignacion_promocion_lista_detalle fad_seg
             ON fad_seg.id_asignacion = fa.id_asignacion AND fad_seg.empresa = fa.empresa AND fad_seg.tipo_estructura = 13
         LEFT JOIN JerarquiaSegmentacion js
             ON js.id_nivel = fad_seg.id_referencia AND js.empresa = f.empresa
@@ -99,7 +99,7 @@ BEGIN
         BEGIN
             INSERT INTO #lineas (sku, qty, subtotal)
             SELECT d.sku, d.qty, d.line_subtotal
-            FROM DEV_FFA..ffa_tbl_txn_detail_cart d
+            FROM STAGE_FFA..ffa_tbl_txn_detail_cart d
             WHERE d.cart_id = @cart_id
               AND d.line_type = 'SALE';
         END
@@ -139,9 +139,9 @@ BEGIN
                 ELSE 0
             END                         AS descuento_monto
         FROM #lineas l
-        INNER JOIN DEV_FFA..ffa_promocion_articulo pa
+        INNER JOIN STAGE_FFA..ffa_promocion_articulo pa
             ON pa.empresa = @empresa AND pa.articulo_sku = l.sku
-        INNER JOIN DEV_FFA..ffa_promocion p
+        INNER JOIN STAGE_FFA..ffa_promocion p
             ON p.empresa = pa.empresa
             AND p.codigo = pa.codigo_promocion
             AND p.fecha_inicio <= @fecha
@@ -153,7 +153,7 @@ BEGIN
         -- Mejor condicion aplicable segun el pivot (mayor apartir_de que cumple)
         OUTER APPLY (
             SELECT TOP 1 c.condiciones_promocion_id, c.apartir_de, c.hasta, c.por_cada, c.isMonetario
-            FROM DEV_FFA..ffa_condiciones_promocion c
+            FROM STAGE_FFA..ffa_condiciones_promocion c
             WHERE c.empresa = @empresa
               AND c.codigo_promocion = p.codigo
               AND c.apartir_de <= (CASE WHEN c.isMonetario = 1 THEN l.subtotal ELSE l.qty END)
@@ -161,14 +161,14 @@ BEGIN
             ORDER BY c.apartir_de DESC
         ) cnd
         -- Beneficios de esa condicion (distintos)
-        INNER JOIN DEV_FFA..ffa_beneficios_promocion bp
+        INNER JOIN STAGE_FFA..ffa_beneficios_promocion bp
             ON bp.empresa = @empresa
             AND bp.codigo_promocion = p.codigo
             AND (bp.id_condicion_promocion = cnd.condiciones_promocion_id OR cnd.condiciones_promocion_id IS NULL)
-        LEFT JOIN DEV_FFA..ARTICULO ab
+        LEFT JOIN STAGE_FFA..ARTICULO ab
             ON ab.EMPRESA = @empresa AND ab.SKU = bp.articulo_sku
         OUTER APPLY (
-            SELECT TOP 1 ri.LINK FROM DEV_FFA..RED_IMAGENES ri
+            SELECT TOP 1 ri.LINK FROM STAGE_FFA..RED_IMAGENES ri
             WHERE ri.ID = bp.articulo_sku AND ri.EMPRESA = @empresa AND ri.VIGENTE = 'S'
         ) img
         WHERE cnd.condiciones_promocion_id IS NOT NULL
