@@ -10,12 +10,13 @@ GO
 * PROCEDURE
 * AUTOR: Saul Gonzalez
 * FECHA CREACION: 24-06-2026
-* DESCRIPCION: Aplica al carrito conversacional las promos del cliente por linea SALE. Si el cliente eligio una promo para el sku (c_commerce_cart_chosen_promo) se aplica SOLO esa (excluyente); si no, se aplica el mejor descuento % + la mejor bonificacion. Solo considera promos ELEGIBLES (misma regla que el portal: estado=1, vigencia, territorio, asignacion segmentacion/geografia). Escribe line_discounts, ffa_tbl_txn_discount_cart y lineas BONUS, y recalcula el encabezado. Idempotente.
+* DESCRIPCION: Aplica al carrito conversacional las promos del cliente por linea SALE. Aplica el mejor descuento % + la mejor bonificacion por linea (sin stacking). Solo considera promos ELEGIBLES (misma regla que el portal: estado=1, vigencia, territorio, asignacion segmentacion/geografia). Escribe line_discounts, ffa_tbl_txn_discount_cart y lineas BONUS, y recalcula el encabezado. Idempotente.
 * MODIFICACIONES:
 *   - 24-06-2026 / Saul Gonzalez: Creacion (solo descuento % limpio).
 *   - 24-06-2026 / Saul Gonzalez: Mejor descuento % + mejor bonificacion por linea. Sin stacking.
 *   - 29-06-2026 / Saul Gonzalez: Filtro de elegibilidad (estado/territorio/asignacion, igual que el portal) y respeto a la promo elegida por el cliente (excluyente) via c_commerce_cart_chosen_promo.
 *   - 30-06-2026 / Saul Gonzalez: Atar cada beneficio a SU condicion (bp.id_condicion_promocion) al elegir el tier por cantidad, igual que c_commerce_cart_promo_sp_R_V1. Antes el bonus se aplicaba con el tier que matcheaba la cantidad aunque el beneficio perteneciera a otro tier (ej. 22727: bonus del tier 11-15 se aplicaba en qty 8).
+*   - 30-06-2026 / Saul Gonzalez: Quitar dependencia de c_commerce_cart_chosen_promo (feature elegir-promo sin backend, no usado); siempre aplica auto-mejor. Ya no requiere esa tabla.
 */
 CREATE OR ALTER PROCEDURE [dbo].[c_commerce_cart_apply_promos_sp_U_V1]
     @cart_id     UNIQUEIDENTIFIER,
@@ -69,12 +70,6 @@ BEGIN
             AND (f.territorio IS NULL OR f.territorio = @territorio_cliente)
             AND (f.cod_cliente = @codcliente OR (f.cod_cliente IS NULL AND jg.id_nivel IS NOT NULL AND (fad_seg.id_referencia IS NULL OR js.id_nivel IS NOT NULL)));
 
-        -- 0b) Promo ELEGIDA por el cliente por sku (excluyente). Solo si sigue elegible.
-        SELECT cp.sku, cp.codigo
-        INTO #chosen
-        FROM FFA..c_commerce_cart_chosen_promo cp
-        WHERE cp.cart_id = @cart_id
-          AND cp.codigo IN (SELECT codigo FROM #promos_ok);
 
         -- 1) RESET (idempotente): descuentos y lineas BONUS previas
         DELETE FROM FFA..ffa_tbl_txn_discount_cart WHERE cart_id = @cart_id;
@@ -88,7 +83,6 @@ BEGIN
         INSERT INTO @aplicar (line_id, codigo, nombre, pct, monto)
         SELECT s.line_id, x.codigo, x.nombre, x.pct, CAST(s.line_subtotal * x.pct / 100.0 AS NUMERIC(18,4))
         FROM (SELECT d.line_id, d.sku, d.qty, d.line_subtotal FROM FFA..ffa_tbl_txn_detail_cart d WHERE d.cart_id = @cart_id AND d.line_type = 'SALE') s
-        LEFT JOIN #chosen ch ON ch.sku = s.sku
         CROSS APPLY (
             SELECT TOP 1 p.codigo, p.nombre, bp.porcentaje_descuento AS pct
             FROM FFA..ffa_promocion_articulo pa
@@ -100,7 +94,6 @@ BEGIN
                AND (c.hasta IS NULL OR (CASE WHEN c.isMonetario = 1 THEN s.line_subtotal ELSE s.qty END) <= c.hasta)
             WHERE pa.empresa = @empresa AND pa.articulo_sku = s.sku
               AND p.codigo IN (SELECT codigo FROM #promos_ok)
-              AND (ch.codigo IS NULL OR p.codigo = ch.codigo)
             ORDER BY bp.porcentaje_descuento DESC
         ) x
         WHERE x.pct IS NOT NULL;
@@ -117,7 +110,6 @@ BEGIN
             SELECT d.line_id AS origin_line, bp.articulo_sku AS bonus_sku,
                    FLOOR((CASE WHEN c.isMonetario = 1 THEN d.line_subtotal ELSE d.qty END) / NULLIF(c.por_cada,0)) * bp.cantidad_redimible AS qty_bonus
             FROM FFA..ffa_tbl_txn_detail_cart d
-            LEFT JOIN #chosen ch ON ch.sku = d.sku
             INNER JOIN FFA..ffa_promocion_articulo pa ON pa.empresa = @empresa AND pa.articulo_sku = d.sku
             INNER JOIN FFA..ffa_promocion p ON p.empresa = pa.empresa AND p.codigo = pa.codigo_promocion
             INNER JOIN FFA..ffa_beneficios_promocion bp ON bp.empresa = p.empresa AND bp.codigo_promocion = p.codigo AND bp.tipo_beneficio_id = 2 AND bp.cantidad_redimible > 0
@@ -132,7 +124,6 @@ BEGIN
             ) c
             WHERE d.cart_id = @cart_id AND d.line_type = 'SALE' AND c.por_cada > 0
               AND p.codigo IN (SELECT codigo FROM #promos_ok)
-              AND (ch.codigo IS NULL OR p.codigo = ch.codigo)
         ),
         bonus_best AS (
             SELECT origin_line, bonus_sku, qty_bonus,
@@ -155,11 +146,9 @@ BEGIN
         WHERE h.cart_id = @cart_id;
 
         DROP TABLE #promos_ok;
-        DROP TABLE #chosen;
     END TRY
     BEGIN CATCH
         IF OBJECT_ID('tempdb..#promos_ok') IS NOT NULL DROP TABLE #promos_ok;
-        IF OBJECT_ID('tempdb..#chosen') IS NOT NULL DROP TABLE #chosen;
         THROW;
     END CATCH
 END;
