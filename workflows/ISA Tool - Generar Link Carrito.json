@@ -38,7 +38,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT TOP 1 cart_id FROM ffa_tbl_txn_header_cart WHERE codcliente = '{{ $json.codcliente }}' AND empresa = '{{ $json.empresa }}' AND status IN ('ACTIVE','ENVIADO_WHATSAPP') AND total > 0 ORDER BY created_at DESC"
+        "query": "SELECT TOP 1 cart_id FROM ffa_tbl_txn_header_cart WHERE codcliente = '{{ $json.codcliente }}' AND empresa = '{{ $json.empresa }}' AND status IN ('ACTIVE','ENVIADO_WHATSAPP') AND total > 0 AND (expires_at IS NULL OR expires_at > SYSUTCDATETIME()) ORDER BY created_at DESC"
       },
       "type": "n8n-nodes-base.microsoftSql",
       "typeVersion": 1.1,
