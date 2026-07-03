@@ -604,6 +604,93 @@
       ],
       "id": "pedido-memoria",
       "name": "Memoria"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://authentication-api.dev.pdctechco.com/api/auth/login",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"email\": \"cc.auth\",\n  \"password\": \"@cc350CC\"\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        520,
+        -260
+      ],
+      "id": "ped-gettoken-cart-01",
+      "name": "GET TOKEN Cart",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ffa-api.dev.pdctechco.com/api/v1/Cart/header",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "=Bearer {{ $('GET TOKEN Cart').first().json.data.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"tienda\": \"{{ $('When Called by Agent').first().json.tienda }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.cliente_id }}\",\n  \"status\": \"ACTIVE\",\n  \"price_list\": \"P1\",\n  \"bodega\": \"{{ $('When Called by Agent').first().json.tienda }}\",\n  \"direccion\": \"{{ $('Datos Carrito').first().json.direccion }}\"\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        760,
+        -260
+      ],
+      "id": "ped-crear-carrito-web-01",
+      "name": "Crear Carrito Web",
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parche stopgap: la creacion/refresh del carrito la hace ffa-api (Cart/header),\n// que excluye vencidos y crea uno nuevo. Restauramos el json del trigger para\n// que el agente siga igual (todo lo demas usa los endpoints de siempre).\nreturn [{ json: $('When Called by Agent').first().json }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -48
+      ],
+      "id": "ped-continuar-01",
+      "name": "Continuar Pedido"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 REPLACE(REPLACE(ISNULL(c.direccion,''), CHAR(34), CHAR(39)), CHAR(10), ' ') AS direccion FROM dbo.clientes c WHERE c.empresa = '{{ $('When Called by Agent').first().json.empresa }}' AND c.codcliente = '{{ $('When Called by Agent').first().json.cliente_id }}';"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        -260
+      ],
+      "id": "ped-datos-carrito-01",
+      "name": "Datos Carrito",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -612,7 +699,7 @@
       "main": [
         [
           {
-            "node": "Subagente Pedido",
+            "node": "GET TOKEN Cart",
             "type": "main",
             "index": 0
           }
@@ -713,6 +800,50 @@
           {
             "node": "Subagente Pedido",
             "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET TOKEN Cart": {
+      "main": [
+        [
+          {
+            "node": "Datos Carrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Carrito Web": {
+      "main": [
+        [
+          {
+            "node": "Continuar Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continuar Pedido": {
+      "main": [
+        [
+          {
+            "node": "Subagente Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos Carrito": {
+      "main": [
+        [
+          {
+            "node": "Crear Carrito Web",
+            "type": "main",
             "index": 0
           }
         ]
