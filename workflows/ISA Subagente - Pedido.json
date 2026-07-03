@@ -641,7 +641,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"tienda\": \"{{ $('When Called by Agent').first().json.tienda }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.cliente_id }}\",\n  \"status\": \"ACTIVE\",\n  \"price_list\": \"P1\"\n}",
+        "jsonBody": "={\n  \"empresa\": \"{{ $('When Called by Agent').first().json.empresa }}\",\n  \"tienda\": \"{{ $('When Called by Agent').first().json.tienda }}\",\n  \"codcliente\": \"{{ $('When Called by Agent').first().json.cliente_id }}\",\n  \"status\": \"ACTIVE\",\n  \"price_list\": \"P1\",\n  \"bodega\": \"{{ $('When Called by Agent').first().json.tienda }}\",\n  \"direccion\": \"{{ $('Datos Carrito').first().json.direccion }}\"\n}",
         "options": {
           "timeout": 60000
         }
@@ -669,6 +669,28 @@
       ],
       "id": "ped-continuar-01",
       "name": "Continuar Pedido"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 REPLACE(REPLACE(ISNULL(c.direccion,''), CHAR(34), CHAR(39)), CHAR(10), ' ') AS direccion FROM dbo.clientes c WHERE c.empresa = '{{ $('When Called by Agent').first().json.empresa }}' AND c.codcliente = '{{ $('When Called by Agent').first().json.cliente_id }}';"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        -260
+      ],
+      "id": "ped-datos-carrito-01",
+      "name": "Datos Carrito",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "microsoftSql": {
+          "id": "ZTSBLpGk8OfRbYkg",
+          "name": "Microsoft SQL account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -787,7 +809,7 @@
       "main": [
         [
           {
-            "node": "Crear Carrito Web",
+            "node": "Datos Carrito",
             "type": "main",
             "index": 0
           }
@@ -810,6 +832,17 @@
         [
           {
             "node": "Subagente Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos Carrito": {
+      "main": [
+        [
+          {
+            "node": "Crear Carrito Web",
             "type": "main",
             "index": 0
           }
